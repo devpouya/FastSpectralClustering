@@ -44,6 +44,44 @@ static void construct_eps_neighborhood_matrix(double *points, int lines, int dim
 }
 
 /*
+ * compute degrees matrix D
+ */
+static double compute_degrees(double *graph, double *degrees, int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (graph[i*n+j] > 0.0) {
+                degrees[i*n+i] += graph[i*n+j];
+            } else {
+                degrees[i*n+i] += 0;
+            }
+        }
+    }
+//    for (int i = 0; i < n; i++) {
+//        for (int j = 0; j < n; j++) {
+//            printf("%f ", degrees[i*n+ j]);
+//        }
+//        printf("\n");
+//    }
+}
+
+/*
+ * compute unnormalized graph laplacian
+ */
+static void construct_unnormalized_laplacian(double *graph, double *laplacian, int n) {
+    double* degrees = (double *)malloc(n * n * sizeof(double));
+    compute_degrees(graph, degrees, n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            laplacian[i*n+j] = degrees[i*n+j] - graph[i*n+j];
+            printf("%f ", laplacian[i*n+j]);
+        }
+        printf("\n");
+    }
+}
+
+
+
+/*
  * The file that the program reads from is stored in the following format, assuming that
  * we are using n d-dimensional datapoints:
  * <d>\n
@@ -66,7 +104,8 @@ int main(int argc, char *argv[]) {
 
     // Find the dimension
     rewind(fp);
-    int dim = 0;
+    int dim ;
+    fscanf(fp, "%d\n", &dim);
 
     // Read the points
     char fmt[4*dim + 1];
@@ -91,5 +130,9 @@ int main(int argc, char *argv[]) {
     int eps_neighborhood[lines][lines];
     construct_eps_neighborhood_matrix((double *) points, lines, dim, (int *) eps_neighborhood);
     // Skip KNN matrix since too annoying to compute
+
+    // compute unnormalized laplacian
+    double* laplacian = (double *)malloc(lines * lines * sizeof(double));
+    construct_unnormalized_laplacian(fully_connected, laplacian, lines);
     return 0;
 }
