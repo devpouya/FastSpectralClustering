@@ -6,6 +6,7 @@
 
 #define EPS 2
 
+double *TheArray;
 static void repeat_str(const char *str, int times, char *ret) {
     int len = strlen(str);
     printf("%d\n", len);
@@ -13,6 +14,12 @@ static void repeat_str(const char *str, int times, char *ret) {
         strncpy(ret + i*len, str, len);
     }
     ret[len*times] = '\0';
+}
+
+int cmp(const void *a, const void *b){
+    int ia = *(int *)a;
+    int ib = *(int *)b;
+    return (TheArray[ia] > TheArray[ib]) - (TheArray[ia] < TheArray[ib]);
 }
 
 static double l2_norm(double *u, double *v, int dim) {
@@ -43,6 +50,39 @@ static void construct_eps_neighborhood_matrix(double *points, int lines, int dim
     }
 }
 
+static void construct_knn_matrix(double *points, int lines, int dim, int k, int *ret) {
+    double vals[lines];
+    int indices[lines];
+
+    for (int i = 0; i < lines; ++i) {
+        for(int ii = 0; ii < lines; ++ii) {
+            indices[ii] = ii;
+        }
+        for (int j = 0; j < lines; ++j) {
+            ret[i*lines + j] = 0.0;
+            vals[j] = l2_norm(&points[i*dim], &points[j*dim], dim);
+        }
+        TheArray = vals;
+        size_t len = sizeof(vals)/ sizeof(*vals);
+        qsort(indices, len, sizeof(*indices), cmp);
+        for (int s = 0; s < k; ++s) {
+            ret[i*lines + indices[s]] = 1.0;
+        }
+    }
+
+    for(int i = 0; i < lines; ++i) {
+        for(int j = 0; j < lines; ++j) {
+            printf("%d ", ret[i*lines + j]);
+
+        }
+        printf("\n");
+
+    }
+
+
+}
+
+
 /*
  * The file that the program reads from is stored in the following format, assuming that
  * we are using n d-dimensional datapoints:
@@ -66,7 +106,8 @@ int main(int argc, char *argv[]) {
 
     // Find the dimension
     rewind(fp);
-    int dim = 0;
+    int dim;
+    fscanf(fp, "%d\n", &dim);
 
     // Read the points
     char fmt[4*dim + 1];
@@ -91,5 +132,9 @@ int main(int argc, char *argv[]) {
     int eps_neighborhood[lines][lines];
     construct_eps_neighborhood_matrix((double *) points, lines, dim, (int *) eps_neighborhood);
     // Skip KNN matrix since too annoying to compute
+    int k = 2;
+    int knn_graph[lines][lines];
+    construct_knn_matrix((double *) points, lines, dim, k,(int *) knn_graph);
+
     return 0;
 }
