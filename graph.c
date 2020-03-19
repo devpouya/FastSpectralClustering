@@ -6,7 +6,6 @@
 
 #define EPS 2
 
-static double *TheArray;
 static void repeat_str(const char *str, int times, char *ret) {
     int len = strlen(str);
     printf("%d\n", len);
@@ -16,7 +15,8 @@ static void repeat_str(const char *str, int times, char *ret) {
     ret[len*times] = '\0';
 }
 
-int cmp(const void *a, const void *b){
+static double *TheArray;
+static int cmp(const void *a, const void *b){
     int ia = *(int *)a;
     int ib = *(int *)b;
     return (TheArray[ia] > TheArray[ib]) - (TheArray[ia] < TheArray[ib]);
@@ -51,9 +51,9 @@ static void construct_eps_neighborhood_matrix(double *points, int lines, int dim
 }
 
 static void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n, double *ret){
-    for (int i = 0; i< n; i++){
+    for (int i = 0; i < n; i++) {
         double d_i = 0;
-        for (int j = 0; j<n;j++){
+        for (int j = 0; j < n;j++) {
             d_i += weighted_adj_matrix[i*n+ j];
         }
         ret[i] = d_i;
@@ -76,12 +76,12 @@ static void construct_normalized_laplacian_sym_matrix(double *weighted_adj_matri
         }
     }
     // compute (D^(-1/2)*W)*D^(-1/2)
-    for(int i = 0; i< num_points; i++){
-        for(int j = 0; j< num_points; j++){
-            if(i==j){
-                ret[i*num_points + j] = 1.0 - ret[i*num_points + j]*sqrt_inv_degree_matrix[j];
-            }else{
-                ret[i*num_points + j] = - ret[i*num_points + j]*sqrt_inv_degree_matrix[j];
+    for (int i = 0; i < num_points; i++) {
+        for (int j = 0; j < num_points; j++) {
+            if (i == j) {
+                ret[i*num_points + j] = 1.0 - ret[i*num_points + j] * sqrt_inv_degree_matrix[j];
+            } else {
+                ret[i*num_points + j] = -ret[i*num_points + j] * sqrt_inv_degree_matrix[j];
             }
             printf("%lf ", ret[i*num_points + j]);
         }
@@ -134,17 +134,16 @@ static void construct_knn_matrix(double *points, int lines, int dim, int k, int 
             vals[j] = l2_norm(&points[i*dim], &points[j*dim], dim);
         }
         TheArray = vals;
-        size_t len = sizeof(vals)/ sizeof(*vals);
+        size_t len = sizeof(vals) / sizeof(*vals);
         qsort(indices, len, sizeof(*indices), cmp);
-        for (int s = 0; s < k; ++s) {
-            ret[i*lines + indices[s]] = 1.0;
+        for (int s = 0; s < k+1; ++s) {
+            ret[i*lines + indices[s]] = (indices[s] != i) ? 1.0 : 0;
         }
     }
 
     for(int i = 0; i < lines; ++i) {
         for(int j = 0; j < lines; ++j) {
             printf("%d ", ret[i*lines + j]);
-
         }
         printf("\n");
     }
