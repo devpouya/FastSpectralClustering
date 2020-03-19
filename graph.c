@@ -50,19 +50,21 @@ static void construct_eps_neighborhood_matrix(double *points, int lines, int dim
     }
 }
 
-static void calculate_diagonal_degree_matrix(double *d, double * weighted_adj_matrix, int n){
+static void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n, double *ret){
     for (int i = 0; i< n; i++){
         double d_i = 0;
         for (int j = 0; j<n;j++){
             d_i += weighted_adj_matrix[i*n+ j];
         }
-        d[i] = d_i;
+        ret[i] = d_i;
+        printf("%lf ", ret[i]);
     }
+    printf("\n");
 }
 
-static void construct_normalized_laplacian_sym_matrix(double *l_sym, double * weighted_adj_matrix, int num_points){
-    double * sqrt_inv_degree_matrix;  // '1-d' array
-    calculate_diagonal_degree_matrix(sqrt_inv_degree_matrix, weighted_adj_matrix, num_points); //load degree_matrix temporarily in sqrt_inv_degree_matrix
+static void construct_normalized_laplacian_sym_matrix(double *weighted_adj_matrix, int num_points, double *ret){
+    double sqrt_inv_degree_matrix[num_points];  // '1-d' array
+    calculate_diagonal_degree_matrix(weighted_adj_matrix, num_points, sqrt_inv_degree_matrix); //load degree_matrix temporarily in sqrt_inv_degree_matrix
     for (int i =0; i < num_points; i++){
         sqrt_inv_degree_matrix[i] = 1.0/sqrt(sqrt_inv_degree_matrix[i]);
     }
@@ -70,45 +72,50 @@ static void construct_normalized_laplacian_sym_matrix(double *l_sym, double * we
     // but with this trick we avoid *0.0
     for (int i = 0; i < num_points; i++){
         for(int j = 0; j < num_points; j++){
-            l_sym[i*num_points + j] = sqrt_inv_degree_matrix[i]*weighted_adj_matrix[(i+j)*num_points + j];
+            ret[i*num_points + j] = sqrt_inv_degree_matrix[i] * weighted_adj_matrix[i*num_points + j];
         }
     }
     // compute (D^(-1/2)*W)*D^(-1/2)
     for(int i = 0; i< num_points; i++){
         for(int j = 0; j< num_points; j++){
             if(i==j){
-                l_sym[i*num_points + j] = 1.0 - l_sym[i*num_points + j]*sqrt_inv_degree_matrix[j];
+                ret[i*num_points + j] = 1.0 - ret[i*num_points + j]*sqrt_inv_degree_matrix[j];
             }else{
-                l_sym[i*num_points + j] = - l_sym[i*num_points + j]*sqrt_inv_degree_matrix[j];
+                ret[i*num_points + j] = - ret[i*num_points + j]*sqrt_inv_degree_matrix[j];
             }
+            printf("%lf ", ret[i*num_points + j]);
         }
+        printf("\n");
     }
 }
 
-static void construct_normalized_laplacian_rw_matrix(double *l_rw, double * weighted_adj_matrix,  int num_points){
-    double * inv_degree_matrix;
-    calculate_diagonal_degree_matrix(inv_degree_matrix, weighted_adj_matrix, num_points); //load degree_matrix temporarily in sqrt_inv_degree_matrix
-    for (int i =0; i < num_points; i++){
-        inv_degree_matrix[i] = 1.0/inv_degree_matrix[i]);
-    }
+static void construct_normalized_laplacian_rw_matrix(double *weighted_adj_matrix, int num_points, double *ret) {
+    double inv_degree_matrix[num_points];
+    calculate_diagonal_degree_matrix(weighted_adj_matrix, num_points, inv_degree_matrix); //load degree_matrix temporarily in sqrt_inv_degree_matrix
     for (int i = 0; i < num_points; i++){
-        for(int j = 0; j < num_points; j++){
-            if(i==j){
-                l_rw[i*num_points + j] = 1.0 - inv_degree_matrix[i]*weighted_adj_matrix[(i+j)*num_points + j];
-            }else{
-                l_rw[i*num_points + j] =  - inv_degree_matrix[i]*weighted_adj_matrix[(i+j)*num_points + j];
+        inv_degree_matrix[i] = 1.0/inv_degree_matrix[i];
+    }
+    for (int i = 0; i < num_points; i++) {
+        for (int j = 0; j < num_points; j++) {
+            if (i == j) {
+                ret[i*num_points + j] = 1.0 - inv_degree_matrix[i] * weighted_adj_matrix[i*num_points + j];
+            } else {
+                ret[i*num_points + j] = -inv_degree_matrix[i] * weighted_adj_matrix[i*num_points + j];
             }
+            printf("%lf ", ret[i*num_points + j]);
         }
+        printf("\n");
     }
 }
 
-static void construct_unnormalized_laplacian(double *graph, double *laplacian, int n) {
-    double* degrees = (double *)malloc(n * n * sizeof(double));
-    calculate_diagonal_degree_matrix(graph, degrees, n);
+static void construct_unnormalized_laplacian(double *graph, int n, double *ret) {
+    // double* degrees = (double *)malloc(n * n * sizeof(double));
+    double degrees[n];
+    calculate_diagonal_degree_matrix(graph, n, degrees);
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            laplacian[i*n+j] = degrees[i*n+j] - graph[i*n+j];
-            printf("%f ", laplacian[i*n+j]);
+            ret[i*n+j] = ((i == j) ? degrees[i] : 0) - graph[i*n+j];
+            printf("%f ", ret[i*n+j]);
         }
         printf("\n");
     }
@@ -188,19 +195,34 @@ int main(int argc, char *argv[]) {
 
     // Construct the matrices and print them
     // fully-connected matrix
+    printf("Fully connected matrix:\n");
     double fully_connected[lines][lines];
     construct_fully_connected_matrix((double *) points, lines, dim, (double *) fully_connected);
     // epsilon neighborhood matrix
+
+    printf("\nEps neighborhood matrix:\n");
     int eps_neighborhood[lines][lines];
     construct_eps_neighborhood_matrix((double *) points, lines, dim, (int *) eps_neighborhood);
     // Skip KNN matrix since too annoying to compute
+
+    printf("\nKNN matrix:\n");
     int k = 2;
     int knn_graph[lines][lines];
     construct_knn_matrix((double *) points, lines, dim, k,(int *) knn_graph);
 
-
+    printf("\nUnnormalized Laplacian:\n");
     // compute unnormalized laplacian
-    double* laplacian = (double *)malloc(lines * lines * sizeof(double));
-    construct_unnormalized_laplacian(fully_connected, laplacian, lines);
+    double laplacian[lines][lines];
+    construct_unnormalized_laplacian((double *) fully_connected, lines, (double *) laplacian);
+
+    printf("\nRW Normalized Laplacian\n");
+    // compute normalized rw laplacian
+    double l_rw[lines][lines];
+    construct_normalized_laplacian_rw_matrix((double *) fully_connected, lines, (double *) l_rw);
+
+    printf("\nSymmetric Normalized Laplacian\n");
+    // compute normalized rw laplacian
+    double l_sym[lines][lines];
+    construct_normalized_laplacian_sym_matrix((double *) fully_connected, lines, (double *) l_sym);
     return 0;
 }
