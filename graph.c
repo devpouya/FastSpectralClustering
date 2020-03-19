@@ -6,7 +6,7 @@
 
 #define EPS 2
 
-double *TheArray;
+static double *TheArray;
 static void repeat_str(const char *str, int times, char *ret) {
     int len = strlen(str);
     printf("%d\n", len);
