@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <math.h>
 #include <string.h>
-#include <mkl.h>
+// #include <mkl.h>
+#include <lapacke.h>
 
 // #include "mkl_lapacke.h"
 
@@ -155,12 +156,12 @@ static void construct_knn_matrix(double *points, int lines, int dim, int k, int 
 
 /* Auxiliary routine: printing a matrix */
 /* copied from intel lapack example: https://software.intel.com/sites/products/documentation/doclib/mkl_sa/11/mkl_lapack_examples/lapacke_cgeev_row.c.htm */
-void print_matrix( char* desc, MKL_INT m, MKL_INT n, MKL_Complex8* a, MKL_INT lda ) {
-        MKL_INT i, j;
+void print_matrix( char* desc, int m, int n, double* a, int lda ) {
+        int i, j;
         printf( "\n %s\n", desc );
         for( i = 0; i < m; i++ ) {
                 for( j = 0; j < n; j++ )
-                        printf( " (%6.2f,%6.2f)", a[i*lda+j].real, a[i*lda+j].imag );
+                        printf( " (%6.2f)", a[i*lda+j]);
                 printf( "\n" );
         }
 }
@@ -229,11 +230,17 @@ int main(int argc, char *argv[]) {
     double laplacian[lines][lines];
     construct_unnormalized_laplacian((double *) fully_connected, lines, (double *) laplacian);
     //compute the eigendecomposition and take the first k eigenvectors.
-    MKL_INT n = dim, lda = dim, ldvl = dim, ldvr = dim, info;
+    int n = lines, lda = lines, ldvl = lines, ldvr = lines, info;
     /* Local arrays */
-    MKL_DOUBLE w[dim], vl[dim*dim], vr[dim*dim];
+    double wr[lines], wi[lines], vl[lines*lines], vr[lines*lines];
 
-    info = LAPACKE_cgeev(LAPACK_ROW_MAJOR, 'N', 'V', n, laplacian, lda, w, vl, ldvl, vr, ldvr);
+    for (int i = 0; i < lines; ++i) {
+        for (int j = 0; j < lines; j++) {
+            laplacian[i][j] = (i == j);
+        }
+    }
+
+    info = LAPACKE_dgeev(LAPACK_ROW_MAJOR, 'N', 'V', n, (double *) laplacian, lda, wr, wi, vl, ldvl, vr, ldvr);
     /* Check for convergence */
     if( info > 0 ) {
             printf( "The algorithm failed to compute eigenvalues.\n" );
