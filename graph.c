@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
     double laplacian[lines][lines];
     construct_unnormalized_laplacian((double *) fully_connected, lines, (double *) laplacian);
     //compute the eigendecomposition and take the first k eigenvectors.
-    int n = lines, lda = lines, ldvl = lines, ldvr = lines, info;
+    int n = lines, lda = lines, ldb = lines, ldvl = lines, ldvr = lines, info;
     /* Local arrays */
     double wr[lines], wi[lines], vl[lines*lines], vr[lines*lines];
 
@@ -246,7 +246,30 @@ int main(int argc, char *argv[]) {
             printf( "The algorithm failed to compute eigenvalues.\n" );
             exit( 1 );
     }
+    
     /* Print right eigenvectors */
+    print_matrix( "Right eigenvectors", n, n, vr, ldvr );
+
+    double degrees_vector[n];
+    calculate_diagonal_degree_matrix((double *) fully_connected, n, degrees_vector);
+    
+    double degrees[n][n];
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            degrees[i][j] = (i == j) ? /*degrees_vector[i]*/1 : 0;
+        }
+    }
+    
+    double alphai[lines], alphar[lines], beta[lines];
+
+
+
+    info = LAPACKE_dggev(LAPACK_ROW_MAJOR, 'N', 'V',
+                        n, (double *) laplacian, lda, (double *) degrees,
+                        ldb, alphar, alphai,
+                        beta, vl, ldvl, vr,
+                        ldvr);
+
     print_matrix( "Right eigenvectors", n, n, vr, ldvr );
 
     printf("\nRW Normalized Laplacian\n");
