@@ -14,7 +14,7 @@ CFLAGS := -O0
 endif
 
 all: graph.c
-	$(CC) $(CFLAGS) $(CINCLUDES) $(CLIBS) -o graph graph.c
+	$(CC) $(CFLAGS) -o graph graph.c $(CINCLUDES) $(CLIBS) 
 
 .PHONY clean:
 	rm -rf graph
