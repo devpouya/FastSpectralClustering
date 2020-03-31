@@ -6,8 +6,8 @@
 #include <time.h>
 
 #define EPS 2
-#define DBL_MIN -10000
-#define DBL_MAX 10000
+#define DBL_MIN -100000
+#define DBL_MAX 100000
 
 static void repeat_str(const char *str, int times, char *ret) {
     int len = strlen(str);
@@ -185,7 +185,7 @@ static double init_means(double *points, int lines, int k, double *ret) {
 }
 
 static double compute_mean_of_one_dimension(double *points, int size, int k, int dimension) {
-    int sum = 0;
+    double sum = 0;
     for (int i = 0; i < size; i++) { // for all points
             sum += points[i*k + dimension]; // .. select one dimension
     }
@@ -263,7 +263,7 @@ static void map_to_nearest_cluster(double *points, int lines, int k, double *mea
  */
 static void K_means(double *points, int lines, int k, int max_iter, struct cluster *ret) {
     int i = 0;
-    double means[k*k];
+    double means[k];
     while (i < max_iter) {
         (i == 0) ? init_means(&points[0], lines, k, means) : reset_means(ret, k, means);
         // post condition: means is up-to-date
