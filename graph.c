@@ -177,7 +177,7 @@ struct cluster {
     double *points;
 };
 
-static double init_means(double *points, int lines, int k, double *ret) {
+static void init_means(double *points, int lines, int k, double *ret) {
     // find min/max bounds for each dimension
     int bounds[k*2];
     for (int i = 0; i < 2*k; i++) {  // row represents dimension
@@ -210,7 +210,7 @@ static double compute_mean_of_one_dimension(double *points, int size, int k, int
     return (size > 0) ? (sum/size) : 0;
 }
 
-static double update_means(struct cluster *clusters, int k, double *ret) {
+static void update_means(struct cluster *clusters, int k, double *ret) {
     for (int i = 0; i < k; i++) { // re-compute the means (ret) for each cluster
         printf("Center %d: ( ", i);
         for (int j = 0; j < k; j++) {
@@ -393,12 +393,6 @@ int main(int argc, char *argv[]) {
     /* Local arrays */
     double wr[lines], wi[lines], vl[lines*lines], vr[lines*lines];
 
-    for (int i = 0; i < lines; ++i) {
-        for (int j = 0; j < lines; j++) {
-            laplacian[i][j] = (i == j);
-        }
-    }
-
     info = LAPACKE_dgeev(LAPACK_ROW_MAJOR, 'N', 'V', n, (double *) laplacian, lda, wr, wi, vl, ldvl, vr, ldvr);
     /* Check for convergence */
     if( info > 0 ) {
@@ -406,28 +400,33 @@ int main(int argc, char *argv[]) {
             exit( 1 );
     }
     
+    printf("Eigenvalues:\n");
+    for (int i = 0; i < n; i++) {
+        printf("(%lf, %lf) ", wr[i], wi[i]);
+    }
+    printf("\n");
     /* Print right eigenvectors */
     print_matrix( "Right eigenvectors", n, n, vr, ldvr );
 
-    double degrees_vector[n];
-    calculate_diagonal_degree_matrix((double *) fully_connected, n, degrees_vector);
+    // double degrees_vector[n];
+    // calculate_diagonal_degree_matrix((double *) fully_connected, n, degrees_vector);
     
-    double degrees[n][n];
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            degrees[i][j] = (i == j) ? /*degrees_vector[i]*/1 : 0;
-        }
-    }
+    // double degrees[n][n];
+    // for (int i = 0; i < n; i++) {
+    //     for (int j = 0; j < n; j++) {
+    //         degrees[i][j] = (i == j) ? /*degrees_vector[i]*/1 : 0;
+    //     }
+    // }
     
-    double alphai[lines], alphar[lines], beta[lines];
+    // double alphai[lines], alphar[lines], beta[lines];
 
 
 
-    info = LAPACKE_dggev(LAPACK_ROW_MAJOR, 'N', 'V',
-                        n, (double *) laplacian, lda, (double *) degrees,
-                        ldb, alphar, alphai,
-                        beta, vl, ldvl, vr,
-                        ldvr);
+    // info = LAPACKE_dggev(LAPACK_ROW_MAJOR, 'N', 'V',
+    //                     n, (double *) laplacian, lda, (double *) degrees,
+    //                     ldb, alphar, alphai,
+    //                     beta, vl, ldvl, vr,
+    //                     ldvr);
 
     print_matrix( "Right eigenvectors", n, n, vr, ldvr );
 
