@@ -248,10 +248,10 @@ static void map_to_nearest_cluster(double *points, int lines, int k, double *mea
 
 }
 
-static int early_stopping(double *means, struct cluster *clusters, int k) {
-    for (int i = 0; i < k; i++) {
-        for (int j = 0; j < k; j++) {
-            if (means[i*k+j] != clusters[i].mean[j]) {
+static int early_stopping(double *means, struct cluster *clusters, double eps, int k) {
+    for (int i = 0; i < k; i++) { // clusters
+        for (int j = 0; j < k; j++) { // dimension of the center
+            if (means[i*k+j] > clusters[i].mean[j] + eps && means[i*k+j] < clusters[i].mean[j] - eps) {
                 return 0;
             }
         }
@@ -276,14 +276,14 @@ static int early_stopping(double *means, struct cluster *clusters, int k) {
  *   TODO: dynamically allocate and change of size of cluster.points
  *
  */
-static void K_means(double *points, int lines, int k, int max_iter, struct cluster *ret) {
+static void K_means(double *points, int lines, int k, int max_iter, double eps, struct cluster *ret) {
     int i = 0;
     double means[k * k];
     while (i < max_iter) {
         (i == 0) ? init_means(&points[0], lines, k, means) : update_means(ret, k, means);
         // check if the means are stable, if yes => stop
         if (i > 0) {
-            if (early_stopping(means, ret, k)) {
+            if (early_stopping(means, ret, eps, k)) {
                 break;
             }
         }
