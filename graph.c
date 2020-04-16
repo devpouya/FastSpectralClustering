@@ -280,11 +280,12 @@ void print_matrix( char* desc, int m, int n, double* a, int lda ) {
 /*---- K-Means util methods ---------------------------------------------- */
 
 struct cluster {
-    double *mean;
-    int size;
-    double *points;
+    double *mean; // center of the cluster
+    int size; // size of cluster points
+    int *indices; // stores the indices of the points of U (stored row-ise)
 };
-static void init_means(double *U, int lines, int k, double *ret) {
+
+static void init_means(double *U, int n, int k, double *ret) {
     // find min/max bounds for each dimension
     // k is the number of columns
     double bounds[k][2];
@@ -292,10 +293,10 @@ static void init_means(double *U, int lines, int k, double *ret) {
         bounds[i][0] = DBL_MAX;
         bounds[i][1] = DBL_MIN;
     } // Right you need to set to opposite value !!
-    for (int i = 0; i < lines; i++) { // each line is a point
+    for (int i = 0; i < n; i++) { // each line is a point
         for (int j = 0; j < k; j++) {
-            bounds[j][0] = (U[i*k + j] < bounds[j][0]) ? U[i*k + j] : bounds[j][0];
-            bounds[j][1] = (U[i*k + j] > bounds[j][1]) ? U[i*k + j] : bounds[j][1];
+            bounds[j][0] = (U[i*n + j] < bounds[j][0]) ? U[i*n + j] : bounds[j][0];
+            bounds[j][1] = (U[i*n + j] > bounds[j][1]) ? U[i*n + j] : bounds[j][1];
         }
     }
     srand(time(0));
@@ -315,20 +316,20 @@ static void init_means(double *U, int lines, int k, double *ret) {
 
 // mean of each column
 // dimension is the column index along which the mean is computed
-static double compute_mean_of_one_dimension(double *points, int size, int k, int dimension) {
+static double compute_mean_of_one_dimension(double *U, int *indices, int size, int n, int dimension) {
     double sum = 0;
     for (int i = 0; i < size; i++) { // for all points
-        sum += points[i*k + dimension]; // .. select one dimension
+        sum += U[indices[i]*n+dimension]; // .. select one dimension
     }
     return (size > 0) ? (sum/size) : 0;
 }
 
-static void update_means(struct cluster *clusters, int k, double *ret) {
-    for (int i = 0; i < k; i++) { // re-compute the means (ret) for each cluster
+static void update_means(double *U, struct cluster *clusters, int k, int n, double *ret) {
+    for (int i = 0; i < k; i++) { // iterate over cluster i
        printf("Center %d: ( ", i);
-        for (int j = 0; j < k; j++) {
+        for (int j = 0; j < k; j++) { // j is the dimension here
             ret[i*k + j] = (clusters[j].size > 0) ?
-                           compute_mean_of_one_dimension(clusters[i].points, clusters[i].size, k, j) : clusters[i].mean[j];
+                           compute_mean_of_one_dimension(U, clusters[i].indices, clusters[i].size, n, j) : clusters[i].mean[j];
            printf("%lf ", ret[i*k + j]);
         }
        printf(")\n");
@@ -349,30 +350,28 @@ static int find_nearest_cluster_index(double *point, double *means, int k) {
     return index;
 }
 
-static void map_to_nearest_cluster(double *points, int lines, int k, double *means, struct cluster *ret) {
+static void map_to_nearest_cluster(double *U, int n, int k, double *means, struct cluster *ret) {
     // potentially all points can be in the same cluster
     // find nearest cluster for each point = line
-    int index_nn[lines];
-    for (int j = 0; j < lines; j++) {
-        index_nn[j] = find_nearest_cluster_index(&points[j * k], means, k); // find nearest mean for this point = line
+    int index_nn[n];
+    for (int j = 0; j < n; j++) {
+        index_nn[j] = find_nearest_cluster_index(&U[j * n], means, k); // find nearest mean for this point = line
     }
     for (int i = 0; i < k; i++) { // construct cluster one after another
-        double tmp[lines*k];
+        int indices[n];
         int cluster_size = 0; // keep tract of cluster size in # of points
-        for (int j = 0; j < lines; j++) {
+        for (int j = 0; j < n; j++) {
             if (index_nn[j] == i) {
-                for (int e = 0; e < k; e++) {
-                    tmp[cluster_size * k + e] = points[j * k + e];
-                }
+                indices[cluster_size] = j; // store index of U => j
                 cluster_size++;
             }
         } // done with point j
 
-        for (int j = 0; j < cluster_size*k; j++) { // copy data
-            ret[i].points[j] = tmp[j];
-        }
         for (int j = 0; j < k; j++) {
             ret[i].mean[j] = means[i*k+j];
+        }
+        for (int j = 0; j < cluster_size; j++) {
+            ret[i].indices[j] = indices[j];
         }
         ret[i].size = cluster_size;
     } // done with cluster i
@@ -380,10 +379,10 @@ static void map_to_nearest_cluster(double *points, int lines, int k, double *mea
 }
 
 
-static int early_stopping(double *means, struct cluster *clusters, int k) {
-    for (int i = 0; i < k; i++) {
-        for (int j = 0; j < k; j++) {
-            if (means[i*k+j] != clusters[i].mean[j]) {
+static int early_stopping(double *means, struct cluster *clusters, double error, int k) {
+    for (int i = 0; i < k; i++) { // iterate over cluster
+        for (int j = 0; j < k; j++) { // iterate over each dimension of the mean
+            if (abs(means[i*k+j] - clusters[i].mean[j]) > error) {
                 return 0;
             }
         }
@@ -408,21 +407,21 @@ static int early_stopping(double *means, struct cluster *clusters, int k) {
  *   TODO: dynamically allocate and change of size of cluster.points
  *
  */
-static void K_means(double *U, int lines, int k, int max_iter, struct cluster *ret) {
-    // k is the number of columns in U matrix  U is a n by k matrix
+static void K_means(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
+    // k is the number of columns in U matrix  U is a n by k matrix (here only!)
     int i = 0;
     // each row represents a cluster each column a dimension
     double means[k*k];
     while (i < max_iter) {
-        (i == 0) ? init_means(&U[0], lines, k, means) : update_means(ret, k,means);
+        (i == 0) ? init_means(&U[0], n, k, means) : update_means(U, ret, k, n, means);
         // check if the means are stable, if yes => stop
         if (i > 0) {
-            //if (early_stopping(means, ret, k)) {
-            //    break;
-            //}
+            if (early_stopping(means, ret, stopping_error, k)) {
+                break;
+            }
         }
         // post condition: means is up-to-date
-        map_to_nearest_cluster(U, lines, k, means, ret);
+        map_to_nearest_cluster(U, n, k, means, ret);
         i++;
     }
     // print clusters: Cluster i : (1,2) (4,5) etc.
@@ -430,8 +429,8 @@ static void K_means(double *U, int lines, int k, int max_iter, struct cluster *r
         printf("Cluster %d: ", j);
         for(int e = 0; e < ret[j].size; e++) {
             printf("( ");
-            for (int f = 0; f < k; f++) {
-                printf("%lf ", ret[j].points[e * k + f]);
+            for (int f = 0; f < n; f++) {
+                printf("%lf ", U[ret[j].indices[e]*n+f]);
             }
             printf(")  ");
         }
@@ -543,7 +542,7 @@ int main(int argc, char *argv[]) {
     // Skip KNN matrix since too annoying to compute
 
     printf("\nKNN matrix:\n");
-    int k = 2;
+    int k = 3;
     int knn_graph[lines][lines];
     construct_knn_matrix((double *) points, lines, dim, k,(int *) knn_graph);
 
@@ -613,24 +612,16 @@ int main(int argc, char *argv[]) {
     // U (8x2) is the data in points.txt for now => k = 2
     // number of cluster <=> # columns of U
 
-
-    // Lazy mans code
-    double U[lines][k];
-    for(int i = 0; i < n; i++) {
-        for(int j = 0; j < k; j++) {
-            U[i][j] = laplacian[i][j];
-        }
-    }
-
+    // init datastructure
     struct cluster clusters[k];
     for (int i = 0; i < k; i++) {
-        clusters[i].mean = (double *) malloc(k * sizeof(double));
+        clusters[i].mean = (double *) malloc(k * sizeof(double)); // k is the "dimension" here
         clusters[i].size = 0;
-        clusters[i].points = (double *) malloc(lines * k * sizeof(double));
+        clusters[i].indices = (int *) malloc(lines * sizeof(int)); // at most
     }
     // try with different max_iter
     // K_means((double *) points, lines, k, 10, clusters);
 
-    K_means((double *) U, lines, k, 10000, clusters);
+    K_means((double *) laplacian, lines, k, 10, 0.0001, clusters);
     return 0;
 }
