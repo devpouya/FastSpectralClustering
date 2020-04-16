@@ -205,7 +205,7 @@ static void init_means(double *points, int lines, int k, double *ret) {
 static double compute_mean_of_one_dimension(double *points, int size, int k, int dimension) {
     double sum = 0;
     for (int i = 0; i < size; i++) { // for all points
-        sum += points[i*k + dimension]; // .. select one dimension
+        sum += points[i*size + dimension]; // .. select one dimension
     }
     return (size > 0) ? (sum/size) : 0;
 }
