@@ -274,7 +274,7 @@ static void map_to_nearest_cluster(double *U, int n, int k, double *means, struc
 static int early_stopping(double *means, struct cluster *clusters, double error, int k) {
     for (int i = 0; i < k; i++) { // iterate over cluster
         for (int j = 0; j < k; j++) { // iterate over each dimension of the mean
-            if (abs(means[i*k+j] - clusters[i].mean[j]) > error) {
+            if (fabs(means[i*k+j] - clusters[i].mean[j]) > error) {
                 return 0;
             }
         }
