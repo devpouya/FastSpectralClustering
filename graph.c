@@ -354,6 +354,7 @@ int main(int argc, char *argv[]) {
 
     printf("loading dataset: %s\n", argv[1]);
     printf("number of clusters: %d\n", atoi(argv[2]));
+    printf("output path: %s\n", argv[3]);
 
     struct file f = load_file(argv[1]);
     int dim = f.dimension;
@@ -434,9 +435,8 @@ int main(int argc, char *argv[]) {
     K_means((double *) laplacian, lines, k, 100, 0.0001, clusters);
     myInt64 runtime = stop_tsc(start);
 
-    char output_dir[100]= "./output_dir/result_";
     print_cluster_indices(clusters, k);
-    write_clustering_result(strcat(output_dir, argv[1]), clusters, k);
+    write_clustering_result(argv[3], clusters, k);
 
     return 0;
 }
