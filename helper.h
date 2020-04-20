@@ -26,14 +26,16 @@ struct file load_file(char *file) {
     rewind(fp);
     int dim;
     fscanf(fp, "%d\n", &dim);
-    char fmt[4*dim + 1];
-    repeat_str("%lf ", dim, fmt);
-    fmt[4*dim-1] = '\n';
-    fmt[4*dim] = '\0';
-    printf("Dimension = %d, fmt = %s", dim, fmt);
+    // char fmt[4*dim + 1];
+    // repeat_str("%lf ", dim, fmt);
+    // fmt[4*dim-1] = '\n';
+    // fmt[4*dim] = '\0';
+    printf("Dimension = %d \n" fmt);
     double points[lines][dim];
     for (int i = 0; i < lines; ++i) {
-        fscanf(fp, fmt, &points[i][0], &points[i][1], &points[i][2]);
+        for (int j = 0; j < dim; ++j){
+            fscanf(fp, "%lf", &points[i][j])
+        }
     }
     struct file f;
     f.points = *points;
