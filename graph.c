@@ -9,6 +9,7 @@
 #include <lapacke.h>
 #include "instrumentation.h"
 #include "tsc_x86.h"
+#include "helper.h"
 
 // #include "mkl_lapacke.h"
 
@@ -17,14 +18,6 @@
 #define DBL_MIN -100000
 #define DBL_MAX 100000
 
-static void repeat_str(const char *str, int times, char *ret) {
-    int len = strlen(str);
-    printf("%d\n", len);
-    for (int i = 0; i < times; i++) {
-        strncpy(ret + i*len, str, len);
-    }
-    ret[len*times] = '\0';
-}
 
 static double *TheArray;
 static int cmp(const void *a, const void *b){
@@ -171,113 +164,7 @@ static void construct_knn_matrix(double *points, int lines, int dim, int k, int 
         printf("\n");
     }
 }
-/*---- K-Means util methods ---------------------------------------------- */
 
-struct cluster {
-    double *mean;
-    int size;
-    double *points;
-};
-
-static double init_means(double *points, int lines, int k, double *ret) {
-    // find min/max bounds for each dimension
-    int bounds[k*2];
-    for (int i = 0; i < 2*k; i++) {  // row represents dimension
-        bounds[i] = (i%2==0) ? DBL_MAX : DBL_MIN;  // first column represents min bound, second column max bound
-    } // Right you need to set to opposite value !!
-    for (int i = 0; i < lines; i++) { // each line is a point
-        for (int j = 0; j < k; j++) {
-            bounds[j*2] = (points[i*k + j] < bounds[j*2]) ? points[i*k + j] : bounds[j*2];
-            bounds[j*2+1] = (points[i*k + j] > bounds[j*2+1]) ? points[i*k + j] : bounds[j*2+1];
-        }
-    }
-    // generate k random means stores row-wise
-    for (int i = 0; i < k; i++) {
-        srand((i+1)*100*time(0));
-        printf("Center %d: ( ", i);
-        for (int j = 0; j < k; j++) {
-
-            ret[i*k + j] = (rand() % (bounds[j * 2 + 1] - bounds[j * 2] + 1)) + bounds[j * 2];
-            printf("%lf ", ret[i*k + j]);
-        }
-        printf(")\n");
-    }
-}
-
-static double compute_mean_of_one_dimension(double *points, int size, int k, int dimension) {
-    double sum = 0;
-    for (int i = 0; i < size; i++) { // for all points
-            sum += points[i*k + dimension]; // .. select one dimension
-    }
-    return (size > 0) ? (sum/size) : 0;
-}
-
-static double update_means(struct cluster *clusters, int k, double *ret) {
-    for (int i = 0; i < k; i++) { // re-compute the means (ret) for each cluster
-        printf("Center %d: ( ", i);
-        for (int j = 0; j < k; j++) {
-            ret[i*k + j] = (clusters[j].size > 0) ?
-                    compute_mean_of_one_dimension(clusters[i].points, clusters[i].size, k, j) : clusters[i].mean[j];
-            printf("%lf ", ret[i*k + j]);
-        }
-        printf(")\n");
-    }
-}
-
-static int find_nearest_cluster_index(double *point, double *means, int k) {
-    // use l2_norm
-    double gap = l2_norm(point, &means[0], k);
-    int index = 0;
-    for (int i = 1; i < k; i++) { // for every cluster check abs distance to point and take the minimal
-        double norm = l2_norm(point, &means[i*k], k);
-        if(norm < gap) {
-            gap = norm;
-            index = i;
-        }
-    }
-    return index;
-}
-
-static void map_to_nearest_cluster(double *points, int lines, int k, double *means, struct cluster *ret) {
-   // potentially all points can be in the same cluster
-    // find nearest cluster for each point = line
-    int index_nn[lines];
-    for (int j = 0; j < lines; j++) {
-       index_nn[j] = find_nearest_cluster_index(&points[j * k], means, k); // find nearest mean for this point = line
-    }
-    for (int i = 0; i < k; i++) { // construct cluster one after another
-        double tmp[lines*k];
-        int cluster_size = 0; // keep tract of cluster size in # of points
-        for (int j = 0; j < lines; j++) {
-            if (index_nn[j] == i) {
-                for (int e = 0; e < k; e++) {
-                    tmp[cluster_size * k + e] = points[j * k + e];
-                }
-                cluster_size++;
-            }
-        } // done with point j
-
-        for (int j = 0; j < cluster_size*k; j++) { // copy data
-            ret[i].points[j] = tmp[j];
-        }
-        for (int j = 0; j < k; j++) {
-            ret[i].mean[j] = means[i*k+j];
-        }
-        ret[i].size = cluster_size;
-    } // done with cluster i
-
-}
-
-static int early_stopping(double *means, struct cluster *clusters, double eps, int k) {
-    for (int i = 0; i < k; i++) { // clusters
-        for (int j = 0; j < k; j++) { // dimension of the center
-            if (means[i*k+j] > clusters[i].mean[j] + eps && means[i*k+j] < clusters[i].mean[j] - eps) {
-                return 0;
-            }
-        }
-    }
-    return 1;
-}
 
 /* Auxiliary routine: printing a matrix */
 /* copied from intel lapack example: https://software.intel.com/sites/products/documentation/doclib/mkl_sa/11/mkl_lapack_examples/lapacke_cgeev_row.c.htm */
@@ -392,7 +279,6 @@ static void map_to_nearest_cluster(double *U, int n, int k, double *means, struc
 
 }
 
-
 static int early_stopping(double *means, struct cluster *clusters, double error, int k) {
     for (int i = 0; i < k; i++) { // iterate over cluster
         for (int j = 0; j < k; j++) { // iterate over each dimension of the mean
@@ -454,52 +340,10 @@ static void K_means(double *U, int n, int k, int max_iter, double stopping_error
 
 /*------------------------------------------------------------------------ */
 
-/*
- * K-Means Algorithm
- *
- *   1. Choose the number of clusters(K) and obtain the data points: Done
- *   2. Place the centroids c_1, c_2, ..... c_k randomly in [min..max]: Done
- *   3. Repeat steps 4 and 5 until convergence or until the end of a fixed number of iterations
- *   4. for each data point x_i:
- *          - find the nearest centroid(c_1, c_2 .. c_k)
- *          - assign the point to that cluster
- *   5. for each cluster j = 1..k
- *          - new centroid = mean of all points assigned to that cluster
- *   6. End
- *
- *   TODO: dynamically allocate and change of size of cluster.points
- *
- */
-static void K_means(double *points, int lines, int k, int max_iter, double eps, struct cluster *ret) {
-    int i = 0;
-    double means[k * k];
-    while (i < max_iter) {
-        (i == 0) ? init_means(&points[0], lines, k, means) : update_means(ret, k, means);
-        // check if the means are stable, if yes => stop
-        if (i > 0) {
-            if (early_stopping(means, ret, eps, k)) {
-                break;
-            }
-        }
-        // post condition: means is up-to-date
-        map_to_nearest_cluster(points, lines, k, means, ret);
-        i++;
-    }
-    // print clusters: Cluster i : (1,2) (4,5) etc.
-    for (int j = 0; j < k; j++) {
-        printf("Cluster %d: ", j);
-        for(int e = 0; e < ret[j].size; e++) {
-            printf("( ");
-            for (int f = 0; f < k; f++) {
-                printf("%lf ", ret[j].points[e * k + f]);
-            }
-            printf(")  ");
-        }
-        printf("\n");
-    }
-}
 
-/*------------------------------------------------------------------------ */
+static struct cluster SpectralClustering() {
+
+}
 
 /*
  * The file that the program reads from is stored in the following format, assuming that
@@ -510,38 +354,12 @@ static void K_means(double *points, int lines, int k, int max_iter, double eps, 
  *                           ........................
  * <Dim. 0 of point n-1> <Dim. 1 of point n-1> <Dim. 2 of point n-1> ... <Dim. d of point n-1>\n
  */
-
 int main(int argc, char *argv[]) {
 
-    FILE *fp;
-    fp = fopen("points3d.txt", "r");
-
-    // Count the number of lines in the file
-    int lines = 0;
-    while (EOF != (fscanf(fp, "%*[^\n]"), fscanf(fp,"%*c")))
-        ++lines;
-    --lines;  // Subtract one because it starts with the dimension
-    printf("Read %d lines\n", lines);
-
-    // Find the dimension
-    rewind(fp);
-    int dim;
-    fscanf(fp, "%d\n", &dim);
-
-    // Read the points
-    char fmt[4*dim + 1];
-    repeat_str("%lf ", dim, fmt);
-    fmt[4*dim-1] = '\n';
-    fmt[4*dim] = '\0';
-    printf("Dimension = %d, fmt = %s", dim, fmt);
-    double points[lines][dim];
-    for (int i = 0; i < lines; ++i) {
-        fscanf(fp, fmt, &points[i][0], &points[i][1], &points[i][2]);
-    }
-
-    // for (int i = 0; i < lines; ++i) {
-    //     printf(fmt, points[i][0], points[i][1]);
-    // }
+    struct file f = load_file("points3d.txt");
+    int dim = f.dimension;
+    int lines = f.lines;
+    double *points = f.points;
 
     // Construct the matrices and print them
     // fully-connected matrix
@@ -589,29 +407,6 @@ int main(int argc, char *argv[]) {
 
     //print_matrix( "Right eigenvectors", n, n, vr, ldvr );
     print_matrix( "Eigenvectors (stored columnwise)", n, n, (double *) laplacian, lda );
-
-    /* sort the eigenvectors and print*/
-    // double degrees_vector[n];
-    // calculate_diagonal_degree_matrix((double *) fully_connected, n, degrees_vector);
-
-    // double degrees[n][n];
-    // for (int i = 0; i < n; i++) {
-    //     for (int j = 0; j < n; j++) {
-    //         degrees[i][j] = (i == j) ? /*degrees_vector[i]*/1 : 0;
-    //     }
-    // }
-
-    // double alphai[lines], alphar[lines], beta[lines];
-
-
-
-    // info = LAPACKE_dggev(LAPACK_ROW_MAJOR, 'N', 'V',
-    //                     n, (double *) laplacian, lda, (double *) degrees,
-    //                     ldb, alphar, alphai,
-    //                     beta, vl, ldvl, vr,
-    //                     ldvr);
-
-    //print_matrix( "Right eigenvectors", n, n, vr, ldvr );
 
     printf("\nRW Normalized Laplacian\n");
     // compute normalized rw laplacian
