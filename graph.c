@@ -431,6 +431,7 @@ int main(int argc, char *argv[]) {
     myInt64 runtime = stop_tsc(start);
 
     print_cluster_indices(clusters, k);
+    write_clustering_result("./output_dir/points_results.txt", clusters, k);
 
     return 0;
 }

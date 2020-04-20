@@ -32,6 +32,29 @@ void print_cluster_indices(struct cluster *clusters, int num_clusters){
     }
 }
 
+int write_clustering_result(char *file, struct cluster *clusters, int num_clusters){
+    FILE *fp;
+    fp = fopen(file, "w");
+    // write the number of cluster at the beginning of the output
+    fprintf(fp, "%d\n", num_clusters);
+
+    // write the sizes of each clusters in the second line
+    for (int i = 0; i < num_clusters; i++){
+        fprintf(fp, "%d ", clusters[i].size);
+    }
+    fprintf(fp, "\n");
+
+    //write the indices of points in each cluster, mark the end of the cluster with a new line
+    for (int i = 0; i < num_clusters; i++){
+        for (int j = 0; j < clusters[i].size; j++){
+            fprintf(fp, "%d ", clusters[i].indices[j]);
+        }
+        fprintf(fp, "\n");
+    }
+    fclose(fp);
+    return 0;
+}
+
 struct file load_file(char *file) {
     FILE *fp;
     fp = fopen(file, "r");
