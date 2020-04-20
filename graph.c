@@ -348,10 +348,14 @@ static struct cluster SpectralClustering() {
  * <Dim. 0 of point 1> <Dim. 1 of point 1> <Dim. 2 of point 1> ... <Dim. d of point 1>\n
  *                           ........................
  * <Dim. 0 of point n-1> <Dim. 1 of point n-1> <Dim. 2 of point n-1> ... <Dim. d of point n-1>\n
+ * arguments: dataset_path, number of clusters (k)
  */
 int main(int argc, char *argv[]) {
 
-    struct file f = load_file("points.txt");
+    printf("loading dataset: %s\n", argv[1]);
+    printf("number of clusters: %d\n", atoi(argv[2]));
+
+    struct file f = load_file(argv[1]);
     int dim = f.dimension;
     int lines = f.lines;
     double *points = f.points;
@@ -369,7 +373,7 @@ int main(int argc, char *argv[]) {
     // Skip KNN matrix since too annoying to compute
 
     printf("\nKNN matrix:\n");
-    int k = 2;
+    int k = atoi(argv[2]);
     int knn_graph[lines][lines];
     construct_knn_matrix((double *) points, lines, dim, k,(int *) knn_graph);
 
@@ -430,8 +434,9 @@ int main(int argc, char *argv[]) {
     K_means((double *) laplacian, lines, k, 100, 0.0001, clusters);
     myInt64 runtime = stop_tsc(start);
 
+    char output_dir[100]= "./output_dir/result_";
     print_cluster_indices(clusters, k);
-    write_clustering_result("./output_dir/points_results.txt", clusters, k);
+    write_clustering_result(strcat(output_dir, argv[1]), clusters, k);
 
     return 0;
 }
