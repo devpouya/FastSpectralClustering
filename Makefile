@@ -8,8 +8,8 @@ CFLAGS := -O0
 endif
 ifeq ($(UNAME), Darwin)
 CC := clang
-CINCLUDES := -I/usr/local/Cellar/openblas/0.3.6_1/include
-CLIBS := -L/usr/local/Cellar/openblas/0.3.6_1/lib -lopenblas
+CINCLUDES := -I/usr/local/Cellar/openblas/0.3.9/include
+CLIBS := -L/usr/local/Cellar/openblas/0.3.9/lib -lopenblas
 CFLAGS := -O0
 endif
 

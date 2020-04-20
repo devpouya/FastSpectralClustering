@@ -7,6 +7,8 @@
 
 // #include <mkl.h>
 #include <lapacke.h>
+#include "instrumentation.h"
+#include "tsc_x86.h"
 
 // #include "mkl_lapacke.h"
 
@@ -32,6 +34,9 @@ static int cmp(const void *a, const void *b){
 }
 
 static double l2_norm(double *u, double *v, int dim) {
+    NUM_ADDS(3*dim);
+    NUM_MULS(dim);
+    NUM_SQRTS(1);
     double norm = 0;
     for (int i = 0; i < dim; i++) {
         norm += (u[i] - v[i]) * (u[i] - v[i]);
@@ -60,6 +65,7 @@ static void construct_eps_neighborhood_matrix(double *points, int lines, int dim
 }
 
 static void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n, double *ret){
+    NUM_ADDS(n*n);
     for (int i = 0; i < n; i++) {
         double d_i = 0;
         for (int j = 0; j < n;j++) {
@@ -74,11 +80,13 @@ static void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n
 static void construct_normalized_laplacian_sym_matrix(double *weighted_adj_matrix, int num_points, double *ret){
     double sqrt_inv_degree_matrix[num_points];  // '1-d' array
     calculate_diagonal_degree_matrix(weighted_adj_matrix, num_points, sqrt_inv_degree_matrix); //load degree_matrix temporarily in sqrt_inv_degree_matrix
+    NUM_SQRTS(num_points);
     for (int i =0; i < num_points; i++){
         sqrt_inv_degree_matrix[i] = 1.0/sqrt(sqrt_inv_degree_matrix[i]);
     }
     // compute D^(-1/2) W,  not sure if this code is optimal yet, how to avoid "jumping row"?  process one row each time enccourage spatial locality
     // but with this trick we avoid *0.0
+    NUM_MULS(num_points * num_points);
     for (int i = 0; i < num_points; i++){
         for(int j = 0; j < num_points; j++){
             ret[i*num_points + j] = sqrt_inv_degree_matrix[i] * weighted_adj_matrix[i*num_points + j];
@@ -88,8 +96,10 @@ static void construct_normalized_laplacian_sym_matrix(double *weighted_adj_matri
     for (int i = 0; i < num_points; i++) {
         for (int j = 0; j < num_points; j++) {
             if (i == j) {
+                NUM_ADDS(1); NUM_MULS(1);
                 ret[i*num_points + j] = 1.0 - ret[i*num_points + j] * sqrt_inv_degree_matrix[j];
             } else {
+                NUM_MULS(1);
                 ret[i*num_points + j] = -ret[i*num_points + j] * sqrt_inv_degree_matrix[j];
             }
             printf("%lf ", ret[i*num_points + j]);
@@ -101,12 +111,15 @@ static void construct_normalized_laplacian_sym_matrix(double *weighted_adj_matri
 static void construct_normalized_laplacian_rw_matrix(double *weighted_adj_matrix, int num_points, double *ret) {
     double inv_degree_matrix[num_points];
     calculate_diagonal_degree_matrix(weighted_adj_matrix, num_points, inv_degree_matrix); //load degree_matrix temporarily in sqrt_inv_degree_matrix
+    NUM_SQRTS(num_points);
     for (int i = 0; i < num_points; i++){
         inv_degree_matrix[i] = 1.0/inv_degree_matrix[i];
     }
     for (int i = 0; i < num_points; i++) {
         for (int j = 0; j < num_points; j++) {
+            NUM_MULS(1);
             if (i == j) {
+                NUM_ADDS(1);
                 ret[i*num_points + j] = 1.0 - inv_degree_matrix[i] * weighted_adj_matrix[i*num_points + j];
             } else {
                 ret[i*num_points + j] = -inv_degree_matrix[i] * weighted_adj_matrix[i*num_points + j];
@@ -121,6 +134,7 @@ static void construct_unnormalized_laplacian(double *graph, int n, double *ret) 
     // double* degrees = (double *)malloc(n * n * sizeof(double));
     double degrees[n];
     calculate_diagonal_degree_matrix(graph, n, degrees);
+    NUM_ADDS(n*n);
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             ret[i*n+j] = ((i == j) ? degrees[i] : 0) - graph[i*n+j];
@@ -382,7 +396,7 @@ static void map_to_nearest_cluster(double *U, int n, int k, double *means, struc
 static int early_stopping(double *means, struct cluster *clusters, double error, int k) {
     for (int i = 0; i < k; i++) { // iterate over cluster
         for (int j = 0; j < k; j++) { // iterate over each dimension of the mean
-            if (abs(means[i*k+j] - clusters[i].mean[j]) > error) {
+            if (fabs(means[i*k+j] - clusters[i].mean[j]) > error) {
                 return 0;
             }
         }
@@ -549,6 +563,7 @@ int main(int argc, char *argv[]) {
     printf("\nUnnormalized Laplacian:\n");
     // compute unnormalized laplacian
     double laplacian[lines][lines];
+    myInt64 start = start_tsc();
     construct_unnormalized_laplacian((double *) fully_connected, lines, (double *) laplacian);
 
     //compute the eigendecomposition and take the first k eigenvectors.
@@ -623,5 +638,6 @@ int main(int argc, char *argv[]) {
     // K_means((double *) points, lines, k, 10, clusters);
 
     K_means((double *) laplacian, lines, k, 10, 0.0001, clusters);
+    myInt64 runtime = stop_tsc(start);
     return 0;
 }
