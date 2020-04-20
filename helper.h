@@ -4,6 +4,12 @@ struct file {
     int dimension;
 };
 
+struct cluster {
+    double *mean; // center of the cluster
+    int size; // size of cluster points
+    int *indices; // stores the indices of the points of U (stored row-ise)
+};
+
 void repeat_str(const char *str, int times, char *ret) {
     int len = strlen(str);
     printf("%d\n", len);
@@ -11,6 +17,19 @@ void repeat_str(const char *str, int times, char *ret) {
         strncpy(ret + i*len, str, len);
     }
     ret[len*times] = '\0';
+}
+
+void print_cluster_indices(struct cluster *clusters, int num_clusters){
+    printf("Print clustered point indices\n");
+        for (int j = 0; j < num_clusters; j++) {
+            printf("Cluster %d: ", j);
+                        printf("( ");
+            for(int e = 0; e < clusters[j].size; e++) {
+                    printf("%d ", clusters[j].indices[e]);
+            }
+            printf(")  ");
+        printf("\n");
+    }
 }
 
 struct file load_file(char *file) {
@@ -30,11 +49,11 @@ struct file load_file(char *file) {
     // repeat_str("%lf ", dim, fmt);
     // fmt[4*dim-1] = '\n';
     // fmt[4*dim] = '\0';
-    printf("Dimension = %d \n" fmt);
+    printf("Dimension = %d \n" , dim);
     double points[lines][dim];
     for (int i = 0; i < lines; ++i) {
         for (int j = 0; j < dim; ++j){
-            fscanf(fp, "%lf", &points[i][j])
+            fscanf(fp, "%lf", &points[i][j]);
         }
     }
     struct file f;

@@ -180,11 +180,6 @@ void print_matrix( char* desc, int m, int n, double* a, int lda ) {
 
 /*---- K-Means util methods ---------------------------------------------- */
 
-struct cluster {
-    double *mean; // center of the cluster
-    int size; // size of cluster points
-    int *indices; // stores the indices of the points of U (stored row-ise)
-};
 
 static void init_means(double *U, int n, int k, double *ret) {
     // find min/max bounds for each dimension
@@ -356,7 +351,7 @@ static struct cluster SpectralClustering() {
  */
 int main(int argc, char *argv[]) {
 
-    struct file f = load_file("points3d.txt");
+    struct file f = load_file("points.txt");
     int dim = f.dimension;
     int lines = f.lines;
     double *points = f.points;
@@ -374,7 +369,7 @@ int main(int argc, char *argv[]) {
     // Skip KNN matrix since too annoying to compute
 
     printf("\nKNN matrix:\n");
-    int k = 3;
+    int k = 2;
     int knn_graph[lines][lines];
     construct_knn_matrix((double *) points, lines, dim, k,(int *) knn_graph);
 
@@ -432,7 +427,10 @@ int main(int argc, char *argv[]) {
     // try with different max_iter
     // K_means((double *) points, lines, k, 10, clusters);
 
-    K_means((double *) laplacian, lines, k, 10, 0.0001, clusters);
+    K_means((double *) laplacian, lines, k, 100, 0.0001, clusters);
     myInt64 runtime = stop_tsc(start);
+
+    print_cluster_indices(clusters, k);
+
     return 0;
 }
