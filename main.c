@@ -7,6 +7,7 @@
 #include <lapacke.h>
 
 #include "tsc_x86.h"
+#include "instrumentation.h"
 #include "norms.h"
 #include "construct_graph.h"
 #include "kmeans.h"
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]) {
     print_cluster_indices(clusters, k);
     write_clustering_result(argv[3], clusters, k);
 
-    printf(" => Runtime: %llu cycles\n", runtime);
+    printf(" => Runtime: %llu cycles; ops: %d ops\n", runtime, NUM_FLOPS);
 
     free(fully_connected);
     free(laplacian);

@@ -1,6 +1,6 @@
 UNAME := $(shell uname)
 
-CFLAGS := -O0 -Wall -Werror
+CFLAGS := -O0 -Wall -Werror -DINSTRUMENTATION
 
 ifeq ($(UNAME), Linux)
 	CC := gcc
@@ -14,7 +14,7 @@ ifeq ($(UNAME), Darwin)
 endif
 
 all: main.c norms.c construct_graph.c kmeans.c util.c
-	$(CC) $(CFLAGS) -o clustering main.c norms.c construct_graph.c kmeans.c util.c $(CINCLUDES) $(CLIBS) 
+	$(CC) $(CFLAGS) -o clustering main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS) 
 
 .PHONY clean:
 	rm -rf clustering
