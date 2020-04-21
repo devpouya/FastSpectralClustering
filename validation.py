@@ -30,7 +30,8 @@ dim = int(f_dataset.readline())
 data = np.zeros((number_of_points, dim))
 line_idx = 0
 for lines in f_dataset:
-    line_data = lines.strip().split(" ")
+    line_data = lines.strip().split()
+    print(line_data)
     for i in range(dim):
         data[line_idx][i] = line_data[i]
     line_idx = line_idx + 1
@@ -55,7 +56,7 @@ for k in range(int(number_clusters)):
 # print(clustered_data[0][1])
 
 # plot the clusters
-number_of_colors = 8
+number_of_colors = int(number_clusters)
 color = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
              for i in range(number_of_colors)]
 print(color)
