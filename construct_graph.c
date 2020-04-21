@@ -32,7 +32,7 @@ void construct_fully_connected_matrix(double *points, int lines, int dim, double
     }
 }
 
-void construct_eps_neighborhood_matrix(double *points, int lines, int dim, int *ret) {
+void construct_eps_neighborhood_matrix(double *points, int lines, int dim, double *ret) {
     for (int i = 0; i < lines; ++i) {
         for (int j = 0; j < lines; ++j) {
             ret[i*lines + j] = l2_norm(&points[i*dim], &points[j*dim], dim) < EPS;
@@ -101,7 +101,7 @@ void construct_unnormalized_laplacian(double *graph, int n, double *ret) {
     }
 }
 
-void construct_knn_matrix(double *points, int lines, int dim, int k, int *ret) {
+void construct_knn_matrix(double *points, int lines, int dim, int k, double *ret) {
     double vals[lines];
     int indices[lines];
 
