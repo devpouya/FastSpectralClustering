@@ -78,7 +78,9 @@ static void init_means(double *U, int n, int k, double *ret) {
     for (int i = 0; i < k; i++) {
         // printf("Center %d: ( ", i);
         for (int j = 0; j < k; j++) {
-
+            NUM_DIVS(1);
+            NUM_MULS(1);
+            NUM_ADDS(2);
             ret[i*k + j] = ( ((double )rand() /RAND_MAX)*(bounds[j][1] - bounds[j][0])) + bounds[j][0];
             // printf("%lf ", ret[i*k + j]);
         }
@@ -91,6 +93,8 @@ static void init_means(double *U, int n, int k, double *ret) {
 // dimension is the column index along which the mean is computed
 static double compute_mean_of_one_dimension(double *U, int *indices, int size, int n, int dimension) {
     double sum = 0;
+    NUM_ADDS(size);
+    NUM_DIVS(1);
     for (int i = 0; i < size; i++) { // for all points
         sum += U[indices[i]*n+dimension]; // .. select one dimension
     }
@@ -152,6 +156,7 @@ static void map_to_nearest_cluster(double *U, int n, int k, double *means, struc
 }
 
 static int early_stopping(double *means, struct cluster *clusters, double error, int k) {
+    NUM_ADDS(k*k);
     for (int i = 0; i < k; i++) { // iterate over cluster
         for (int j = 0; j < k; j++) { // iterate over each dimension of the mean
             if (fabs(means[i*k+j] - clusters[i].mean[j]) > error) {

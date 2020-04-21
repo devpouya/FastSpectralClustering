@@ -1,18 +1,31 @@
 #ifndef _INSTRUMENTATION_H
 #define _INSTRUMENTATION_H
 
-static int __num_adds = 0;
-static int __num_muls = 0;
-static int __num_divs = 0;
-static int __num_sqrts = 0;
-static int __num_exps = 0;
+#include <stdio.h>
 
-#define NUM_ADDS(n) (__num_adds += (n))
-#define NUM_MULS(n) (__num_muls += (n))
-#define NUM_DIVS(n) (__num_divs += (n))
-#define NUM_SQRTS(n) (__num_sqrts += (n))
-#define NUM_EXPS(n) (__num_exps += (n))
-#define NUM_FLOPS (__num_adds + __num_muls + __num_divs + __num_sqrts+__num_exps)
-#define RESET_OPS __num_adds = 0; __num_muls = 0; __num_divs = 0; __num_sqrts = 0;__num_exps = 0;
+#ifdef INSTRUMENTATION
+
+#define NUM_ADDS(n) num_adds(n)
+#define NUM_MULS(n) num_muls(n)
+#define NUM_DIVS(n) num_divs(n)
+#define NUM_SQRTS(n) num_sqrts(n)
+#define NUM_EXPS(n) num_exps(n)
+#define NUM_FLOPS num_flops()
+
+void num_adds(int n);
+void num_muls(int n);
+void num_divs(int n);
+void num_sqrts(int n);
+void num_exps(int n);
+int num_flops(void);
+
+#else
+#define NUM_ADDS(n) ((void) 0)
+#define NUM_MULS(n) ((void) 0)
+#define NUM_DIVS(n) ((void) 0)
+#define NUM_SQRTS(n) ((void) 0)
+#define NUM_EXPS(n) ((void) 0)
+#define NUM_FLOPS 0
+#endif
 
 #endif
