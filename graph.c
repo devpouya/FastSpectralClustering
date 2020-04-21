@@ -371,6 +371,7 @@ int main(int argc, char *argv[]) {
     int lines = f.lines;
     double *points = f.points;
 
+    printf("%lf %lf %lf %lf ", points[0] , points[1] , points[2] , points[3] );
     // Construct the matrices and print them
     // fully-connected matrix
     printf("Fully connected matrix:\n");
