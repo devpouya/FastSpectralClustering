@@ -9,7 +9,7 @@ number_clusters = input("enter number of clusters  ")
 output_path = input("enter the output file name: ")
 
 subprocess.run(["make"])
-subprocess.run(["./graph", dataset_path, number_clusters, output_path])
+subprocess.run(["./clustering", dataset_path, number_clusters, output_path])
 
 f = open(output_path, "r")
 
