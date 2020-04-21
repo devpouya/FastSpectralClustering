@@ -8,6 +8,55 @@
 #include "instrumentation.h"
 #include "kmeans.h"
 
+/*
+static void init_kpp(double *U, int n, int k, double *ret) {
+    // add a random initial point to the centers
+    srand(time(0));
+    int ind = ((int)rand()%n);
+    //ret[0] = U[((int)rand()%n)*k];
+    for(int j = 0; j < k; j++) {
+        ret[j] = U[ind*k+j];
+    }
+    double sum = 0;
+    for (int c = 1; c < k; c++) {
+        sum = 0;
+        double dists[n];
+        for (int i = 0; i < n; i++) {
+            //find closest point and add to sum
+            double dist = DBL_MAX;
+            for(int j = 0; j < c; j++) {
+                double tmp = l2_norm(&U[i*k],&ret[j*k],k);
+                if (tmp < dist) {
+                    dist = tmp;
+                }
+            }
+            sum += dist;
+            dists[i] = dist;
+
+        }
+        double ransom = sum*rand() / (RAND_MAX-1);
+
+        for (int i = 0; i < k; i++) {
+            if(ransom-dists[i]>0){
+                printf("TRAP i %d c %d\n",i,c);
+
+                continue;
+            }
+            printf("Center %d: ( ", i);
+            for (int j = 0; j < k; j++) {
+                ret[c*k + j] = U[i*k+j];
+                 printf("%lf ", ret[i*k + j]);
+            }
+            printf(")\n");
+        }
+    }
+
+
+
+
+}
+*/
+
 static void init_means(double *U, int n, int k, double *ret) {
     // find min/max bounds for each dimension
     // k is the number of columns
@@ -36,6 +85,7 @@ static void init_means(double *U, int n, int k, double *ret) {
         // printf(")\n");
     }
 }
+
 
 // mean of each column
 // dimension is the column index along which the mean is computed
