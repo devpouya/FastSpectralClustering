@@ -40,7 +40,7 @@ print("data set shape :{}".format(data.shape))
 # this is a list, which stores points by clusters
 clustered_data = []
 for k in range(int(number_clusters)):
-    point_index = [int(i) for i in f.readline().strip().split(" ")]
+    point_index = [int(i) for i in f.readline().strip().split()]
     # assuming dim = 2 here
     assert dim == 2
     x = np.zeros(cluster_sizes[k])
@@ -64,7 +64,3 @@ for i in range(int(number_clusters)):
     plt.scatter(clustered_data[i][0], clustered_data[i][1], color=color[i])
 
 plt.show()
-
-
-
-
