@@ -336,9 +336,9 @@ static void K_means(double *U, int n, int k, int max_iter, double stopping_error
 /*------------------------------------------------------------------------ */
 
 
-static struct cluster SpectralClustering() {
+// static struct cluster SpectralClustering() {
 
-}
+// }
 
 /*
  * The file that the program reads from is stored in the following format, assuming that

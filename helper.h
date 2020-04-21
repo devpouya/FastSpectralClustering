@@ -69,14 +69,14 @@ struct file load_file(char *file) {
     int dim;
     fscanf(fp, "%d\n", &dim);
     printf("Dimension = %d \n" , dim);
-    double points[lines][dim];
+    double *points = malloc(lines * dim * sizeof(double));
     for (int i = 0; i < lines; ++i) {
         for (int j = 0; j < dim; ++j){
-            fscanf(fp, "%lf", &points[i][j]);
+            fscanf(fp, "%lf", &points[i*dim + j]);
         }
     }
     struct file f;
-    f.points = *points;
+    f.points = points;
     f.dimension = dim;
     f.lines = lines;
     return f;
