@@ -17,6 +17,8 @@
 #define EPS 2
 #define DBL_MIN -100000
 #define DBL_MAX 100000
+#define SIGMA 1.0
+
 
 
 static double *TheArray;
@@ -36,11 +38,19 @@ static double l2_norm(double *u, double *v, int dim) {
     }
     return sqrt(norm);
 }
+static double gaussian_similarity(double *u, double *v, int dim) {
+    NUM_EXPS(1);
+    NUM_DIVS(1);
+    NUM_MULS(4);
+    double norm = l2_norm(u,v,dim);
+    double inner = -1.0*norm*norm/(2*SIGMA*SIGMA);
+    return exp(inner);
+}
 
 static void construct_fully_connected_matrix(double *points, int lines, int dim, double *ret) {
     for (int i = 0; i < lines; ++i) {
         for (int j = 0; j < lines; ++j) {
-            ret[i*lines + j] = l2_norm(&points[i*dim], &points[j*dim], dim);
+            ret[i*lines + j] = gaussian_similarity(&points[i*dim], &points[j*dim], dim);
             printf("%lf ", ret[i*lines + j]);
         }
         printf("\n");
