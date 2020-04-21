@@ -55,7 +55,32 @@ static void init_kpp(double *U, int n, int k, double *ret) {
 
 
 }
+
 */
+static void init_rand(double *U, int n, int k, double *ret) {
+    srand(time(0));
+    // knuth algorithm for distinct random values in range
+    int rem, havs;
+    rem = 0;
+    int inds[k];
+    for(havs = 0; havs < k && rem < k; ++havs) {
+        int rh = k-havs;
+        int rm = k-rem;
+        if(rand()%rh<rm) {
+            inds[rem++] = havs+1;
+        }
+    }
+    for (int i = 0; i < k; i++) {
+        for (int j = 0; j < k; j++) {
+            NUM_DIVS(1);
+            NUM_MULS(1);
+            NUM_ADDS(2);
+            ret[i*k + j] = U[inds[i]*k+j];
+        }
+    }
+}
+
+/*
 
 static void init_means(double *U, int n, int k, double *ret) {
     // find min/max bounds for each dimension
@@ -89,6 +114,7 @@ static void init_means(double *U, int n, int k, double *ret) {
 }
 
 
+*/
 // mean of each column
 // dimension is the column index along which the mean is computed
 static double compute_mean_of_one_dimension(double *U, int *indices, int size, int n, int dimension) {
@@ -190,7 +216,7 @@ void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct
     // each row represents a cluster each column a dimension
     double means[k*k];
     while (i < max_iter) {
-        (i == 0) ? init_means(&U[0], n, k, means) : update_means(U, ret, k, n, means);
+        (i == 0) ? init_rand(&U[0], n, k, means) : update_means(U, ret, k, n, means);
         // check if the means are stable, if yes => stop
         if (i > 0) {
             if (early_stopping(means, ret, stopping_error, k)) {
