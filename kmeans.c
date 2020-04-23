@@ -60,23 +60,7 @@ static void init_kpp(double *U, int n, int k, double *ret) {
                 ret[c*k + j] = U[index*n+j];
             }
         }
-        /*
-        double ransom = sum*rand() / (RAND_MAX-1);
 
-        for (int i = 0; i < k; i++) {
-            if(ransom-dists[i]>0){
-                printf("TRAP i %d c %d\n",i,c);
-
-                continue;
-            }
-            printf("Center %d: ( ", i);
-            for (int j = 0; j < k; j++) {
-                ret[c*k + j] = U[i*n+j];
-                 printf("%lf ", ret[i*k + j]);
-            }
-            printf(")\n");
-        }
-         */
     }
 
 
