@@ -74,6 +74,7 @@ static void init_rand(double *U, int n, int k, double *ret) {
     srand(time(0));
     // knuth algorithm for distinct random values in range
    int rem, havs;
+
     rem = 0;
     int inds[k];
     for(havs = 0; havs < k && rem < k; ++havs) {
@@ -238,6 +239,7 @@ void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct
     double means[k*k];
     while (i < max_iter) {
         (i == 0) ? init_kpp(&U[0], n, k, means) : update_means(U, ret, k, n, means);
+
         // check if the means are stable, if yes => stop
         if (i > 0) {
 //            if (early_stopping(means, ret, stopping_error, k)) {
