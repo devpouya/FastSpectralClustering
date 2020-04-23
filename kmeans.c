@@ -25,7 +25,7 @@ static void init_kpp(double *U, int n, int k, double *ret) {
             //find closest point and add to sum
             double dist = DBL_MAX;
             for(int j = 0; j < c; j++) {
-                double tmp = l2_norm(&U[i*k],&ret[j*k],k);
+                double tmp = gaussian_similarity(&U[i*k],&ret[j*k],k);
                 if (tmp < dist) {
                     dist = tmp;
                 }
@@ -55,8 +55,8 @@ static void init_kpp(double *U, int n, int k, double *ret) {
 
 
 }
-*/
 
+*/
 
 static void init_rand(double *U, int n, int k, double *ret) {
     srand(time(0));
@@ -80,7 +80,6 @@ static void init_rand(double *U, int n, int k, double *ret) {
         }
     }
 }
-
 
 
 /*static void init_means(double *U, int n, int k, double *ret) {
@@ -113,7 +112,6 @@ static void init_rand(double *U, int n, int k, double *ret) {
         // printf(")\n");
     }
 }*/
-
 
 
 // mean of each column
@@ -228,7 +226,7 @@ void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct
     // each row represents a cluster each column a dimension
     double means[k*k];
     while (i < max_iter) {
-        (i == 0) ? init_rand(&U[0], n, k, means) : update_means(U, ret, k, n, means);
+        (i == 0) ? init_means(&U[0], n, k, means) : update_means(U, ret, k, n, means);
         // check if the means are stable, if yes => stop
         if (i > 0) {
 //            if (early_stopping(means, ret, stopping_error, k)) {
