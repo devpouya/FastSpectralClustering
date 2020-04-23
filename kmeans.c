@@ -55,12 +55,13 @@ static void init_kpp(double *U, int n, int k, double *ret) {
 
 
 }
-
 */
+
+
 static void init_rand(double *U, int n, int k, double *ret) {
     srand(time(0));
     // knuth algorithm for distinct random values in range
-    int rem, havs;
+/*    int rem, havs;
     rem = 0;
     int inds[k];
     for(havs = 0; havs < k && rem < k; ++havs) {
@@ -69,20 +70,20 @@ static void init_rand(double *U, int n, int k, double *ret) {
         if(rand()%rh<rm) {
             inds[rem++] = havs+1;
         }
-    }
+    }*/
     for (int i = 0; i < k; i++) {
         for (int j = 0; j < k; j++) {
             NUM_DIVS(1);
             NUM_MULS(1);
             NUM_ADDS(2);
-            ret[i*k + j] = U[inds[i]*k+j];
+            ret[i*k + j] = U[i*n+j];
         }
     }
 }
 
-/*
 
-static void init_means(double *U, int n, int k, double *ret) {
+
+/*static void init_means(double *U, int n, int k, double *ret) {
     // find min/max bounds for each dimension
     // k is the number of columns
     double bounds[k][2];
@@ -111,10 +112,10 @@ static void init_means(double *U, int n, int k, double *ret) {
         }
         // printf(")\n");
     }
-}
+}*/
 
 
-*/
+
 // mean of each column
 // dimension is the column index along which the mean is computed
 static double compute_mean_of_one_dimension(double *U, int *indices, int size, int n, int dimension) {
@@ -131,11 +132,22 @@ static void update_means(double *U, struct cluster *clusters, int k, int n, doub
     for (int i = 0; i < k; i++) { // iterate over cluster i
     //    printf("Center %d: ( ", i);
         for (int j = 0; j < k; j++) { // j is the dimension here
-            ret[i*k + j] = (clusters[j].size > 0) ?
+            ret[i*k + j] = (clusters[i].size > 0) ?
                            compute_mean_of_one_dimension(U, clusters[i].indices, clusters[i].size, n, j) : clusters[i].mean[j];
         //    printf("%lf ", ret[i*k + j]);
         }
     //    printf(")\n");
+    }
+}
+
+static void copy_means(struct cluster *clusters, int k, double *means) {
+    for (int i = 0; i < k; i++) { // iterate over cluster i
+        //    printf("Center %d: ( ", i);
+        for (int j = 0; j < k; j++) { // j is the dimension here
+            means[i*k + j] = clusters[i].mean[j];
+            //    printf("%lf ", ret[i*k + j]);
+        }
+        //    printf(")\n");
     }
 }
 
@@ -180,18 +192,18 @@ static void map_to_nearest_cluster(double *U, int n, int k, double *means, struc
     } // done with cluster i
 
 }
-
-static int early_stopping(double *means, struct cluster *clusters, double error, int k) {
-    NUM_ADDS(k*k);
-    for (int i = 0; i < k; i++) { // iterate over cluster
-        for (int j = 0; j < k; j++) { // iterate over each dimension of the mean
-            if (fabs(means[i*k+j] - clusters[i].mean[j]) > error) {
-                return 0;
-            }
-        }
-    }
-    return 1;
-}
+//
+//static int early_stopping(double *means, struct cluster *clusters, double error, int k) {
+//    NUM_ADDS(k*k);
+//    for (int i = 0; i < k; i++) { // iterate over cluster
+//        for (int j = 0; j < k; j++) { // iterate over each dimension of the mean
+//            if (fabs(means[i*k+j] - clusters[i].mean[j]) > error) {
+//                return 0;
+//            }
+//        }
+//    }
+//    return 1;
+//}
 
 
 /*
@@ -219,12 +231,16 @@ void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct
         (i == 0) ? init_rand(&U[0], n, k, means) : update_means(U, ret, k, n, means);
         // check if the means are stable, if yes => stop
         if (i > 0) {
-            if (early_stopping(means, ret, stopping_error, k)) {
-                break;
-            }
+//            if (early_stopping(means, ret, stopping_error, k)) {
+//                break;
+//            }
+            // update means double array (aims to store previous means)
+            copy_means(ret, k, means);
         }
+
         // post condition: means is up-to-date
         map_to_nearest_cluster(U, n, k, means, ret);
+
         i++;
     }
     // print clusters: Cluster i : (1,2) (4,5) etc.

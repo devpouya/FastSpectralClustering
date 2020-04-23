@@ -23,7 +23,7 @@ for i in range(k):
     points = np.append(points,st,axis=0)
 np.random.shuffle(points)
 """
-file = open("./gaussian_2d_nk.txt","w+")
+file = open("gaussian_2d_nk", "w+")
 file.write("2\n")
 for i in range(n):
     for j in range(2):
