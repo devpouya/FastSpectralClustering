@@ -8,24 +8,30 @@
 #include "instrumentation.h"
 #include "kmeans.h"
 
-/*
+static void cumulative_sum(double *probs, int n, double *ret) {
+    ret[0] = probs[0];
+    for(int i = 1; i < n; i++) {
+        ret[i] = ret[i-1]+probs[i];
+    }
+}
 static void init_kpp(double *U, int n, int k, double *ret) {
     // add a random initial point to the centers
     srand(time(0));
     int ind = ((int)rand()%n);
     //ret[0] = U[((int)rand()%n)*k];
     for(int j = 0; j < k; j++) {
-        ret[j] = U[ind*k+j];
+        ret[j] = U[ind*n+j];
     }
     double sum = 0;
     for (int c = 1; c < k; c++) {
+
         sum = 0;
         double dists[n];
         for (int i = 0; i < n; i++) {
             //find closest point and add to sum
             double dist = DBL_MAX;
             for(int j = 0; j < c; j++) {
-                double tmp = gaussian_similarity(&U[i*k],&ret[j*k],k);
+                double tmp = l2_norm(&U[i*n],&ret[j*k],k);
                 if (tmp < dist) {
                     dist = tmp;
                 }
@@ -34,6 +40,27 @@ static void init_kpp(double *U, int n, int k, double *ret) {
             dists[i] = dist;
 
         }
+        for(int i = 0; i < n; i++) {
+            dists[i] /= sum;
+        }
+        double cumsums[n];
+        int index = 0;
+        cumulative_sum(dists,n,cumsums);
+        double r = rand()/((double)RAND_MAX);
+        for(int i = 0; i < n; i++) {
+            if(r < cumsums[i]) {
+                index = i;
+                printf("picked index:%d\n",index);
+                break;
+            }
+        }
+        for (int i = 0; i < k; i++) {
+
+            for (int j = 0; j < k; j++) {
+                ret[c*k + j] = U[index*n+j];
+            }
+        }
+        /*
         double ransom = sum*rand() / (RAND_MAX-1);
 
         for (int i = 0; i < k; i++) {
@@ -44,11 +71,12 @@ static void init_kpp(double *U, int n, int k, double *ret) {
             }
             printf("Center %d: ( ", i);
             for (int j = 0; j < k; j++) {
-                ret[c*k + j] = U[i*k+j];
+                ret[c*k + j] = U[i*n+j];
                  printf("%lf ", ret[i*k + j]);
             }
             printf(")\n");
         }
+         */
     }
 
 
@@ -56,12 +84,12 @@ static void init_kpp(double *U, int n, int k, double *ret) {
 
 }
 
-*/
 
+/*
 static void init_rand(double *U, int n, int k, double *ret) {
     srand(time(0));
     // knuth algorithm for distinct random values in range
-/*    int rem, havs;
+   int rem, havs;
     rem = 0;
     int inds[k];
     for(havs = 0; havs < k && rem < k; ++havs) {
@@ -70,18 +98,17 @@ static void init_rand(double *U, int n, int k, double *ret) {
         if(rand()%rh<rm) {
             inds[rem++] = havs+1;
         }
-    }*/
+    }
     for (int i = 0; i < k; i++) {
         for (int j = 0; j < k; j++) {
             NUM_DIVS(1);
             NUM_MULS(1);
             NUM_ADDS(2);
-            ret[i*k + j] = U[i*n+j];
+            ret[i*k + j] = U[inds[i]*n+j];
         }
     }
 }
-
-
+*/
 /*static void init_means(double *U, int n, int k, double *ret) {
     // find min/max bounds for each dimension
     // k is the number of columns
@@ -226,7 +253,7 @@ void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct
     // each row represents a cluster each column a dimension
     double means[k*k];
     while (i < max_iter) {
-        (i == 0) ? init_means(&U[0], n, k, means) : update_means(U, ret, k, n, means);
+        (i == 0) ? init_kpp(&U[0], n, k, means) : update_means(U, ret, k, n, means);
         // check if the means are stable, if yes => stop
         if (i > 0) {
 //            if (early_stopping(means, ret, stopping_error, k)) {
@@ -265,6 +292,11 @@ void print_cluster_indices(struct cluster *clusters, int num_clusters){
             }
             printf(")  ");
         printf("\n");
+    }
+
+    printf("CLUSTER SIZES\n");
+    for(int i = 0; i < num_clusters; i++) {
+        printf("Cluster %d has size: %d\n",i,clusters[i].size);
     }
 }
 
