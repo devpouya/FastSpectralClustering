@@ -1,9 +1,15 @@
 import numpy as np
+import sys
 from sklearn.datasets import make_blobs
 
-k = int(input("enter desired number of clusters: "))
-n = int(input("enter desired number of total data points: "))
-
+if (len(sys.argv) != 4):
+    k = int(input("enter desired number of clusters: "))
+    n = int(input("enter desired number of total data points: "))
+    out = input("enter output filename: ")
+else:
+    k = int(sys.argv[1])
+    n = int(sys.argv[2])
+    out = sys.argv[3]
 
 points, y = make_blobs(n_samples=n,centers=k,n_features=2,random_state=7)
 """
@@ -23,7 +29,7 @@ for i in range(k):
     points = np.append(points,st,axis=0)
 np.random.shuffle(points)
 """
-file = open("gaussian_2d_nk", "w+")
+file = open(out, "w+")
 file.write("2\n")
 for i in range(n):
     for j in range(2):

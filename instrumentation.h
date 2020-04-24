@@ -2,6 +2,7 @@
 #define _INSTRUMENTATION_H
 
 #include <stdio.h>
+#include <stdint.h>
 
 #ifdef INSTRUMENTATION
 
@@ -17,7 +18,7 @@ void num_muls(int n);
 void num_divs(int n);
 void num_sqrts(int n);
 void num_exps(int n);
-int num_flops(void);
+uint64_t num_flops(void);
 
 #else
 #define NUM_ADDS(n) ((void) 0)
