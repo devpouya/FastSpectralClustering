@@ -9,6 +9,13 @@
 #include "kmeans.h"
 
 
+static void cumulative_sum(double *probs, int n, double *ret) {
+    ret[0] = probs[0];
+    for(int i = 1; i < n; i++) {
+        ret[i] = ret[i-1]+probs[i];
+    }
+}
+
 static void init_kpp(double *U, int n, int k, double *ret) {
     // add a random initial point to the centers
     srand(time(0));
@@ -19,13 +26,18 @@ static void init_kpp(double *U, int n, int k, double *ret) {
     }
     double sum = 0;
     for (int c = 1; c < k; c++) {
+
         sum = 0;
         double dists[n];
         for (int i = 0; i < n; i++) {
             //find closest point and add to sum
             double dist = DBL_MAX;
             for(int j = 0; j < c; j++) {
+<<<<<<< HEAD
                 double tmp = gaussian_similarity(&U[i*n],&ret[j*k],k);
+=======
+                double tmp = l2_norm(&U[i*n],&ret[j*k],k);
+>>>>>>> d93ca77b65072c191ac59980850138f82ac0006e
                 if (tmp < dist) {
                     dist = tmp;
                 }
@@ -34,21 +46,28 @@ static void init_kpp(double *U, int n, int k, double *ret) {
             dists[i] = dist;
 
         }
-        double ransom = sum*rand() / (RAND_MAX-1);
-
-        for (int i = 0; i < k; i++) {
-            if(ransom-dists[i]>0){
-                printf("TRAP i %d c %d\n",i,c);
-
-                continue;
+        for(int i = 0; i < n; i++) {
+            dists[i] /= sum;
+        }
+        double cumsums[n];
+        int index = 0;
+        cumulative_sum(dists,n,cumsums);
+        double r = rand()/((double)RAND_MAX);
+        for(int i = 0; i < n; i++) {
+            if(r < cumsums[i]) {
+                index = i;
+                printf("picked index:%d\n",index);
+                break;
             }
-            printf("Center %d: ( ", i);
+        }
+        for (int i = 0; i < k; i++) {
+
             for (int j = 0; j < k; j++) {
                 ret[c*k + j] = U[i*n+j];
                  printf("%lf ", ret[i*k + j]);
             }
-            printf(")\n");
         }
+
     }
 
 
@@ -56,13 +75,14 @@ static void init_kpp(double *U, int n, int k, double *ret) {
 
 }
 
+
+
 /*
-
-
 static void init_rand(double *U, int n, int k, double *ret) {
     srand(time(0));
     // knuth algorithm for distinct random values in range
-    int rem, havs;
+   int rem, havs;
+
     rem = 0;
     int inds[k];
     for(havs = 0; havs < k && rem < k; ++havs) {
@@ -82,7 +102,6 @@ static void init_rand(double *U, int n, int k, double *ret) {
     }
 }
 */
-
 
 /*static void init_means(double *U, int n, int k, double *ret) {
     // find min/max bounds for each dimension
@@ -229,6 +248,7 @@ void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct
     double means[k*k];
     while (i < max_iter) {
         (i == 0) ? init_kpp(&U[0], n, k, means) : update_means(U, ret, k, n, means);
+
         // check if the means are stable, if yes => stop
         if (i > 0) {
 //            if (early_stopping(means, ret, stopping_error, k)) {
@@ -267,6 +287,11 @@ void print_cluster_indices(struct cluster *clusters, int num_clusters){
             }
             printf(")  ");
         printf("\n");
+    }
+
+    printf("CLUSTER SIZES\n");
+    for(int i = 0; i < num_clusters; i++) {
+        printf("Cluster %d has size: %d\n",i,clusters[i].size);
     }
 }
 

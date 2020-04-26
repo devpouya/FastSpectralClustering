@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
     construct_unnormalized_laplacian(fully_connected, lines, laplacian);
 
     //compute the eigendecomposition and take the first k eigenvectors.
+    printf("Performing eigenvalue decomposition...\n");
     double *w = malloc(lines * sizeof(double));
     lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, laplacian, lda, w);
     /* Check for convergence */
@@ -90,11 +91,15 @@ int main(int argc, char *argv[]) {
     print_cluster_indices(clusters, k);
     write_clustering_result(argv[3], clusters, k);
 
-    printf(" => Runtime: %llu cycles; ops: %d ops\n", runtime, NUM_FLOPS);
+    printf(" => Runtime: %llu cycles; ops: %llu ops\n", runtime, NUM_FLOPS);
 
     free(fully_connected);
     free(laplacian);
     free(w);
     free(f.points);
+
+    // LEAVE THESE PRINTS (for the performance checking script)
+    printf("%llu\n", runtime);
+    printf("%llu\n", NUM_FLOPS);
     return 0;
 }
