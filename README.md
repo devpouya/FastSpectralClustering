@@ -17,7 +17,7 @@ It makes use of various optimization techniques to reach its maximal performance
 - i
 
 <a name="Structure"></a>
-##Project structure
+## Project structure
 
 
 ```
@@ -51,7 +51,7 @@ team018/
 ```
 
 <a name="Installation"></a>
-##Installation
+## Installation
 
 On linux, run: `./requirements/install.sh`
 
