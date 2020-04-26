@@ -8,14 +8,12 @@
 #include "instrumentation.h"
 #include "kmeans.h"
 
-
 static void cumulative_sum(double *probs, int n, double *ret) {
     ret[0] = probs[0];
     for(int i = 1; i < n; i++) {
         ret[i] = ret[i-1]+probs[i];
     }
 }
-
 static void init_kpp(double *U, int n, int k, double *ret) {
     // add a random initial point to the centers
     srand(time(0));
@@ -33,11 +31,7 @@ static void init_kpp(double *U, int n, int k, double *ret) {
             //find closest point and add to sum
             double dist = DBL_MAX;
             for(int j = 0; j < c; j++) {
-<<<<<<< HEAD
-                double tmp = gaussian_similarity(&U[i*n],&ret[j*k],k);
-=======
                 double tmp = l2_norm(&U[i*n],&ret[j*k],k);
->>>>>>> d93ca77b65072c191ac59980850138f82ac0006e
                 if (tmp < dist) {
                     dist = tmp;
                 }
@@ -63,8 +57,7 @@ static void init_kpp(double *U, int n, int k, double *ret) {
         for (int i = 0; i < k; i++) {
 
             for (int j = 0; j < k; j++) {
-                ret[c*k + j] = U[i*n+j];
-                 printf("%lf ", ret[i*k + j]);
+                ret[c*k + j] = U[index*n+j];
             }
         }
 
@@ -74,7 +67,6 @@ static void init_kpp(double *U, int n, int k, double *ret) {
 
 
 }
-
 
 
 /*
@@ -102,7 +94,6 @@ static void init_rand(double *U, int n, int k, double *ret) {
     }
 }
 */
-
 /*static void init_means(double *U, int n, int k, double *ret) {
     // find min/max bounds for each dimension
     // k is the number of columns
@@ -149,13 +140,13 @@ static double compute_mean_of_one_dimension(double *U, int *indices, int size, i
 
 static void update_means(double *U, struct cluster *clusters, int k, int n, double *ret) {
     for (int i = 0; i < k; i++) { // iterate over cluster i
-    //    printf("Center %d: ( ", i);
+        //    printf("Center %d: ( ", i);
         for (int j = 0; j < k; j++) { // j is the dimension here
             ret[i*k + j] = (clusters[i].size > 0) ?
                            compute_mean_of_one_dimension(U, clusters[i].indices, clusters[i].size, n, j) : clusters[i].mean[j];
-        //    printf("%lf ", ret[i*k + j]);
+            //    printf("%lf ", ret[i*k + j]);
         }
-    //    printf(")\n");
+        //    printf(")\n");
     }
 }
 
@@ -279,13 +270,13 @@ void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct
 
 void print_cluster_indices(struct cluster *clusters, int num_clusters){
     printf("Printing clustered point indices:\n");
-        for (int j = 0; j < num_clusters; j++) {
-            printf("Cluster %d: ", j);
-                        printf("( ");
-            for(int e = 0; e < clusters[j].size; e++) {
-                    printf("%d ", clusters[j].indices[e]);
-            }
-            printf(")  ");
+    for (int j = 0; j < num_clusters; j++) {
+        printf("Cluster %d: ", j);
+        printf("( ");
+        for(int e = 0; e < clusters[j].size; e++) {
+            printf("%d ", clusters[j].indices[e]);
+        }
+        printf(")  ");
         printf("\n");
     }
 

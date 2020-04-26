@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
 
     printf("Performing k-means clustering...\n");
-    // U (8x2) is the data in points.txt for now => k = 2
+    // U (8x2) is the datasets in points.txt for now => k = 2
     // number of cluster <=> # columns of U
 
     // init datastructure
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     print_cluster_indices(clusters, k);
     write_clustering_result(argv[3], clusters, k);
 
-    printf(" => Runtime: %llu cycles; ops: %llu ops\n", runtime, NUM_FLOPS);
+    printf(" => Runtime: %llu cycles; ops: %lu ops\n", runtime, NUM_FLOPS);
 
     free(fully_connected);
     free(laplacian);
@@ -100,6 +100,6 @@ int main(int argc, char *argv[]) {
 
     // LEAVE THESE PRINTS (for the performance checking script)
     printf("%llu\n", runtime);
-    printf("%llu\n", NUM_FLOPS);
+    printf("%lu\n", NUM_FLOPS);
     return 0;
 }
