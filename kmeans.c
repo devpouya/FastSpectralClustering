@@ -140,13 +140,13 @@ static double compute_mean_of_one_dimension(double *U, int *indices, int size, i
 
 static void update_means(double *U, struct cluster *clusters, int k, int n, double *ret) {
     for (int i = 0; i < k; i++) { // iterate over cluster i
-    //    printf("Center %d: ( ", i);
+        //    printf("Center %d: ( ", i);
         for (int j = 0; j < k; j++) { // j is the dimension here
             ret[i*k + j] = (clusters[i].size > 0) ?
                            compute_mean_of_one_dimension(U, clusters[i].indices, clusters[i].size, n, j) : clusters[i].mean[j];
-        //    printf("%lf ", ret[i*k + j]);
+            //    printf("%lf ", ret[i*k + j]);
         }
-    //    printf(")\n");
+        //    printf(")\n");
     }
 }
 
@@ -270,13 +270,13 @@ void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct
 
 void print_cluster_indices(struct cluster *clusters, int num_clusters){
     printf("Printing clustered point indices:\n");
-        for (int j = 0; j < num_clusters; j++) {
-            printf("Cluster %d: ", j);
-                        printf("( ");
-            for(int e = 0; e < clusters[j].size; e++) {
-                    printf("%d ", clusters[j].indices[e]);
-            }
-            printf(")  ");
+    for (int j = 0; j < num_clusters; j++) {
+        printf("Cluster %d: ", j);
+        printf("( ");
+        for(int e = 0; e < clusters[j].size; e++) {
+            printf("%d ", clusters[j].indices[e]);
+        }
+        printf(")  ");
         printf("\n");
     }
 
