@@ -1,3 +1,5 @@
+#ifndef _X86_TSC_H
+#define _X86_TSC_H
 /* ==================== GNU C and possibly other UNIX compilers ===================== */
 	#ifndef _WIN32
 
@@ -74,21 +76,22 @@
 #endif
 
 
-void init_tsc() {
+__header_inline void init_tsc() {
 	; // no need to initialize anything for x86
 }
 
-myInt64 start_tsc(void) {
+__header_inline myInt64 start_tsc(void) {
     tsc_counter start;
     CPUID();
     RDTSC(start);
     return COUNTER_VAL(start);
 }
 
-myInt64 stop_tsc(myInt64 start) {
+__header_inline myInt64 stop_tsc(myInt64 start) {
 	tsc_counter end;
 	RDTSC(end);
 	CPUID();
 	return COUNTER_VAL(end) - start;
 }
 
+#endif
