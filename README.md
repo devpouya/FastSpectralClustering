@@ -67,6 +67,10 @@ On linux, run: `./requirements/install.sh`
 
 lapack: `sudo apt-get install liblapacke-dev`
 
+##### macOS
+
+lapack: `brew install openblas`
+
 
 <a name="Commands"></a>
 ## Commands
@@ -107,5 +111,9 @@ the runtime, and the flops
     - `gnuplot -c "scripts/graphs/base_performance.gp" "'base_perf_1000.eps'" "'base_perf_1000.txt'"
 `
 
+## TODO
 
-
+- Rerun performance checker for 0 < n ≤ 200 (naïve version)
+- Profiling to discover bottlenecks (extend instrumentation.c with per-function timing)
+- Benchmark alternatives (dlib, subalgorithms)
+- Optimization
