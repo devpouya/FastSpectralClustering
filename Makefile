@@ -1,6 +1,6 @@
 UNAME := $(shell uname)
 
-CFLAGS := -O3 -ffast-math -Wall -Werror -DINSTRUMENTATION
+CFLAGS := -O3 -ffast-math -Wall -Werror -Wno-unused-value -DINSTRUMENTATION
 
 ifeq ($(UNAME), Linux)
 	CC := gcc
