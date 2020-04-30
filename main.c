@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     // kmeans(points, lines, k, 10, clusters);
 
     kmeans(laplacian, lines, k, 100, 0.0001, clusters);
-    myInt64 runtime = stop_tsc(start2) + end1;
+    uint64_t runtime = stop_tsc(start2) + end1;
 
     print_cluster_indices(clusters, k);
     write_clustering_result(argv[3], clusters, k);
