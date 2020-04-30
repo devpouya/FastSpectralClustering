@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 #include <lapacke.h>
+#include <inttypes.h>
 
 #include "tsc_x86.h"
 #include "instrumentation.h"
@@ -93,7 +94,7 @@ int main(int argc, char *argv[]) {
     print_cluster_indices(clusters, k);
     write_clustering_result(argv[3], clusters, k);
 
-    printf(" => Runtime: %llu cycles; ops: %llu ops\n", runtime, NUM_FLOPS);
+    printf(" => Runtime: %" PRIu64  " cycles; ops: %" PRIu64 " ops\n", runtime, NUM_FLOPS);
 
     free(fully_connected);
     free(laplacian);
@@ -101,7 +102,7 @@ int main(int argc, char *argv[]) {
     free(f.points);
 
     // LEAVE THESE PRINTS (for the performance checking script)
-    printf("%llu\n", runtime);
-    printf("%llu\n", NUM_FLOPS);
+    printf("%" PRIu64 "\n", runtime);
+    printf("%" PRIu64 "\n", NUM_FLOPS);
     return 0;
 }
