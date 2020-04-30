@@ -63,6 +63,8 @@ On linux, run: `./requirements/install.sh`
 
 ##### linux
 
+`sudo apt-get install libopenblas-dev`
+
 `sudo apt-get install $(cat requirements/apt-requirements.txt)`
 
 lapack: `sudo apt-get install liblapacke-dev`
