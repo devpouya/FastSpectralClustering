@@ -44,16 +44,17 @@ int main(int argc, char *argv[]) {
     // Construct the matrices and print them
     // fully-connected matrix
     printf("Constructing fully connected matrix...\n");
+    myInt64 start1 = start_tsc();
     double *fully_connected = malloc(lines * lines * sizeof(double));
     construct_fully_connected_matrix(points, lines, dim, fully_connected);
 
     printf("Constructing unnormalized Laplacian...\n");
     // compute unnormalized laplacian
     double *laplacian = malloc(lines * lines * sizeof(double));
-    myInt64 start = start_tsc();
     construct_unnormalized_laplacian(fully_connected, lines, laplacian);
 
     //compute the eigendecomposition and take the first k eigenvectors.
+    myInt64 end1 = stop_tsc(start1);
     printf("Performing eigenvalue decomposition...\n");
     double *w = malloc(lines * sizeof(double));
     lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, laplacian, lda, w);
@@ -62,6 +63,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "ERROR: The algorithm failed to compute eigenvalues.\n");
         exit(1);
     }
+    myInt64 start2 = start_tsc();
 
     // printf("Eigenvalues:\n");
     // for (int i = 0; i < n; i++) {
@@ -86,7 +88,7 @@ int main(int argc, char *argv[]) {
     // kmeans(points, lines, k, 10, clusters);
 
     kmeans(laplacian, lines, k, 100, 0.0001, clusters);
-    myInt64 runtime = stop_tsc(start);
+    myInt64 runtime = stop_tsc(start2) + end1;
 
     print_cluster_indices(clusters, k);
     write_clustering_result(argv[3], clusters, k);

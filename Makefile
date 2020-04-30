@@ -1,6 +1,6 @@
 UNAME := $(shell uname)
 
-CFLAGS := -O0 -Wall -Werror -DINSTRUMENTATION
+CFLAGS := -O3 -ffast-math -Wall -Werror -DINSTRUMENTATION
 
 ifeq ($(UNAME), Linux)
 	CC := gcc
@@ -13,7 +13,7 @@ ifeq ($(UNAME), Darwin)
 	CLIBS := -L/usr/local/Cellar/openblas/0.3.9/lib -lopenblas
 endif
 
-all: main.c norms.c construct_graph.c kmeans.c util.c
+all: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
 	$(CC) $(CFLAGS) -o clustering main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS) 
 
 .PHONY clean:
