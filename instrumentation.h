@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include "tsc_x86.h"
 
 #ifdef INSTRUMENTATION
 
@@ -27,6 +28,39 @@ uint64_t num_flops(void);
 #define NUM_SQRTS(n) ((void) 0)
 #define NUM_EXPS(n) ((void) 0)
 #define NUM_FLOPS 0
+#endif
+
+#ifdef PROFILING
+
+#ifndef PROFILING_NUM_FUNCS
+#define PROFILING_NUM_FUNCS 128
+#endif
+
+extern const char *__func_names[PROFILING_NUM_FUNCS];
+extern uint64_t __func_times[PROFILING_NUM_FUNCS];
+extern int __curr_idx;
+
+#define ENTER_FUNC \
+static int __profiler_ready = 0; \
+static int __func_index; \
+if (!__profiler_ready) { \
+    __func_index = ++__curr_idx; \
+    __func_names[__func_index] = __func__; \
+    __profiler_ready = 1; \
+} \
+uint64_t __func_start = start_tsc()
+
+#define EXIT_FUNC __func_times[__func_index] += stop_tsc(__func_start)
+#define PROFILER_LIST() __profiler_list()
+
+void __profiler_list(void);
+
+#else
+
+#define ENTER_FUNC ((void) 0)
+#define EXIT_FUNC ((void) 0)
+#define PROFILER_LIST() ((void) 0)
+
 #endif
 
 #endif

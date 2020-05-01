@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
 
     if (argc != 4) {
         printf("usage: %s points_file num_clusters output_file\n", argv[0]);
+        return 1;
     }
 
     printf("loading dataset: %s\n", argv[1]);
@@ -100,6 +101,8 @@ int main(int argc, char *argv[]) {
     free(laplacian);
     free(w);
     free(f.points);
+
+    PROFILER_LIST();
 
     // LEAVE THESE PRINTS (for the performance checking script)
     printf("%" PRIu64 "\n", runtime);

@@ -9,12 +9,15 @@
 #include "kmeans.h"
 
 static void cumulative_sum(double *probs, int n, double *ret) {
+    ENTER_FUNC;
     ret[0] = probs[0];
     for(int i = 1; i < n; i++) {
         ret[i] = ret[i-1]+probs[i];
     }
+    EXIT_FUNC;
 }
 static void init_kpp(double *U, int n, int k, double *ret) {
+    ENTER_FUNC;
     // add a random initial point to the centers
     srand(time(0));
     int ind = ((int)rand()%n);
@@ -62,10 +65,7 @@ static void init_kpp(double *U, int n, int k, double *ret) {
         }
 
     }
-
-
-
-
+    EXIT_FUNC;
 }
 
 
@@ -129,6 +129,7 @@ static void init_rand(double *U, int n, int k, double *ret) {
 // mean of each column
 // dimension is the column index along which the mean is computed
 static double compute_mean_of_one_dimension(double *U, int *indices, int size, int n, int dimension) {
+    ENTER_FUNC;
     double sum = 0;
     NUM_ADDS(size);
     NUM_DIVS(1);
@@ -136,9 +137,11 @@ static double compute_mean_of_one_dimension(double *U, int *indices, int size, i
         sum += U[indices[i]*n+dimension]; // .. select one dimension
     }
     return (size > 0) ? (sum/size) : 0;
+    EXIT_FUNC;
 }
 
 static void update_means(double *U, struct cluster *clusters, int k, int n, double *ret) {
+    ENTER_FUNC;
     for (int i = 0; i < k; i++) { // iterate over cluster i
         //    printf("Center %d: ( ", i);
         for (int j = 0; j < k; j++) { // j is the dimension here
@@ -148,9 +151,11 @@ static void update_means(double *U, struct cluster *clusters, int k, int n, doub
         }
         //    printf(")\n");
     }
+    EXIT_FUNC;
 }
 
 static void copy_means(struct cluster *clusters, int k, double *means) {
+    ENTER_FUNC;
     for (int i = 0; i < k; i++) { // iterate over cluster i
         //    printf("Center %d: ( ", i);
         for (int j = 0; j < k; j++) { // j is the dimension here
@@ -159,9 +164,11 @@ static void copy_means(struct cluster *clusters, int k, double *means) {
         }
         //    printf(")\n");
     }
+    EXIT_FUNC;
 }
 
 static int find_nearest_cluster_index(double *point, double *means, int k) {
+    ENTER_FUNC;
     // use l2_norm
     double gap = DBL_MAX;
     int index = 0;
@@ -172,10 +179,12 @@ static int find_nearest_cluster_index(double *point, double *means, int k) {
             index = i;
         }
     }
+    EXIT_FUNC;
     return index;
 }
 
 static void map_to_nearest_cluster(double *U, int n, int k, double *means, struct cluster *ret) {
+    ENTER_FUNC;
     // potentially all points can be in the same cluster
     // find nearest cluster for each point = line
     int index_nn[n];
@@ -200,7 +209,7 @@ static void map_to_nearest_cluster(double *U, int n, int k, double *means, struc
         }
         ret[i].size = cluster_size;
     } // done with cluster i
-
+    EXIT_FUNC;
 }
 //
 //static int early_stopping(double *means, struct cluster *clusters, double error, int k) {
@@ -233,6 +242,7 @@ static void map_to_nearest_cluster(double *U, int n, int k, double *means, struc
  *
  */
 void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
+    ENTER_FUNC;
     // k is the number of columns in U matrix  U is a n by k matrix (here only!)
     int i = 0;
     // each row represents a cluster each column a dimension
@@ -266,6 +276,7 @@ void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct
         }
         // printf("\n");
     }
+    EXIT_FUNC;
 }
 
 void print_cluster_indices(struct cluster *clusters, int num_clusters){
