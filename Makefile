@@ -5,7 +5,7 @@ CFLAGS := -O3 -ffast-math -Wall -Werror -Wno-unused-result -DINSTRUMENTATION -DP
 ifeq ($(UNAME), Linux)
 	CC := gcc
 	CINCLUDES :=
-	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -lopenblas -lm
+	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -llapacke -lm
 endif
 ifeq ($(UNAME), Darwin)
 	CC := gcc-9
