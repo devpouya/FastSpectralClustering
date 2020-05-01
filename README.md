@@ -6,6 +6,8 @@
 2. [Project structure](#Structure)
 3. [Installation](#Installation)
 4. [Commands](#Commands)
+5. [Todo](#Todo)
+
 
 <a name="Introduction"></a>
 ## Introduction
@@ -112,7 +114,7 @@ the runtime, and the flops
 `, e.g.
     - `gnuplot -c "scripts/graphs/base_performance.gp" "'base_perf_1000.eps'" "'base_perf_1000.txt'"
 `
-
+<a name="Todo"></a>
 ## TODO
 
 - Rerun performance checker for 0 < n ≤ 200 (naïve version)
