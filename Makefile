@@ -14,7 +14,7 @@ ifeq ($(UNAME), Darwin)
 endif
 
 all: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
-	$(CC) $(CFLAGS) -o clustering main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS) 
+	$(CC) $(CFLAGS) -o clustering main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS)
 
 .PHONY clean:
 	rm -rf clustering

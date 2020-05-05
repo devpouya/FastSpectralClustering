@@ -10,4 +10,7 @@ struct file {
 struct file alloc_load_points_from_file(char *file);
 void print_matrix(char* desc, int m, int n, double* a, int lda);
 
+double  wtime(void);
+
+
 #endif

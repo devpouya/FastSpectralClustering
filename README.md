@@ -119,14 +119,6 @@ the runtime, and the flops for each method.
 `, e.g.
     - `gnuplot -c "scripts/graphs/base_performance.gp" "'base_perf_1000.eps'" "'base_perf_1000.txt'"
 `
-<a name="Todo"></a>
-## TODO
-
-- Rerun performance checker for 0 < n ≤ 200 (naïve version)
-- Profiling to discover bottlenecks (extend instrumentation.c with per-function timing)
-- Benchmark alternatives (dlib, subalgorithms)
-- Optimization
-
 
 <a name="Performance"></a>
 ## Performance plots
@@ -140,4 +132,14 @@ the runtime, and the flops for each method.
 ![base_perf_4500](output/graphs/base_perf_200.png) 
 
 
+<a name="Todo"></a>
+## TODO
 
+- Rerun performance checker for 0 < n ≤ 200 (naïve version)
+- Profiling to discover bottlenecks (extend instrumentation.c with per-function timing)
+- Benchmark alternatives (dlib, subalgorithms)
+    > - sequential kmeans by Northwest University: https://github.com/serban/kmeans.git (remove first line of our dataset)
+    
+    > -
+                                           
+- Optimization

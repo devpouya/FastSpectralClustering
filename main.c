@@ -6,6 +6,7 @@
 #include <time.h>
 #include <lapacke.h>
 #include <inttypes.h>
+#include <sys/time.h>
 
 #include "tsc_x86.h"
 #include "instrumentation.h"
@@ -74,6 +75,7 @@ int main(int argc, char *argv[]) {
     // printf("\n");
 
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
+    printf("%d, %d", lines, k);
 
     printf("Performing k-means clustering...\n");
     // U (8x2) is the datasets in points.txt for now => k = 2
@@ -88,12 +90,16 @@ int main(int argc, char *argv[]) {
     }
     // try with different max_iter
     // kmeans(points, lines, k, 10, clusters);
+    double timing_start = wtime();
+    //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
+    kmeans(laplacian, lines, lines, k, 100, 0.0001, clusters);
+    double timing = wtime()-timing_start ;
+    printf("Timing of kmeans: %f [sec] \n", timing);
 
-    kmeans(laplacian, lines, k, 100, 0.0001, clusters);
     uint64_t runtime = stop_tsc(start2) + end1;
 
-    print_cluster_indices(clusters, k);
-    write_clustering_result(argv[3], clusters, k);
+    //print_cluster_indices(clusters, k);
+    //write_clustering_result(argv[3], clusters, k);
 
     printf(" => Runtime: %" PRIu64  " cycles; ops: %" PRIu64 " ops\n", runtime, NUM_FLOPS);
 
