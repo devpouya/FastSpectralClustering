@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include "util.h"
 
 struct file alloc_load_points_from_file(char *file) {
@@ -40,4 +40,47 @@ void print_matrix(char* desc, int m, int n, double* a, int lda) {
             printf( " (%6.2f)", a[i*lda+j]);
         printf( "\n" );
     }
+}
+
+char* concat(const char *s1, const char *s2)
+{
+    char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
+    // in real code you would check for errors in malloc here
+    strcpy(result, s1);
+    strcat(result, s2);
+    return result;
+}
+
+/**
+ * function from https://codeforwin.org/2018/02/c-program-compare-two-files.html
+ * Function to compare two files.
+ * Returns 0 if both files are equivalent, otherwise returns
+ * -1 and sets line and col where both file differ.
+ */
+int compareFile(FILE * fPtr1, FILE * fPtr2, int * line, int * col)
+{
+    char ch1, ch2;
+    *line = 1;
+    *col  = 0;
+    do
+    {
+        // Input character from both files
+        ch1 = fgetc(fPtr1);
+        ch2 = fgetc(fPtr2);
+        // Increment line
+        if (ch1 == '\n')
+        {
+            *line += 1;
+            *col = 0;
+        }
+        // If characters are not same then return -1
+        if (ch1 != ch2)
+            return -1;
+        *col  += 1;
+    } while (ch1 != EOF && ch2 != EOF);
+    /* If both files have reached end */
+    if (ch1 == EOF && ch2 == EOF)
+        return 0;
+    else
+        return -1;
 }
