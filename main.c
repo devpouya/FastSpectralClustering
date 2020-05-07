@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     // fully-connected matrix
     printf("Constructing fully connected matrix...\n");
     myInt64 start1 = start_tsc();
-    double *fully_connected = malloc(lines * lines * sizeof(double));
+    double *fully_connected = calloc(lines * lines , sizeof(double));
     construct_fully_connected_matrix(points, lines, dim, fully_connected);
 
     printf("Constructing unnormalized Laplacian...\n");

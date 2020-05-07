@@ -29,8 +29,13 @@ static void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n
 void construct_fully_connected_matrix(double *points, int lines, int dim, double *ret) {
     ENTER_FUNC;
     for (int i = 0; i < lines; ++i) {
-        for (int j = 0; j < lines; ++j) {
-            ret[i*lines + j] = fast_gaussian_similarity(&points[i*dim], &points[j*dim], dim);
+        for (int j = i+1; j < lines; ++j) {
+
+            ret[i * lines + j] = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
+
+        }
+        for (int j = 0; j < i; ++j) {
+            ret[i*lines+j] = ret[j*lines+i];
         }
     }
     EXIT_FUNC;
