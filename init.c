@@ -19,8 +19,13 @@ void cumulative_sum(double *probs, int n, int m, double *ret) {
 void init_kpp(double *U, int n, int m,int k, double *ret) {
     ENTER_FUNC;
     // add a random initial point to the centers
+#ifdef VALIDATION
+    srand(30);
+#else
     srand(time(0));
+#endif
     int ind = ((int)rand()%n);
+    printf("ind = %d\n", ind);
     //ret[0] = U[((int)rand()%n)*k];
     for(int j = 0; j < k; j++) {
         ret[j] = U[ind*m+j];
@@ -50,6 +55,7 @@ void init_kpp(double *U, int n, int m,int k, double *ret) {
         int index = 0;
         cumulative_sum(dists,n,m, cumsums);
         double r = rand()/((double)RAND_MAX);
+        printf("r = %lf\n", r);
         for(int i = 0; i < n; i++) {
             if(r < cumsums[i]) {
                 index = i;
