@@ -65,6 +65,7 @@ double l2_norm_squared(double *u, double *v, int dim) {
     return norm;
 }
 
+/*
 double gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_EXPS(1);
@@ -74,7 +75,8 @@ double gaussian_similarity(double *u, double *v, int dim) {
     return inner;
 }
 
-double appx_gaussian_similarity(double *u, double *v, int dim) {
+*/
+double gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_DIVS(0);
     NUM_MULS(5);
