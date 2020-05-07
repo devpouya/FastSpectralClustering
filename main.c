@@ -6,6 +6,7 @@
 #include <time.h>
 #include <lapacke.h>
 #include <inttypes.h>
+#include <sys/time.h>
 
 #include "tsc_x86.h"
 #include "instrumentation.h"
@@ -74,8 +75,9 @@ int main(int argc, char *argv[]) {
     // printf("\n");
 
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
+    printf("%d, %d", lines, k);
 
-    printf("Performing k-means clustering...\n");
+    printf("Performing k-means base_clustering...\n");
     // U (8x2) is the datasets in points.txt for now => k = 2
     // number of cluster <=> # columns of U
 
@@ -88,14 +90,20 @@ int main(int argc, char *argv[]) {
     }
     // try with different max_iter
     // kmeans(points, lines, k, 10, clusters);
+    double timing_start = wtime();
+    //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
+    kmeans(laplacian, lines, lines, k, 100, 0.0001, clusters);
+    double timing = wtime()-timing_start ;
+    printf("Timing of kmeans: %f [sec] \n", timing);
 
-    kmeans(laplacian, lines, k, 100, 0.0001, clusters);
     uint64_t runtime = stop_tsc(start2) + end1;
 
-    print_cluster_indices(clusters, k);
-    write_clustering_result(argv[3], clusters, k);
+    //print_cluster_indices(clusters, k);
 
     printf(" => Runtime: %" PRIu64  " cycles; ops: %" PRIu64 " ops\n", runtime, NUM_FLOPS);
+
+    //write result in output file
+    write_clustering_result(argv[3], clusters, k);
 
     free(fully_connected);
     free(laplacian);
@@ -107,5 +115,23 @@ int main(int argc, char *argv[]) {
     // LEAVE THESE PRINTS (for the performance checking script)
     printf("%" PRIu64 "\n", runtime);
     printf("%" PRIu64 "\n", NUM_FLOPS);
+
+#ifdef VALIDATION
+    char *my_argv; // = {"./base_clustering" , argv[1] , argv[2] , "./base_output"};
+    my_argv = concat("./base_clustering ", argv[1]);
+    my_argv = concat(my_argv, " ");
+    my_argv = concat(my_argv, argv[2]);
+    my_argv = concat(my_argv, " ./base_output");
+    system(my_argv);
+    int line, col;
+    FILE* fpt1 = fopen("./base_output", "r");
+    FILE* fpt2 = fopen(argv[3], "r");
+    if (compareFile(fpt1, fpt2, &line, &col) != 0){
+        printf("ERROR! optimized version gives different result as base clustering\n");
+    }else{
+        printf("Result Correct!\n");
+    }
+#endif
+
     return 0;
 }

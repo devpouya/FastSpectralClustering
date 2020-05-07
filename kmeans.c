@@ -7,162 +7,24 @@
 #include "norms.h"
 #include "instrumentation.h"
 #include "kmeans.h"
+#include "init.h"
 
-static void cumulative_sum(double *probs, int n, double *ret) {
+static void update_means(double *U, int *indices, int k, int n, int m, double *ret) {
     ENTER_FUNC;
-    ret[0] = probs[0];
-    for(int i = 1; i < n; i++) {
-        ret[i] = ret[i-1]+probs[i];
+    NUM_ADDS(n*k);
+    NUM_DIVS(k*k);
+    double *tmp_means = calloc(k * k, sizeof(double));
+    int *sizes = calloc(k, sizeof(int));;
+    for (int i = 0; i < n ; i++) { // iterate over each point
+        for (int j = 0; j < k; j++) { // iterate over each indices
+            tmp_means[indices[i]*k+j] += U[i*m+j];
+        }
+        sizes[indices[i]] += 1;
     }
-    EXIT_FUNC;
-}
-static void init_kpp(double *U, int n, int k, double *ret) {
-    ENTER_FUNC;
-    // add a random initial point to the centers
-    srand(time(0));
-    int ind = ((int)rand()%n);
-    //ret[0] = U[((int)rand()%n)*k];
-    for(int j = 0; j < k; j++) {
-        ret[j] = U[ind*n+j];
-    }
-    double sum = 0;
-    for (int c = 1; c < k; c++) {
-
-        sum = 0;
-        double dists[n];
-        for (int i = 0; i < n; i++) {
-            //find closest point and add to sum
-            double dist = DBL_MAX;
-            for(int j = 0; j < c; j++) {
-                double tmp = l2_norm(&U[i*n],&ret[j*k],k);
-                if (tmp < dist) {
-                    dist = tmp;
-                }
-            }
-            sum += dist;
-            dists[i] = dist;
-
+    for (int i = 0; i < k ; i++) { // iterate over cluster
+        for (int j = 0; j < k; j++) { // iterate over each sizes
+            ret[i*k+j] = tmp_means[i*k+j] / sizes[i];
         }
-        for(int i = 0; i < n; i++) {
-            dists[i] /= sum;
-        }
-        double cumsums[n];
-        int index = 0;
-        cumulative_sum(dists,n,cumsums);
-        double r = rand()/((double)RAND_MAX);
-        for(int i = 0; i < n; i++) {
-            if(r < cumsums[i]) {
-                index = i;
-                printf("picked index:%d\n",index);
-                break;
-            }
-        }
-        for (int i = 0; i < k; i++) {
-
-            for (int j = 0; j < k; j++) {
-                ret[c*k + j] = U[index*n+j];
-            }
-        }
-
-    }
-    EXIT_FUNC;
-}
-
-
-/*
-static void init_rand(double *U, int n, int k, double *ret) {
-    srand(time(0));
-    // knuth algorithm for distinct random values in range
-   int rem, havs;
-
-    rem = 0;
-    int inds[k];
-    for(havs = 0; havs < k && rem < k; ++havs) {
-        int rh = k-havs;
-        int rm = k-rem;
-        if(rand()%rh<rm) {
-            inds[rem++] = havs+1;
-        }
-    }
-    for (int i = 0; i < k; i++) {
-        for (int j = 0; j < k; j++) {
-            NUM_DIVS(1);
-            NUM_MULS(1);
-            NUM_ADDS(2);
-            ret[i*k + j] = U[inds[i]*n+j];
-        }
-    }
-}
-*/
-/*static void init_means(double *U, int n, int k, double *ret) {
-    // find min/max bounds for each dimension
-    // k is the number of columns
-    double bounds[k][2];
-    for (int i = 0; i < k; i++) {  // row represents dimension
-        bounds[i][0] = DBL_MAX;
-        bounds[i][1] = DBL_MIN;
-    } // Right you need to set to opposite value !!
-    for (int i = 0; i < n; i++) { // each line is a point
-        for (int j = 0; j < k; j++) {
-            bounds[j][0] = (U[i*n + j] < bounds[j][0]) ? U[i*n + j] : bounds[j][0];
-            bounds[j][1] = (U[i*n + j] > bounds[j][1]) ? U[i*n + j] : bounds[j][1];
-        }
-    }
-    srand(time(0));
-
-    // generate k random means stores row-wise
-    // ret is k by k
-    for (int i = 0; i < k; i++) {
-        // printf("Center %d: ( ", i);
-        for (int j = 0; j < k; j++) {
-            NUM_DIVS(1);
-            NUM_MULS(1);
-            NUM_ADDS(2);
-            ret[i*k + j] = ( ((double )rand() /RAND_MAX)*(bounds[j][1] - bounds[j][0])) + bounds[j][0];
-            // printf("%lf ", ret[i*k + j]);
-        }
-        // printf(")\n");
-    }
-}*/
-
-
-// mean of each column
-// dimension is the column index along which the mean is computed
-static double compute_mean_of_one_dimension(double *U, int *indices, int size, int n, int dimension) {
-    ENTER_FUNC;
-    double sum = 0;
-    NUM_ADDS(size);
-    NUM_DIVS(1);
-    for (int i = 0; i < size; i++) { // for all points
-        sum += U[indices[i]*n+dimension]; // .. select one dimension
-    }
-    return (size > 0) ? (sum/size) : 0;
-    EXIT_FUNC;
-}
-
-static void update_means(double *U, struct cluster *clusters, int k, int n, double *ret) {
-    ENTER_FUNC;
-    for (int i = 0; i < k; i++) { // iterate over cluster i
-        //    printf("Center %d: ( ", i);
-        for (int j = 0; j < k; j++) { // j is the dimension here
-            ret[i*k + j] = (clusters[i].size > 0) ?
-                           compute_mean_of_one_dimension(U, clusters[i].indices, clusters[i].size, n, j) : clusters[i].mean[j];
-            //    printf("%lf ", ret[i*k + j]);
-        }
-        //    printf(")\n");
-    }
-    EXIT_FUNC;
-}
-
-static void copy_means(struct cluster *clusters, int k, double *means) {
-    ENTER_FUNC;
-    for (int i = 0; i < k; i++) { // iterate over cluster i
-        //    printf("Center %d: ( ", i);
-        for (int j = 0; j < k; j++) { // j is the dimension here
-            means[i*k + j] = clusters[i].mean[j];
-            //    printf("%lf ", ret[i*k + j]);
-        }
-        //    printf(")\n");
     }
     EXIT_FUNC;
 }
@@ -183,51 +45,8 @@ static int find_nearest_cluster_index(double *point, double *means, int k) {
     return index;
 }
 
-static void map_to_nearest_cluster(double *U, int n, int k, double *means, struct cluster *ret) {
-    ENTER_FUNC;
-    // potentially all points can be in the same cluster
-    // find nearest cluster for each point = line
-    int index_nn[n];
-    for (int j = 0; j < n; j++) {
-        index_nn[j] = find_nearest_cluster_index(&U[j * n], means, k); // find nearest mean for this point = line
-    }
-    for (int i = 0; i < k; i++) { // construct cluster one after another
-        int indices[n];
-        int cluster_size = 0; // keep tract of cluster size in # of points
-        for (int j = 0; j < n; j++) {
-            if (index_nn[j] == i) {
-                indices[cluster_size] = j; // store index of U => j
-                cluster_size++;
-            }
-        } // done with point j
-
-        for (int j = 0; j < k; j++) {
-            ret[i].mean[j] = means[i*k+j];
-        }
-        for (int j = 0; j < cluster_size; j++) {
-            ret[i].indices[j] = indices[j];
-        }
-        ret[i].size = cluster_size;
-    } // done with cluster i
-    EXIT_FUNC;
-}
-//
-//static int early_stopping(double *means, struct cluster *clusters, double error, int k) {
-//    NUM_ADDS(k*k);
-//    for (int i = 0; i < k; i++) { // iterate over cluster
-//        for (int j = 0; j < k; j++) { // iterate over each dimension of the mean
-//            if (fabs(means[i*k+j] - clusters[i].mean[j]) > error) {
-//                return 0;
-//            }
-//        }
-//    }
-//    return 1;
-//}
-
-
 /*
  * K-Means Algorithm
- *
  *   1. Choose the number of clusters(K) and obtain the data points: Done
  *   2. Place the centroids c_1, c_2, ..... c_k randomly in [min..max]: Done
  *   3. Repeat steps 4 and 5 until convergence or until the end of a fixed number of iterations
@@ -236,46 +55,44 @@ static void map_to_nearest_cluster(double *U, int n, int k, double *means, struc
  *          - assign the point to that cluster
  *   5. for each cluster j = 1..k
  *          - new centroid = mean of all points assigned to that cluster
- *   6. End
- *
- *   TODO: dynamically allocate and change of size of cluster.points
- *
  */
-void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
+void kmeans(double *U, int n, int m, int k, int max_iter, double stopping_error, struct cluster *ret) {
     ENTER_FUNC;
     // k is the number of columns in U matrix  U is a n by k matrix (here only!)
     int i = 0;
     // each row represents a cluster each column a dimension
     double means[k*k];
+    int indices[n];
     while (i < max_iter) {
-        (i == 0) ? init_kpp(&U[0], n, k, means) : update_means(U, ret, k, n, means);
-
-        // check if the means are stable, if yes => stop
-        if (i > 0) {
-//            if (early_stopping(means, ret, stopping_error, k)) {
-//                break;
-//            }
-            // update means double array (aims to store previous means)
-            copy_means(ret, k, means);
+        if (i < 1) {
+            init_kpp(&U[0], n, m, k, means);
+        } else {
+            update_means(U, indices, k, n, m, means);
         }
-
-        // post condition: means is up-to-date
-        map_to_nearest_cluster(U, n, k, means, ret);
-
+        // for each point find the nearest cluster
+        for (int j = 0; j < n; j++) {
+            indices[j] = find_nearest_cluster_index(&U[j * m], means, k); // find nearest mean for this point = line
+        }
         i++;
     }
-    // print clusters: Cluster i : (1,2) (4,5) etc.
-    for (int j = 0; j < k; j++) {
-        // printf("Cluster %d: ", j);
-        for(int e = 0; e < ret[j].size; e++) {
-            // printf("( ");
-            for (int f = 0; f < n; f++) {
-                // printf("%lf ", U[ret[j].indices[e]*n+f]);
+    // build the clusters into struct cluster
+    int indices_tmp[n];
+    for (int i = 0; i < k; i++) { // construct cluster one after another
+        int cluster_size = 0; // keep tract of cluster size in # of points
+        for (int j = 0; j < n; j++) {
+            if (indices[j] == i) {
+                indices_tmp[cluster_size] = j; // store index of U => j
+                cluster_size++;
             }
-            // printf(")  ");
+        } // done with point j
+        for (int j = 0; j < k; j++) {
+            ret[i].mean[j] = means[i*k+j];
         }
-        // printf("\n");
-    }
+        for (int j = 0; j < cluster_size; j++) {
+            ret[i].indices[j] = indices_tmp[j];
+        }
+        ret[i].size = cluster_size;
+    } // done with cluster i
     EXIT_FUNC;
 }
 

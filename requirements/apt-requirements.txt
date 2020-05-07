@@ -1,2 +1,2 @@
 gnuplot
-liblapacke-dev`
+liblapacke-dev

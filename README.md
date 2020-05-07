@@ -6,15 +6,20 @@
 2. [Project structure](#Structure)
 3. [Installation](#Installation)
 4. [Commands](#Commands)
+5. [Performance plots](#Performance)
+6. [Todo](#Todo)
 
 <a name="Introduction"></a>
 ## Introduction
 
 
-This project implements the Spectral Clustering algorithm as presented in the following paper: https://arxiv.org/abs/0711.0189.
+This project implements the Spectral Clustering algorithm presented in the following paper: https://arxiv.org/abs/0711.0189.
 
-It makes use of various optimization techniques to reach its maximal performance  , such as:
-- i
+It makes use of various optimization techniques to reach its maximal performance , such as:
+- TODO
+
+![6 clusters](output/validation/6_c.png) 
+
 
 <a name="Structure"></a>
 ## Project structure
@@ -63,6 +68,10 @@ On linux, run: `./requirements/install.sh`
 
 ##### linux
 
+Openblas compiler: `git clone https://github.com/xianyi/OpenBLAS.git`, `cd openblas`, `make`
+
+`sudo apt-get install libopenblas-dev`
+
 `sudo apt-get install $(cat requirements/apt-requirements.txt)`
 
 lapack: `sudo apt-get install liblapacke-dev`
@@ -84,7 +93,7 @@ Compile with `make`
 ##### Algorithm 
 
 - `./clustering <path/Dataset.txt> <# of clusters> <path/Output.txt>`, returns the clusters partitions (indices), the clusters sizes,
-the runtime, and the flops
+the runtime, and the flops for each method.
 - e.g.: 
 - ` ./clustering ./datasets/test_points/points.txt 2 out.txt
 `
@@ -111,9 +120,26 @@ the runtime, and the flops
     - `gnuplot -c "scripts/graphs/base_performance.gp" "'base_perf_1000.eps'" "'base_perf_1000.txt'"
 `
 
+<a name="Performance"></a>
+## Performance plots
+
+#### Coarse base performance ( n < 4500)
+
+![base_perf_4500](output/graphs/naive.png) 
+
+#### Naive base performance ( n < 200)
+
+![base_perf_4500](output/graphs/base_perf_200.png) 
+
+
+<a name="Todo"></a>
 ## TODO
 
 - Rerun performance checker for 0 < n ≤ 200 (naïve version)
 - Profiling to discover bottlenecks (extend instrumentation.c with per-function timing)
 - Benchmark alternatives (dlib, subalgorithms)
+    > - sequential kmeans by Northwest University: https://github.com/serban/kmeans.git (remove first line of our dataset)
+    
+    > -
+                                           
 - Optimization

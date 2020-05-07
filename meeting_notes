@@ -1,0 +1,44 @@
+1. show algo
+2. show bottleneck 
+3. make a story about the optimization process:
+    a. don't present all 
+    b. present a story with major optimizations
+    time issue at presentation!
+
+
+Report:
+1. research paper like
+    for instance: vector length not divisible. we don't need explanation about that 
+    make language crispy
+
+2. memory measurements, roofline etc..
+
+5 pages. double columns 
+
+1.5 pages about background
+2-3 pages of only experiments
+
+
+roofline: by changing it to approximation of exp. then we have instruction mix
+no need to hit the roof, but 80-90 percent is reasonable
+
+we can also comparing different types of computation, and brand it as a selling point
+
+don't focus too much on a point which isn't the bottleneck and in consequence 
+doesn't give you big speed up, pick low hanging fruits first!
+
+
+have some prior knowledge of the setting : we have a threshold of cluster size
+make different versions of algorithms depend on the distributions
+
+Everyone will answer questions.
+Key point: don't miss easy points!!!!!!
+
+10 minutes   10 slides
+1-2 minutes introduction, bottlenecks - map to the course material
+4-5 munutes about optimization
+remaining: showing plots about optimization, why sth. works, why sth. doesn't
+            don't show plots which don't make sense.
+            if you can't explain it just say we tried a,b,c and still could not find 
+            the reason.
+
