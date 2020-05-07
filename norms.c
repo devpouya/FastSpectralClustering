@@ -53,7 +53,7 @@ double appx_l2_norm(double *u, double *v, int dim) {
     return appx_sqrt_babylonian(norm);
 }
 
-
+/*
 double gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_EXPS(1);
@@ -65,7 +65,8 @@ double gaussian_similarity(double *u, double *v, int dim) {
     return exp(inner);
 }
 
-double appx_gaussian_similarity(double *u, double *v, int dim) {
+*/
+double gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_DIVS(0);
     NUM_MULS(5);
