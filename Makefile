@@ -1,6 +1,6 @@
 UNAME := $(shell uname)
 
-CFLAGS := -O3 -ffast-math -Wall -Werror -Wno-unused-result -DINSTRUMENTATION -DPROFILING -DVALIDATION
+CFLAGS := -O3 -ffast-math -Wall -Werror -Wno-unused-result
 
 ifeq ($(UNAME), Linux)
 	CC := gcc
@@ -15,6 +15,15 @@ endif
 
 all: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
 	$(CC) $(CFLAGS) -o clustering main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS)
+
+base: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
+	$(CC) $(CFLAGS) -DSEED=30 -o base_clustering main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS)
+
+validation: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
+	$(CC) $(CFLAGS) -DSEED=30 -DVALIDATION -o clustering main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS)
+
+profiling: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
+	$(CC) $(CFLAGS) -DPROFILING -DINSTRUMENTATION -o clustering main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS)
 
 .PHONY clean:
 	rm -rf clustering

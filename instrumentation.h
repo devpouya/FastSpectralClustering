@@ -27,7 +27,7 @@ uint64_t num_flops(void);
 #define NUM_DIVS(n) ((void) 0)
 #define NUM_SQRTS(n) ((void) 0)
 #define NUM_EXPS(n) ((void) 0)
-#define NUM_FLOPS 0
+#define NUM_FLOPS ((uint64_t) 0)
 #endif
 
 #ifdef PROFILING

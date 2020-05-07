@@ -11,6 +11,8 @@
 
 static void update_means(double *U, int *indices, int k, int n, int m, double *ret) {
     ENTER_FUNC;
+    NUM_ADDS(n*k);
+    NUM_DIVS(k*k);
     double *tmp_means = calloc(k * k, sizeof(double));
     int *sizes = calloc(k, sizeof(int));;
     for (int i = 0; i < n ; i++) { // iterate over each point
