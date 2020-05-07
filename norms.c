@@ -93,6 +93,7 @@ double fast_gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_MULS(1);
     double inner = fast_schraudolph_exp(-0.5 * l2_norm_squared(u, v, dim));
+
     EXIT_FUNC;
     return inner;
 }
