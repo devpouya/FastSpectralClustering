@@ -173,7 +173,7 @@ static int find_nearest_cluster_index(double *point, double *means, int k) {
     double gap = DBL_MAX;
     int index = 0;
     for (int i = 0; i < k; i++) { // for every cluster check abs distance to point and take the minimal
-        double norm = l2_norm(point, &means[i*k], k);
+        double norm = l2_norm_squared(point, &means[i*k], k);
         if(norm < gap) {
             gap = norm;
             index = i;

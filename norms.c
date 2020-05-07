@@ -37,8 +37,9 @@ double l2_norm(double *u, double *v, int dim) {
     for (int i = 0; i < dim; i++) {
         norm += (u[i] - v[i]) * (u[i] - v[i]);
     }
+    norm = sqrt(norm);
     EXIT_FUNC;
-    return sqrt(norm);
+    return norm;
 }
 
 double appx_l2_norm(double *u, double *v, int dim) {
@@ -49,28 +50,35 @@ double appx_l2_norm(double *u, double *v, int dim) {
     for (int i = 0; i < dim; i++) {
         norm += (u[i] - v[i]) * (u[i] - v[i]);
     }
+    norm = appx_sqrt_babylonian(norm);
     EXIT_FUNC;
-    return appx_sqrt_babylonian(norm);
+    return norm;
 }
 
+double l2_norm_squared(double *u, double *v, int dim) {
+    ENTER_FUNC;
+    double norm = 0;
+    for (int i = 0; i < dim; i++) {
+        norm += (u[i] - v[i]) * (u[i] - v[i]);
+    }
+    EXIT_FUNC;
+    return norm;
+}
 
 double gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_EXPS(1);
-    NUM_DIVS(0);
-    NUM_MULS(5);
-    double norm = l2_norm(u,v,dim);
-    double inner = -1.0*norm*norm*0.5;
+    NUM_MULS(1);
+    double inner = exp(-0.5 * l2_norm_squared(u, v, dim));
     EXIT_FUNC;
-    return exp(inner);
+    return inner;
 }
 
 double appx_gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_DIVS(0);
     NUM_MULS(5);
-    double norm = l2_norm(u,v,dim); // appx_l2_norm(u,v,dim);
-    double inner = -1.0*norm*norm*0.5;
+    double inner = appx_exp(-0.5 * l2_norm_squared(u, v, dim));
     EXIT_FUNC;
-    return appx_exp(inner);
+    return inner;
 }
