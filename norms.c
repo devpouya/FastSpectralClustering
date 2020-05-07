@@ -24,6 +24,7 @@ double fast_exp(double x) {
     return ((double) x1)/((double) x2);
 }
 
+// http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.9.4508&rep=rep1&type=pdf
 double fast_schraudolph_exp(double x) {
     ENTER_FUNC;
     NUM_MULS(3);
