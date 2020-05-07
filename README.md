@@ -135,11 +135,16 @@ the runtime, and the flops for each method.
 <a name="Todo"></a>
 ## TODO
 
-- Rerun performance checker for 0 < n ≤ 200 (naïve version)
-- Profiling to discover bottlenecks (extend instrumentation.c with per-function timing)
 - Benchmark alternatives (dlib, subalgorithms)
-    > - sequential kmeans by Northwest University: https://github.com/serban/kmeans.git (remove first line of our dataset)
-    
-    > -
+  - sequential kmeans by Northwest University: https://github.com/serban/kmeans.git (remove first line of our dataset)
+  - scikit-learn
+  - MATLAB
                                            
-- Optimization
+- Optimization:
+  - Algorithm-level 
+    - direct computation of Laplacian (Pouya)
+    - more efficient k-means algorithm (Leo, Zuowen, Pouya) (all should read)
+  - Unrolling + accumulators for l2 norm (Zuowen)
+  - Reduce range of exp + use Taylor expansion (Pouya)
+  - Analyze cache behavior of find_nearest_cluster_index (Julien)
+  - roofline plots
