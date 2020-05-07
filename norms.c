@@ -82,7 +82,7 @@ double gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_DIVS(0);
     NUM_MULS(5);
-    double inner = appx_exp(-0.5 * l2_norm_squared(u, v, dim));
+    double inner = /*appx_*/exp(-0.5 * l2_norm_squared(u, v, dim));
     EXIT_FUNC;
     return inner;
 }
