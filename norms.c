@@ -57,6 +57,8 @@ double appx_l2_norm(double *u, double *v, int dim) {
 
 double l2_norm_squared(double *u, double *v, int dim) {
     ENTER_FUNC;
+    NUM_ADDS(3*dim);
+    NUM_MULS(dim);
     double norm = 0;
     for (int i = 0; i < dim; i++) {
         norm += (u[i] - v[i]) * (u[i] - v[i]);
