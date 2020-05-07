@@ -19,8 +19,8 @@ void cumulative_sum(double *probs, int n, int m, double *ret) {
 void init_kpp(double *U, int n, int m,int k, double *ret) {
     ENTER_FUNC;
     // add a random initial point to the centers
-#ifdef VALIDATION
-    srand(30);
+#ifdef SEED
+    srand(SEED);
 #else
     srand(time(0));
 #endif
