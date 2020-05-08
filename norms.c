@@ -24,28 +24,6 @@ double fast_exp(double x) {
     return ((double) x1)/((double) x2);
 }
 
-// http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.9.4508&rep=rep1&type=pdf
-double fast_schraudolph_exp(double x) {
-    ENTER_FUNC;
-    NUM_MULS(3);
-    NUM_ADDS(1);
-    static union {
-        double d;
-        struct{
-#ifdef  LITTLE_ENDIAN
-            int i, j;
-#else
-            int j, i;
-#endif
-
-        } n; } eco;
-
-    eco.n.i = 1512775.3951951856938*x +1072632447;
-    EXIT_FUNC;
-    return eco.d;
-
-
-}
 
 
 double l2_norm(double *u, double *v, int dim) {
@@ -93,7 +71,7 @@ double gaussian_similarity(double *u, double *v, int dim) {
 double fast_gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_MULS(1);
-    double inner = fast_schraudolph_exp(-0.5 * l2_norm_squared(u, v, dim));
+    double inner = EXP(-0.5 * l2_norm_squared(u, v, dim));
 
     EXIT_FUNC;
     return inner;

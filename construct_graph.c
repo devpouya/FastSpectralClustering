@@ -26,20 +26,45 @@ static void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n
     EXIT_FUNC;
 }
 
+
+
 void construct_fully_connected_matrix(double *points, int lines, int dim, double *ret) {
     ENTER_FUNC;
-    for (int i = 0; i < lines; ++i) {
-        for (int j = i+1; j < lines; ++j) {
+    for (int i = 0; i < lines-3; i+=4) {
+        for (int j = i+1; j < lines; j+=4) {
 
             ret[i * lines + j] = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
+            ret[(i+1) * lines + j] = fast_gaussian_similarity(&points[(i+1) * dim], &points[j * dim], dim);
+            ret[(i+2) * lines + j] = fast_gaussian_similarity(&points[(i+2) * dim], &points[j * dim], dim);
+            ret[(i+3) * lines + j] = fast_gaussian_similarity(&points[(i+3) * dim], &points[j * dim], dim);
+
+            ret[i * lines + j+1] = fast_gaussian_similarity(&points[i * dim], &points[(j+1) * dim], dim);
+            ret[(i+1) * lines + j+1] = fast_gaussian_similarity(&points[(i+1) * dim], &points[(j+1) * dim], dim);
+            ret[(i+2) * lines + j+1] = fast_gaussian_similarity(&points[(i+2) * dim], &points[(j+1) * dim], dim);
+            ret[(i+3) * lines + j+1] = fast_gaussian_similarity(&points[(i+3) * dim], &points[(j+1) * dim], dim);
+
+            ret[i * lines + j+2] = fast_gaussian_similarity(&points[i * dim], &points[(j+2) * dim], dim);
+            ret[(i+1) * lines + j+2] = fast_gaussian_similarity(&points[(i+1) * dim], &points[(j+2) * dim], dim);
+            ret[(i+2) * lines + j+2] = fast_gaussian_similarity(&points[(i+2) * dim], &points[(j+2) * dim], dim);
+            ret[(i+3) * lines + j+2] = fast_gaussian_similarity(&points[(i+3) * dim], &points[(j+2) * dim], dim);
+
+            ret[i * lines + j+3] = fast_gaussian_similarity(&points[i * dim], &points[(j+3) * dim], dim);
+            ret[(i+1) * lines + j+3] = fast_gaussian_similarity(&points[(i+1) * dim], &points[(j+3) * dim], dim);
+            ret[(i+2) * lines + j+3] = fast_gaussian_similarity(&points[(i+2) * dim], &points[(j+3) * dim], dim);
+            ret[(i+3) * lines + j+3] = fast_gaussian_similarity(&points[(i+3) * dim], &points[(j+3) * dim], dim);
 
         }
         for (int j = 0; j < i; ++j) {
             ret[i*lines+j] = ret[j*lines+i];
+            ret[(i+1)*lines+j] = ret[j*lines+i+1];
+            ret[(i+2)*lines+j] = ret[j*lines+i+2];
+            ret[(i+3)*lines+j] = ret[j*lines+i+3];
         }
     }
     EXIT_FUNC;
 }
+
+
 
 void construct_eps_neighborhood_matrix(double *points, int lines, int dim, double *ret) {
     ENTER_FUNC;
