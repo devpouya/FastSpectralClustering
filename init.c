@@ -25,7 +25,7 @@ void init_kpp(double *U, int n, int m,int k, double *ret) {
     srand(time(0));
 #endif
     int ind = ((int)rand()%n);
-    printf("ind = %d\n", ind);
+//    printf("ind = %d\n", ind);
     //ret[0] = U[((int)rand()%n)*k];
     for(int j = 0; j < k; j++) {
         ret[j] = U[ind*m+j];
@@ -59,7 +59,7 @@ void init_kpp(double *U, int n, int m,int k, double *ret) {
         for(int i = 0; i < n; i++) {
             if(r < cumsums[i]) {
                 index = i;
-                printf("picked index:%d\n",index);
+//                printf("picked index:%d\n",index);
                 break;
             }
         }

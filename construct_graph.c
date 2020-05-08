@@ -30,7 +30,7 @@ void construct_fully_connected_matrix(double *points, int lines, int dim, double
     ENTER_FUNC;
     for (int i = 0; i < lines; ++i) {
         for (int j = 0; j < lines; ++j) {
-            ret[i*lines + j] = fast_gaussian_similarity(&points[i*dim], &points[j*dim], dim);
+            ret[i*lines + j] = gaussian_similarity(&points[i*dim], &points[j*dim], dim);
         }
     }
     EXIT_FUNC;

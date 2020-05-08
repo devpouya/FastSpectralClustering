@@ -46,32 +46,90 @@ double fast_schraudolph_exp(double x) {
 
 
 }
+//
+//double l2_norm(double *u, double *v, int dim) {
+//    ENTER_FUNC;
+//    NUM_ADDS(3*dim);
+//    NUM_MULS(dim);
+//    NUM_SQRTS(1);
+//
+//    double norm = 0;
+//    int i;
+//    for (i = 0; i < dim; i = i+1) {
+//        norm += (u[i] - v[i]) * (u[i] - v[i]);
+//    }
+//    norm = sqrt(norm);
+//    EXIT_FUNC;
+//    return norm;
+//}
 
-
+//unrolled l2_norm
 double l2_norm(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3*dim);
     NUM_MULS(dim);
     NUM_SQRTS(1);
-    double norm = 0;
-    for (int i = 0; i < dim; i++) {
-        norm += (u[i] - v[i]) * (u[i] - v[i]);
+
+    double norm0, norm1, norm2, norm3, norm4, norm5, norm6, norm7;
+    norm0 = norm1 = norm2 = norm3 = norm4 = norm5 = norm6 = norm7 = 0;
+    int i;
+    for (i = 0; i < dim - 7; i = i+8) {
+        norm0 += (u[i] - v[i]) * (u[i] - v[i]);
+        norm1 += (u[i+1] - v[i+1]) * (u[i+1] - v[i+1]);
+        norm2 += (u[i+2] - v[i+2]) * (u[i+2] - v[i+2]);
+        norm3 += (u[i+3] - v[i+3]) * (u[i+3] - v[i+3]);
+        norm4 += (u[i+4] - v[i+4]) * (u[i+4] - v[i+4]);
+        norm5 += (u[i+5] - v[i+5]) * (u[i+5] - v[i+5]);
+        norm6 += (u[i+6] - v[i+6]) * (u[i+6] - v[i+6]);
+        norm7 += (u[i+7] - v[i+7]) * (u[i+7] - v[i+7]);
     }
-    norm = sqrt(norm);
+    // tail handling
+    for (; i < dim; i++){
+        norm0 += (u[i] - v[i]) * (u[i] - v[i]);
+    }
+
+    double norm = sqrt(norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7);
     EXIT_FUNC;
     return norm;
 }
 
 
 
+//double l2_norm_squared(double *u, double *v, int dim) {
+//    ENTER_FUNC;
+//    NUM_ADDS(3*dim);
+//    NUM_MULS(dim);
+//    double norm = 0;
+//    for (int i = 0; i < dim; i++) {
+//        norm += (u[i] - v[i]) * (u[i] - v[i]);
+//    }
+//    EXIT_FUNC;
+//    return norm;
+//}
+
 double l2_norm_squared(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3*dim);
     NUM_MULS(dim);
-    double norm = 0;
-    for (int i = 0; i < dim; i++) {
-        norm += (u[i] - v[i]) * (u[i] - v[i]);
+
+    double norm0, norm1, norm2, norm3, norm4, norm5, norm6, norm7;
+    norm0 = norm1 = norm2 = norm3 = norm4 = norm5 = norm6 = norm7 = 0;
+    int i;
+    for (i = 0; i < dim - 7; i = i + 8) {
+        norm0 += (u[i] - v[i]) * (u[i] - v[i]);
+        norm1 += (u[i+1] - v[i+1]) * (u[i+1] - v[i+1]);
+        norm2 += (u[i+2] - v[i+2]) * (u[i+2] - v[i+2]);
+        norm3 += (u[i+3] - v[i+3]) * (u[i+3] - v[i+3]);
+        norm4 += (u[i+4] - v[i+4]) * (u[i+4] - v[i+4]);
+        norm5 += (u[i+5] - v[i+5]) * (u[i+5] - v[i+5]);
+        norm6 += (u[i+6] - v[i+6]) * (u[i+6] - v[i+6]);
+        norm7 += (u[i+7] - v[i+7]) * (u[i+7] - v[i+7]);
     }
+    // tail handling
+    for (; i < dim; i++){
+        norm0 += (u[i] - v[i]) * (u[i] - v[i]);
+    }
+    double norm = norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7;
     EXIT_FUNC;
     return norm;
 }
@@ -85,10 +143,6 @@ double gaussian_similarity(double *u, double *v, int dim) {
     EXIT_FUNC;
     return inner;
 }
-
-
-
-
 
 double fast_gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
