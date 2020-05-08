@@ -16,10 +16,14 @@ static int cmp(const void *a, const void *b){
 static void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n, double *ret){
     ENTER_FUNC;
     NUM_ADDS(n*n);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i+=4) {
         double d_i = 0;
-        for (int j = 0; j < n;j++) {
+
+        for (int j = 0; j < n;j+=4) {
                 d_i += weighted_adj_matrix[i * n + j];
+                d_i += weighted_adj_matrix[i * n + j+1];
+                d_i += weighted_adj_matrix[i * n + j+2];
+                d_i += weighted_adj_matrix[i * n + j+3];
         }
         ret[i] = d_i;
     }

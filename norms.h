@@ -1,3 +1,6 @@
+#include <math.h>
+#include "instrumentation.h"
+
 #ifndef _NORMS_H
 #define _NORMS_H
 
@@ -22,8 +25,10 @@ union {
 
 double appx_exp(double x);
 double l2_norm(double *u, double *v, int dim);
+
 double l2_norm_squared(double *u, double *v, int dim);
 double gaussian_similarity(double *u, double *v, int dim);
+
 double fast_gaussian_similarity(double *u, double *v, int dim);
 double appx_gaussian_similarity(double *u, double *v, int dim);
 double fast_LUT_exp(double x);
