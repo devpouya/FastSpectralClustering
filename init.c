@@ -55,7 +55,7 @@ void init_kpp(double *U, int n, int m,int k, double *ret) {
         int index = 0;
         cumulative_sum(dists,n,m, cumsums);
         double r = rand()/((double)RAND_MAX);
-        printf("r = %lf\n", r);
+//        printf("r = %lf\n", r);
         for(int i = 0; i < n; i++) {
             if(r < cumsums[i]) {
                 index = i;
