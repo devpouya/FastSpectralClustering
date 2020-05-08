@@ -63,6 +63,21 @@ double fast_schraudolph_exp(double x) {
 //    return norm;
 //}
 
+/*Returns the square root of n. Note that the function */
+double babylonian_squareRoot(double n)
+{
+    /*We are using n itself as initial approximation
+   This can definitely be improved */
+    double x = n;
+    double y = 1;
+    double e = 0.000001; /* e decides the accuracy level*/
+    while (x - y > e) {
+        x = (x + y) / 2;
+        y = n / x;
+    }
+    return x;
+}
+
 //unrolled l2_norm
 double l2_norm(double *u, double *v, int dim) {
     ENTER_FUNC;
@@ -88,6 +103,7 @@ double l2_norm(double *u, double *v, int dim) {
         norm0 += (u[i] - v[i]) * (u[i] - v[i]);
     }
 
+//    double norm = babylonian_squareRoot(norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7);
     double norm = sqrt(norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7);
     EXIT_FUNC;
     return norm;
