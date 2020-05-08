@@ -19,7 +19,7 @@ static void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n
     for (int i = 0; i < n; i++) {
         double d_i = 0;
         for (int j = 0; j < n;j++) {
-            d_i += weighted_adj_matrix[i*n+ j];
+                d_i += weighted_adj_matrix[i * n + j];
         }
         ret[i] = d_i;
     }
@@ -134,12 +134,26 @@ void construct_unnormalized_laplacian(double *graph, int n, double *ret) {
     // double* degrees = (double *)malloc(n * n * sizeof(double));
     double degrees[n];
     calculate_diagonal_degree_matrix(graph, n, degrees);
-    NUM_ADDS(n*n);
+    //NUM_ADDS(n*n);
+    NUM_MULS(n*n);
     for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            ret[i*n+j] = ((i == j) ? degrees[i] : 0) - graph[i*n+j];
+        for(int j = 0; j < n; j+=4) {
+            //if(i==j) continue; DON'T COMPUTE THE DIAGONAL ELEMENTS (BETTER WHEN VECTORIZING)
+            ret[i * n + j] = -1 * graph[i * n + j];
+
+            ret[i * n + j+1] = -1 * graph[i * n + j+1];
+
+            ret[i * n + j+2] = -1 * graph[i * n + j+2];
+
+            ret[i * n + j+3] = -1 * graph[i * n + j+3];
+
+
         }
+
+        ret[i*n+i] = degrees[i];
+
     }
+
     EXIT_FUNC;
 }
 
