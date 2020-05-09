@@ -14,6 +14,7 @@
 #include "construct_graph.h"
 #include "kmeans.h"
 #include "util.h"
+#include "eig.h"
 
 /*
  * The file that the program reads from is stored in the following format, assuming that
@@ -42,7 +43,7 @@ int main(int argc, char *argv[]) {
     double *points = f.points;
     int k = atoi(argv[2]);
     int n = lines;
-    int lda = n;
+    // int lda = n;
 
     // Construct the matrices and print them
     // fully-connected matrix
@@ -59,21 +60,30 @@ int main(int argc, char *argv[]) {
     //compute the eigendecomposition and take the first k eigenvectors.
     myInt64 end1 = stop_tsc(start1);
     printf("Performing eigenvalue decomposition...\n");
-    double *w = malloc(lines * sizeof(double));
-    lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, laplacian, lda, w);
-    /* Check for convergence */
-    if (info > 0) {
-        fprintf(stderr, "ERROR: The algorithm failed to compute eigenvalues.\n");
-        exit(1);
-    }
+    // double *w = malloc(lines * sizeof(double));
+    // lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, laplacian, lda, w);
+    // /* Check for convergence */
+    // if (info > 0) {
+    //     fprintf(stderr, "ERROR: The algorithm failed to compute eigenvalues.\n");
+    //     exit(1);
+    // }
     myInt64 start2 = start_tsc();
 
     // printf("Eigenvalues:\n");
-    // for (int i = 0; i < n; i++) {
+    // for (int i = 0; i < 5; i++) {
     //     printf("%lf, ", w[i]);
     // }
-    // printf("\n");
+    // printf("\n\n");
 
+    // for (int i = 0; i < n; i++) {
+    //     for (int j = 0; j < 5; j++) {
+    //         printf("%lf, ", laplacian[i*n + j]);
+    //     }
+    //     printf("\n");
+    // }
+    double *eigenvalues = malloc(k * sizeof(double));
+    double *eigenvectors = malloc(n * k * sizeof(double));
+    smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
     printf("%d, %d", lines, k);
 
@@ -92,7 +102,7 @@ int main(int argc, char *argv[]) {
     // kmeans(points, lines, k, 10, clusters);
     double timing_start = wtime();
     //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
-    kmeans(laplacian, lines, lines, k, 100, 0.0001, clusters);
+    kmeans(eigenvectors, lines, k, k, 100, 0.0001, clusters);
     double timing = wtime()-timing_start ;
     printf("Timing of kmeans: %f [sec] \n", timing);
 
@@ -107,7 +117,8 @@ int main(int argc, char *argv[]) {
 
     free(fully_connected);
     free(laplacian);
-    free(w);
+    free(eigenvalues);
+    free(eigenvectors);
     free(f.points);
 
     PROFILER_LIST();

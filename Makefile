@@ -1,29 +1,47 @@
 UNAME := $(shell uname)
+PWD := $(shell pwd)
 
 CFLAGS := -O3 -ffast-math -Wall -Werror -Wno-unused-result
+CINCLUDES := -I$(PWD)/arpack-ng/ICB
 
 ifeq ($(UNAME), Linux)
 	CC := gcc
-	CINCLUDES :=
 	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -llapacke -lm
 endif
 ifeq ($(UNAME), Darwin)
 	CC := gcc-9
-	CINCLUDES := -I/usr/local/Cellar/openblas/0.3.9/include
-	CLIBS := -L/usr/local/Cellar/openblas/0.3.9/lib -lopenblas
+	CINCLUDES += -I/usr/local/Cellar/openblas/0.3.9/include
+	CLIBS := -L/usr/local/Cellar/openblas/0.3.9/lib -lopenblas -lgfortran
 endif
 
-all: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
-	$(CC) $(CFLAGS) -o clustering main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS)
+SRC := main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c eig.c
 
-base: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
-	$(CC) $(CFLAGS) -DSEED=30 -o base_clustering main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS)
+all: clustering
 
-validation: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
-	$(CC) $(CFLAGS) -DSEED=30 -DVALIDATION -o clustering main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS)
+clustering: $(SRC)
+	$(CC) $(CFLAGS) -o clustering $(SRC) arpack-ng/libarpack.a $(CINCLUDES) $(CLIBS)
 
-profiling: main.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
-	$(CC) $(CFLAGS) -DPROFILING -DINSTRUMENTATION -o clustering main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c $(CINCLUDES) $(CLIBS)
+base_clustering: $(SRC)
+	$(CC) $(CFLAGS) -DSEED=30 -o base_clustering $(SRC) arpack-ng/libarpack.a $(CINCLUDES) $(CLIBS)
 
-.PHONY clean:
-	rm -rf clustering
+validation: $(SRC)
+	$(CC) $(CFLAGS) -DSEED=30 -DVALIDATION -o validation $(SRC) arpack-ng/libarpack.a $(CINCLUDES) $(CLIBS)
+
+profiling: $(SRC)
+	$(CC) $(CFLAGS) -DPROFILING -DINSTRUMENTATION -o profiling $(SRC) arpack-ng/libarpack.a $(CINCLUDES) $(CLIBS)
+
+.PHONY: bootstrap-arpack
+bootstrap-arpack:
+	cd arpack-ng && sh bootstrap && cd ..
+
+.PHONY: configure-arpack
+configure-arpack:
+	cd arpack-ng && ./configure --enable-icb && cd ..
+
+.PHONY: arpack
+arpack:
+	cd arpack-ng && cmake -D ICB=ON && make && cd ..
+
+.PHONY: clean
+clean:
+	rm -rf clustering validation profiling
