@@ -43,6 +43,7 @@ static int find_nearest_cluster_index(double *point, double *means, int k) {
     }
     EXIT_FUNC;
     return index;
+
 }
 
 /*
