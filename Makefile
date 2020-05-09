@@ -6,7 +6,7 @@ CINCLUDES := -I$(PWD)/arpack-ng/ICB
 
 ifeq ($(UNAME), Linux)
 	CC := gcc
-	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -llapacke -lm
+	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -lopenblas -lgfortran -lm
 endif
 ifeq ($(UNAME), Darwin)
 	CC := gcc-9
@@ -40,7 +40,7 @@ configure-arpack:
 
 .PHONY: arpack
 arpack:
-	cd arpack-ng && cmake -D ICB=ON && make && cp arpackdef.h ICB/arpackdef.h && cd ..
+	cd arpack-ng && cmake -DICB=ON && make && cp arpackdef.h ICB/arpackdef.h && cd ..
 
 .PHONY: clean
 clean:
