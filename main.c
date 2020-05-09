@@ -46,16 +46,18 @@ int main(int argc, char *argv[]) {
 
     // Construct the matrices and print them
     // fully-connected matrix
-    printf("Constructing fully connected matrix...\n");
+    //printf("Constructing fully connected matrix...\n");
+    printf("Constructing the Laplacian ONE SHOT...\n");
     myInt64 start1 = start_tsc();
-    double *fully_connected = calloc(lines * lines , sizeof(double));
-    construct_fully_connected_matrix(points, lines, dim, fully_connected);
+    //double *fully_connected = calloc(lines * lines , sizeof(double));
+    //construct_fully_connected_matrix(points, lines, dim, fully_connected);
 
     printf("Constructing unnormalized Laplacian...\n");
     // compute unnormalized laplacian
-    double *laplacian = malloc(lines * lines * sizeof(double));
-    construct_unnormalized_laplacian(fully_connected, lines, laplacian);
-
+    //double *laplacian = malloc(lines * lines * sizeof(double));
+    //construct_unnormalized_laplacian(fully_connected, lines, laplacian);
+    double *laplacian = calloc(lines*lines, sizeof(double));
+    oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
     //compute the eigendecomposition and take the first k eigenvectors.
     myInt64 end1 = stop_tsc(start1);
     printf("Performing eigenvalue decomposition...\n");
@@ -105,7 +107,7 @@ int main(int argc, char *argv[]) {
     //write result in output file
     write_clustering_result(argv[3], clusters, k);
 
-    free(fully_connected);
+    //free(fully_connected);
     free(laplacian);
     free(w);
     free(f.points);
