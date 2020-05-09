@@ -42,6 +42,16 @@ void print_matrix(char* desc, int m, int n, double* a, int lda) {
     }
 }
 
+/***
+ * Inspired by http://www.mymathlib.com
+ * */
+void copy_submatrix(double *srcmat, int nrows, int ncols, int dest_cols, double *ret) {
+    int numb_bytes = sizeof(double) * dest_cols;
+
+    for(srcmat+=0; nrows > 0; srcmat += ncols, ret+=dest_cols, nrows--) {
+        memcpy(ret,srcmat,numb_bytes);
+    }
+}
 char* concat(const char *s1, const char *s2)
 {
     char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator

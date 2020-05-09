@@ -80,7 +80,8 @@ int main(int argc, char *argv[]) {
     printf("Performing k-means base_clustering...\n");
     // U (8x2) is the datasets in points.txt for now => k = 2
     // number of cluster <=> # columns of U
-
+    double *small_laplacian = malloc(lines*k* sizeof(double));
+    copy_submatrix(laplacian,lines,lines,k,small_laplacian);
     // init datastructure
     struct cluster clusters[k];
     for (int i = 0; i < k; i++) {
@@ -92,7 +93,7 @@ int main(int argc, char *argv[]) {
     // kmeans(points, lines, k, 10, clusters);
     double timing_start = wtime();
     //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
-    kmeans(laplacian, lines, lines, k, 100, 0.0001, clusters);
+    kmeans(small_laplacian, lines, k, 100, 0.0001, clusters);
     double timing = wtime()-timing_start ;
     printf("Timing of kmeans: %f [sec] \n", timing);
 
@@ -107,6 +108,7 @@ int main(int argc, char *argv[]) {
 
     free(fully_connected);
     free(laplacian);
+    free(small_laplacian);
     free(w);
     free(f.points);
 
