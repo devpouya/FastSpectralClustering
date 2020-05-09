@@ -32,7 +32,7 @@ profiling: $(SRC)
 
 .PHONY: bootstrap-arpack
 bootstrap-arpack:
-	cd arpack-ng && sh bootstrap && cd ..
+	git submodule init && git submodule update && cd arpack-ng && sh bootstrap && cd ..
 
 .PHONY: configure-arpack
 configure-arpack:
@@ -40,7 +40,7 @@ configure-arpack:
 
 .PHONY: arpack
 arpack:
-	cd arpack-ng && cmake -D ICB=ON && make && cd ..
+	cd arpack-ng && cmake -D ICB=ON && make && cp arpackdef.h ICB/arpackdef.h && cd ..
 
 .PHONY: clean
 clean:
