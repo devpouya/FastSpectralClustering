@@ -6,7 +6,7 @@ CINCLUDES := -I$(PWD)/arpack-ng/ICB
 
 ifeq ($(UNAME), Linux)
 	CC := gcc
-	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -lopenblas -lgfortran -lm
+	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -lopenblas -llapacke -lgfortran -lm
 endif
 ifeq ($(UNAME), Darwin)
 	CC := gcc-9
