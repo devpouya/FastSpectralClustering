@@ -9,7 +9,7 @@
 #include "kmeans.h"
 #include "init.h"
 
-static void update_means(double *U, int *indices, int k, int n, int m, double *ret) {
+static void update_means(double *U, int *indices, int k, int n, double *ret) {
     ENTER_FUNC;
     NUM_ADDS(n*k);
     NUM_DIVS(k*k);
@@ -17,7 +17,7 @@ static void update_means(double *U, int *indices, int k, int n, int m, double *r
     int *sizes = calloc(k, sizeof(int));;
     for (int i = 0; i < n ; i++) { // iterate over each point
         for (int j = 0; j < k; j++) { // iterate over each indices
-            tmp_means[indices[i]*k+j] += U[i*m+j];
+            tmp_means[indices[i]*k+j] += U[i*k+j];
         }
         sizes[indices[i]] += 1;
     }
@@ -56,7 +56,7 @@ static int find_nearest_cluster_index(double *point, double *means, int k) {
  *   5. for each cluster j = 1..k
  *          - new centroid = mean of all points assigned to that cluster
  */
-void kmeans(double *U, int n, int m, int k, int max_iter, double stopping_error, struct cluster *ret) {
+void kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
     ENTER_FUNC;
     // k is the number of columns in U matrix  U is a n by k matrix (here only!)
     int i = 0;
@@ -65,13 +65,13 @@ void kmeans(double *U, int n, int m, int k, int max_iter, double stopping_error,
     int indices[n];
     while (i < max_iter) {
         if (i < 1) {
-            init_kpp(&U[0], n, m, k, means);
+            init_kpp(&U[0], n, k, means);
         } else {
-            update_means(U, indices, k, n, m, means);
+            update_means(U, indices, k, n, means);
         }
         // for each point find the nearest cluster
         for (int j = 0; j < n; j++) {
-            indices[j] = find_nearest_cluster_index(&U[j * m], means, k); // find nearest mean for this point = line
+            indices[j] = find_nearest_cluster_index(&U[j * k], means, k); // find nearest mean for this point = line
         }
         i++;
     }

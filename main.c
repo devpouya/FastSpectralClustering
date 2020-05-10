@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     // kmeans(points, lines, k, 10, clusters);
     double timing_start = wtime();
     //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
-    kmeans(eigenvectors, lines, k, k, 100, 0.0001, clusters);
+    kmeans(eigenvectors, lines, k, 100, 0.0001, clusters);
     double timing = wtime()-timing_start ;
     printf("Timing of kmeans: %f [sec] \n", timing);
 
