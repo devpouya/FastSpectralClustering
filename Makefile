@@ -30,6 +30,9 @@ validation: $(SRC)
 profiling: $(SRC)
 	$(CC) $(CFLAGS) -DPROFILING -DINSTRUMENTATION -o profiling $(SRC) arpack-ng/libarpack.a $(CINCLUDES) $(CLIBS)
 
+countops: $(SRC)
+	$(CC) $(CFLAGS) -DINSTRUMENTATION -o countops $(SRC) arpack-ng/libarpack.a $(CINCLUDES) $(CLIBS)
+
 .PHONY: bootstrap-arpack
 bootstrap-arpack:
 	git submodule init && git submodule update && cd arpack-ng && sh bootstrap && cd ..
