@@ -49,7 +49,6 @@ int main(int argc, char *argv[]) {
     // fully-connected matrix
     //printf("Constructing fully connected matrix...\n");
     printf("Constructing the Laplacian ONE SHOT...\n");
-    myInt64 start1 = start_tsc();
     //double *fully_connected = calloc(lines * lines , sizeof(double));
     //construct_fully_connected_matrix(points, lines, dim, fully_connected);
 
@@ -57,6 +56,7 @@ int main(int argc, char *argv[]) {
     // compute unnormalized laplacian
     //double *laplacian = malloc(lines * lines * sizeof(double));
     //construct_unnormalized_laplacian(fully_connected, lines, laplacian);
+    myInt64 start1 = start_tsc();
     double *laplacian = calloc(lines*lines, sizeof(double));
 
     if (dim >=8){
@@ -74,8 +74,6 @@ int main(int argc, char *argv[]) {
     //     fprintf(stderr, "ERROR: The algorithm failed to compute eigenvalues.\n");
     //     exit(1);
     // }
-    myInt64 start2 = start_tsc();
-
     // printf("Eigenvalues:\n");
     // for (int i = 0; i < 5; i++) {
     //     printf("%lf, ", w[i]);
@@ -98,6 +96,8 @@ int main(int argc, char *argv[]) {
     printf("Performing k-means base_clustering...\n");
     // U (8x2) is the datasets in points.txt for now => k = 2
     // number of cluster <=> # columns of U
+
+    myInt64 start2 = start_tsc();
 
     // init datastructure
     struct cluster clusters[k];
