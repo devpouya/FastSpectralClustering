@@ -1,3 +1,6 @@
+#include <math.h>
+#include "instrumentation.h"
+
 #ifndef _NORMS_H
 #define _NORMS_H
 
@@ -19,11 +22,12 @@ union {
 // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.9.4508&rep=rep1&type=pdf
 #define EXP(x) (eco.n.i = 1512775.3951951856938*x +1072632447, eco.d)
 
-
 double appx_exp(double x);
 double l2_norm(double *u, double *v, int dim);
+
 double l2_norm_squared(double *u, double *v, int dim);
 double gaussian_similarity(double *u, double *v, int dim);
+
 double fast_gaussian_similarity(double *u, double *v, int dim);
 double appx_gaussian_similarity(double *u, double *v, int dim);
 double fast_LUT_exp(double x);
