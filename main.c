@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     struct file f = alloc_load_points_from_file(argv[1]);
     int dim = f.dimension;
     int lines = f.lines;
-    double *points = f.points;
+    float *points = f.points;
     int k = atoi(argv[2]);
     int n = lines;
     // int lda = n;
@@ -50,19 +50,19 @@ int main(int argc, char *argv[]) {
     //printf("Constructing fully connected matrix...\n");
     printf("Constructing the Laplacian ONE SHOT...\n");
     myInt64 start1 = start_tsc();
-    //double *fully_connected = calloc(lines * lines , sizeof(double));
+    //float *fully_connected = calloc(lines * lines , sizeof(float));
     //construct_fully_connected_matrix(points, lines, dim, fully_connected);
 
     printf("Constructing unnormalized Laplacian...\n");
     // compute unnormalized laplacian
-    //double *laplacian = malloc(lines * lines * sizeof(double));
+    //float *laplacian = malloc(lines * lines * sizeof(float));
     //construct_unnormalized_laplacian(fully_connected, lines, laplacian);
-    double *laplacian = calloc(lines*lines, sizeof(double));
+    float *laplacian = calloc(lines*lines, sizeof(float));
     oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
     //compute the eigendecomposition and take the first k eigenvectors.
     myInt64 end1 = stop_tsc(start1);
     printf("Performing eigenvalue decomposition...\n");
-    // double *w = malloc(lines * sizeof(double));
+    // float *w = malloc(lines * sizeof(float));
     // lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, laplacian, lda, w);
     // /* Check for convergence */
     // if (info > 0) {
@@ -83,11 +83,11 @@ int main(int argc, char *argv[]) {
     //     }
     //     printf("\n");
     // }
-    double *eigenvalues = malloc(k * sizeof(double));
-    double *eigenvectors = malloc(n * k * sizeof(double));
+    float *eigenvalues = malloc(k * sizeof(float));
+    float *eigenvectors = malloc(n * k * sizeof(float));
     smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
-    // all_eigenvalues(laplacian, n, eigenvalues);
-    // copy_submatrix(laplacian,lines,lines,k,eigenvectors);
+//     all_eigenvalues(laplacian, n, eigenvalues);
+//     copy_submatrix(laplacian,lines,lines,k,eigenvectors);
 
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
     printf("%d, %d", lines, k);
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
     // init datastructure
     struct cluster clusters[k];
     for (int i = 0; i < k; i++) {
-        clusters[i].mean = malloc(k * sizeof(double)); // k is the "dimension" here
+        clusters[i].mean = malloc(k * sizeof(float)); // k is the "dimension" here
         clusters[i].size = 0;
         clusters[i].indices = malloc(lines * sizeof(int)); // at most
     }
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
     // LEAVE THESE PRINTS (for the performance checking script)
     printf("%" PRIu64 "\n", runtime);
     printf("%" PRIu64 "\n", NUM_FLOPS);
-    printf("performance: %lf\n", (double)NUM_FLOPS/runtime);
+    printf("performance: %lf\n", (float)NUM_FLOPS/runtime);
 
 #ifdef VALIDATION
     char *my_argv; // = {"./base_clustering" , argv[1] , argv[2] , "./base_output"};
