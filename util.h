@@ -14,5 +14,7 @@ void copy_submatrix(float *srcmat, int nrows, int ncols, int dest_cols, float *r
 double  wtime(void);
 char* concat(const char *s1, const char *s2);
 int compareFile(FILE * fPtr1, FILE * fPtr2, int * line, int * col);
-
+void update_means(float *U, int *indices, int k, int n, float *ret);
+void print_cluster_indices(struct cluster *clusters, int num_clusters);
+int write_clustering_result(char *file, struct cluster *clusters, int num_clusters);
 #endif

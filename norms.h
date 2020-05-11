@@ -24,11 +24,13 @@ union {
 
 float appx_exp(float x);
 float l2_norm(float *u, float *v, int dim);
-
+float l2_norm_lowdim(float *u, float *v, int dim);
 float l2_norm_squared(float *u, float *v, int dim);
+float l2_norm_squared_lowdim(float *u, float *v, int dim);
 float gaussian_similarity(float *u, float *v, int dim);
 
 float fast_gaussian_similarity(float *u, float *v, int dim);
+float fast_gaussian_similarity_lowdim(float *u, float *v, int dim);
 float appx_gaussian_similarity(float *u, float *v, int dim);
 float fast_LUT_exp(float x);
 float fast_exp(float x);

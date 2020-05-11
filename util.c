@@ -95,3 +95,65 @@ int compareFile(FILE * fPtr1, FILE * fPtr2, int * line, int * col)
     else
         return -1;
 }
+
+void update_means(float *U, int *indices, int k, int n, float *ret) {
+    ENTER_FUNC;
+    NUM_ADDS(n*k);
+    NUM_DIVS(k*k);
+    float *tmp_means = calloc(k * k, sizeof(float));
+    int *sizes = calloc(k, sizeof(int));;
+    for (int i = 0; i < n ; i++) { // iterate over each point
+        for (int j = 0; j < k; j++) { // iterate over each indices
+            tmp_means[indices[i]*k+j] += U[i*k+j];
+        }
+        sizes[indices[i]] += 1;
+    }
+    for (int i = 0; i < k ; i++) { // iterate over cluster
+        for (int j = 0; j < k; j++) { // iterate over each sizes
+            ret[i*k+j] = tmp_means[i*k+j] / sizes[i];
+        }
+    }
+    EXIT_FUNC;
+}
+
+void print_cluster_indices(struct cluster *clusters, int num_clusters){
+    printf("Printing clustered point indices:\n");
+    for (int j = 0; j < num_clusters; j++) {
+        printf("Cluster %d: ", j);
+        printf("( ");
+        for(int e = 0; e < clusters[j].size; e++) {
+            printf("%d ", clusters[j].indices[e]);
+        }
+        printf(")  ");
+        printf("\n");
+    }
+
+    printf("CLUSTER SIZES\n");
+    for(int i = 0; i < num_clusters; i++) {
+        printf("Cluster %d has size: %d\n",i,clusters[i].size);
+    }
+}
+
+
+int write_clustering_result(char *file, struct cluster *clusters, int num_clusters){
+    FILE *fp;
+    fp = fopen(file, "w");
+    // write the number of cluster at the beginning of the output
+    fprintf(fp, "%d\n", num_clusters);
+
+    // write the sizes of each clusters in the second line
+    for (int i = 0; i < num_clusters; i++){
+        fprintf(fp, "%d ", clusters[i].size);
+    }
+    fprintf(fp, "\n");
+
+    //write the indices of points in each cluster, mark the end of the cluster with a new line
+    for (int i = 0; i < num_clusters; i++){
+        for (int j = 0; j < clusters[i].size; j++){
+            fprintf(fp, "%d ", clusters[i].indices[j]);
+        }
+        fprintf(fp, "\n");
+    }
+    fclose(fp);
+    return 0;
+}

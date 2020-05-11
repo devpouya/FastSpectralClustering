@@ -24,7 +24,19 @@ float fast_exp(float x) {
     return ((float) x1)/((float) x2);
 }
 
-
+float l2_norm_lowdim(float *u, float *v, int dim){
+    ENTER_FUNC;
+    NUM_ADDS(3*dim);
+    NUM_MULS(dim);
+    NUM_SQRTS(1);
+    float norm = 0;
+    for (int i = 0; i < dim; i++){
+        norm += (u[i] - v[i]) * (u[i] - v[i]);
+    }
+    norm = sqrt(norm);
+    EXIT_FUNC;
+    return norm;
+}
 
 float l2_norm(float *u, float *v, int dim) {
     ENTER_FUNC;
@@ -56,19 +68,17 @@ float l2_norm(float *u, float *v, int dim) {
     return norm;
 }
 
-
-
-//float l2_norm_squared(float *u, float *v, int dim) {
-//    ENTER_FUNC;
-//    NUM_ADDS(3*dim);
-//    NUM_MULS(dim);
-//    float norm = 0;
-//    for (int i = 0; i < dim; i++) {
-//        norm += (u[i] - v[i]) * (u[i] - v[i]);
-//    }
-//    EXIT_FUNC;
-//    return norm;
-//}
+float l2_norm_squared_lowdim(float *u, float *v, int dim) {
+    ENTER_FUNC;
+    NUM_ADDS(3*dim);
+    NUM_MULS(dim);
+    float norm = 0;
+    for (int i = 0; i < dim; i++) {
+        norm += (u[i] - v[i]) * (u[i] - v[i]);
+    }
+    EXIT_FUNC;
+    return norm;
+}
 
 float l2_norm_squared(float *u, float *v, int dim) {
     ENTER_FUNC;
@@ -112,6 +122,15 @@ float fast_gaussian_similarity(float *u, float *v, int dim) {
     ENTER_FUNC;
     NUM_MULS(1);
     float inner = EXP(-0.5 * l2_norm_squared(u, v, dim));
+
+    EXIT_FUNC;
+    return inner;
+}
+
+float fast_gaussian_similarity_lowdim(float *u, float *v, int dim) {
+    ENTER_FUNC;
+    NUM_MULS(1);
+    float inner = EXP(-0.5 * l2_norm_squared_lowdim(u, v, dim));
 
     EXIT_FUNC;
     return inner;
