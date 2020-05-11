@@ -4,9 +4,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include <lapacke.h>
+#include <arpack.h>
 
-#include "eig.h"
+#include "eigs.h"
 
 static void transpose(double *A, int rows, int cols, double *ret) {
     for (int i = 0; i < rows; i++) {
@@ -16,11 +16,13 @@ static void transpose(double *A, int rows, int cols, double *ret) {
     }
 }
 
-void smallest_eigenvalues(double *A, a_int N, a_int nev, double *ret_eigenvalues, double *ret_eigenvectors) {
+void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, double *ret_eigenvectors) {
     a_int ido = 0;
     char bmat[] = "I";
     char which[] = "SM";
     double tol = 1e-12;
+    a_int N = n;
+    a_int nev = k;
     double resid[N];
     a_int ncv = 2 * nev + 1;
     double V[ncv * N];
@@ -30,7 +32,12 @@ void smallest_eigenvalues(double *A, a_int N, a_int nev, double *ret_eigenvalues
     double workd[3 * N];
     a_int rvec = 1;
     char howmny[] = "A";
-    double* d = ret_eigenvalues;
+    double *d;
+    if (ret_eigenvalues) {
+        d = ret_eigenvalues;
+    } else {
+        d = malloc(k * sizeof(double));
+    }
     a_int select[ncv];
     for (int i = 0; i < ncv; i++) select[i] = 1;
     double *z = malloc(N * nev * sizeof(double));
@@ -69,14 +76,6 @@ void smallest_eigenvalues(double *A, a_int N, a_int nev, double *ret_eigenvalues
     //     }
     //     printf("\n");
     // }
-    free(d);
-}
-
-void all_eigenvalues(double *A, int n, double *ret_eigenvalues) {
-    int lda = n;
-    lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, A, lda, ret_eigenvalues);
-    /* Check for convergence */
-    if (info > 0) {
-        fprintf(stderr, "\033[31mWARNING: The algorithm failed to compute eigenvalues.\033[0m\n");
-    }
+    if (!ret_eigenvalues) free(d);
+    free(z);
 }
