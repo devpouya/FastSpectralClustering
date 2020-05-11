@@ -8,6 +8,7 @@ struct file {
 };
 
 struct file alloc_load_points_from_file(char *file);
+void copy_submatrix(double *srcmat, int nrows, int ncols, int dest_cols, double *ret);
 void print_matrix(char* desc, int m, int n, double* a, int lda);
 
 double  wtime(void);

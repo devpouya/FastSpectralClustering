@@ -5,6 +5,20 @@
 #define LOG2E 1.442695040
 #define LOG_of_2 0.30102999566
 #define LOG_of_2_rec 3.32192809489
+union {
+    double d;
+    struct{
+#ifdef  LITTLE_ENDIAN
+        int i, j;
+#else
+        int j, i;
+#endif
+
+    } n; } eco;
+
+// http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.9.4508&rep=rep1&type=pdf
+#define EXP(x) (eco.n.i = 1512775.3951951856938*x +1072632447, eco.d)
+
 
 double appx_exp(double x);
 double l2_norm(double *u, double *v, int dim);
@@ -14,7 +28,6 @@ double fast_gaussian_similarity(double *u, double *v, int dim);
 double appx_gaussian_similarity(double *u, double *v, int dim);
 double fast_LUT_exp(double x);
 double fast_exp(double x);
-double fast_schraudolph_exp(double x);
 
 
 // LUT

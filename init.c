@@ -7,7 +7,7 @@
 #include "norms.h"
 #include "instrumentation.h"
 
-void cumulative_sum(double *probs, int n, int m, double *ret) {
+void cumulative_sum(double *probs, int n, double *ret) {
     ENTER_FUNC;
     ret[0] = probs[0];
     for(int i = 1; i < n; i++) {
@@ -16,7 +16,7 @@ void cumulative_sum(double *probs, int n, int m, double *ret) {
     EXIT_FUNC;
 }
 
-void init_kpp(double *U, int n, int m,int k, double *ret) {
+void init_kpp(double *U, int n, int k, double *ret) {
     ENTER_FUNC;
     // add a random initial point to the centers
 #ifdef SEED
@@ -28,7 +28,7 @@ void init_kpp(double *U, int n, int m,int k, double *ret) {
 //    printf("ind = %d\n", ind);
     //ret[0] = U[((int)rand()%n)*k];
     for(int j = 0; j < k; j++) {
-        ret[j] = U[ind*m+j];
+        ret[j] = U[ind*k+j];
     }
     double sum = 0;
     for (int c = 1; c < k; c++) {
@@ -39,7 +39,7 @@ void init_kpp(double *U, int n, int m,int k, double *ret) {
             //find closest point and add to sum
             double dist = DBL_MAX;
             for(int j = 0; j < c; j++) {
-                double tmp = l2_norm(&U[i*m],&ret[j*k],k);
+                double tmp = l2_norm(&U[i*k],&ret[j*k],k);
                 if (tmp < dist) {
                     dist = tmp;
                 }
@@ -53,7 +53,7 @@ void init_kpp(double *U, int n, int m,int k, double *ret) {
         }
         double cumsums[n];
         int index = 0;
-        cumulative_sum(dists,n,m, cumsums);
+        cumulative_sum(dists, n, cumsums);
         double r = rand()/((double)RAND_MAX);
 //        printf("r = %lf\n", r);
         for(int i = 0; i < n; i++) {
@@ -66,7 +66,7 @@ void init_kpp(double *U, int n, int m,int k, double *ret) {
         for (int i = 0; i < k; i++) {
 
             for (int j = 0; j < k; j++) {
-                ret[c*k + j] = U[index*m+j];
+                ret[c*k + j] = U[index*k+j];
             }
         }
     }

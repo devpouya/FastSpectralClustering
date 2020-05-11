@@ -30,6 +30,17 @@ struct file alloc_load_points_from_file(char *file) {
     return f;
 }
 
+/***
+ * Inspired by http://www.mymathlib.com
+ * */
+void copy_submatrix(double *srcmat, int nrows, int ncols, int dest_cols, double *ret) {
+    int numb_bytes = sizeof(double) * dest_cols;
+
+    for(srcmat+=0; nrows > 0; srcmat += ncols, ret+=dest_cols, nrows--) {
+        memcpy(ret,srcmat,numb_bytes);
+    }
+}
+
 /* Auxiliary routine: printing a matrix */
 /* copied from intel lapack example: https://software.intel.com/sites/products/documentation/doclib/mkl_sa/11/mkl_lapack_examples/lapacke_cgeev_row.c.htm */
 void print_matrix(char* desc, int m, int n, double* a, int lda) {

@@ -84,6 +84,9 @@ int main(int argc, char *argv[]) {
     double *eigenvalues = malloc(k * sizeof(double));
     double *eigenvectors = malloc(n * k * sizeof(double));
     smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
+    // all_eigenvalues(laplacian, n, eigenvalues);
+    // copy_submatrix(laplacian,lines,lines,k,eigenvectors);
+
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
     printf("%d, %d", lines, k);
 
@@ -102,7 +105,7 @@ int main(int argc, char *argv[]) {
     // kmeans(points, lines, k, 10, clusters);
     double timing_start = wtime();
     //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
-    kmeans(eigenvectors, lines, k, k, 100, 0.0001, clusters);
+    elkan_kmeans(eigenvectors, lines, k, 100, 0.0001, clusters);
     double timing = wtime()-timing_start ;
     printf("Timing of kmeans: %f [sec] \n", timing);
 
@@ -115,11 +118,11 @@ int main(int argc, char *argv[]) {
     //write result in output file
     write_clustering_result(argv[3], clusters, k);
 
-    free(fully_connected);
-    free(laplacian);
-    free(eigenvalues);
-    free(eigenvectors);
-    free(f.points);
+    // free(fully_connected);
+    // free(laplacian);
+    // free(eigenvalues);
+    // free(eigenvectors);
+    // free(f.points);
 
     PROFILER_LIST();
 

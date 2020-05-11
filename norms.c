@@ -24,61 +24,8 @@ double fast_exp(double x) {
     return ((double) x1)/((double) x2);
 }
 
-// http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.9.4508&rep=rep1&type=pdf
-double fast_schraudolph_exp(double x) {
-    ENTER_FUNC;
-    NUM_MULS(3);
-    NUM_ADDS(1);
-    static union {
-        double d;
-        struct{
-#ifdef  LITTLE_ENDIAN
-            int i, j;
-#else
-            int j, i;
-#endif
-
-        } n; } eco;
-
-    eco.n.i = 1512775.3951951856938*x +1072632447;
-    EXIT_FUNC;
-    return eco.d;
 
 
-}
-//
-//double l2_norm(double *u, double *v, int dim) {
-//    ENTER_FUNC;
-//    NUM_ADDS(3*dim);
-//    NUM_MULS(dim);
-//    NUM_SQRTS(1);
-//
-//    double norm = 0;
-//    int i;
-//    for (i = 0; i < dim; i = i+1) {
-//        norm += (u[i] - v[i]) * (u[i] - v[i]);
-//    }
-//    norm = sqrt(norm);
-//    EXIT_FUNC;
-//    return norm;
-//}
-
-/*Returns the square root of n. Note that the function */
-double babylonian_squareRoot(double n)
-{
-    /*We are using n itself as initial approximation
-   This can definitely be improved */
-    double x = n;
-    double y = 1;
-    double e = 0.000001; /* e decides the accuracy level*/
-    while (x - y > e) {
-        x = (x + y) / 2;
-        y = n / x;
-    }
-    return x;
-}
-
-//unrolled l2_norm
 double l2_norm(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3*dim);
@@ -163,7 +110,7 @@ double gaussian_similarity(double *u, double *v, int dim) {
 double fast_gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_MULS(1);
-    double inner = fast_schraudolph_exp(-0.5 * l2_norm_squared(u, v, dim));
+    double inner = EXP(-0.5 * l2_norm_squared(u, v, dim));
 
     EXIT_FUNC;
     return inner;

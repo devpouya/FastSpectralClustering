@@ -20,7 +20,7 @@ void smallest_eigenvalues(double *A, a_int N, a_int nev, double *ret_eigenvalues
     a_int ido = 0;
     char bmat[] = "I";
     char which[] = "SM";
-    double tol = 1e-6;
+    double tol = 1e-12;
     double resid[N];
     a_int ncv = 2 * nev + 1;
     double V[ncv * N];
