@@ -4,9 +4,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include <lapacke.h>
+#include <arpack.h>
 
-#include "eig.h"
+#include "eigs.h"
 
 static void transpose(float *A, int rows, int cols, float *ret) {
     for (int i = 0; i < rows; i++) {
@@ -16,11 +16,13 @@ static void transpose(float *A, int rows, int cols, float *ret) {
     }
 }
 
-void smallest_eigenvalues(float *A, a_int N, a_int nev, float *ret_eigenvalues, float *ret_eigenvectors) {
+void smallest_eigenvalues(float *A, int n, int k, float *ret_eigenvalues, float *ret_eigenvectors) {
     a_int ido = 0;
     char bmat[] = "I";
     char which[] = "SM";
-    float tol = 1e-6;
+    float tol = 1e-12;
+    a_int N = n;
+    a_int nev = k;
     float resid[N];
     a_int ncv = 2 * nev + 1;
     float V[ncv * N];
@@ -30,7 +32,12 @@ void smallest_eigenvalues(float *A, a_int N, a_int nev, float *ret_eigenvalues, 
     float workd[3 * N];
     a_int rvec = 1;
     char howmny[] = "A";
-    float* d = ret_eigenvalues;
+    float *d;
+    if (ret_eigenvalues) {
+        d = ret_eigenvalues;
+    } else {
+        d = malloc(k * sizeof(float));
+    }
     a_int select[ncv];
     for (int i = 0; i < ncv; i++) select[i] = 1;
     float *z = malloc(N * nev * sizeof(float));
@@ -76,20 +83,12 @@ void smallest_eigenvalues(float *A, a_int N, a_int nev, float *ret_eigenvalues, 
 
     transpose(z, N, nev, ret_eigenvectors);
 
-     for (int i = 0; i < N; i++) {
-         for (int j = 0; j < nev; j++) {
-             printf("%f, ", ret_eigenvectors[i*nev + j]);
-         }
-         printf("\n");
-     }
-    free(d);
+    // for (int i = 0; i < N; i++) {
+    //     for (int j = 0; j < nev; j++) {
+    //         printf("%f, ", ret_eigenvectors[i*nev + j]);
+    //     }
+    //     printf("\n");
+    // }
+    if (!ret_eigenvalues) free(d);
+    free(z);
 }
-
-//void all_eigenvalues(float *A, int n, float *ret_eigenvalues) {
-//    int lda = n;
-//    lapack_int info = LAPACKE_ssyev(LAPACK_ROW_MAJOR, 'V', 'U', n, A, lda, ret_eigenvalues);
-//    /* Check for convergence */
-//    if (info > 0) {
-//        fprintf(stderr, "\033[31mWARNING: The algorithm failed to compute eigenvalues.\033[0m\n");
-//    }
-//}

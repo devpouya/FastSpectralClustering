@@ -14,7 +14,7 @@
 #include "construct_graph.h"
 #include "kmeans.h"
 #include "util.h"
-#include "eig.h"
+#include "eigs.h"
 
 /*
  * The file that the program reads from is stored in the following format, assuming that
@@ -91,8 +91,6 @@ int main(int argc, char *argv[]) {
     float *eigenvalues = malloc(k * sizeof(float));
     float *eigenvectors = malloc(n * k * sizeof(float));
     smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
-//     all_eigenvalues(laplacian, n, eigenvalues);
-//     copy_submatrix(laplacian,lines,lines,k,eigenvectors);
 
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
     printf("%d, %d", lines, k);
