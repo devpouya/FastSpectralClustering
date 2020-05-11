@@ -239,8 +239,46 @@ void oneshot_unnormalized_laplacian(double *points, int n, int dim, double *ret)
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
     NUM_ADDS(n*n-n);
+    for (int i = 0; i < n; i++) {
+        double degi;
+        degi =  0;
+        double tmp;
+        for (int j = i+1; j < n; j++) {
+
+            tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
+            degi+=tmp;
+            ret[i*n+j] = tmp;
+
+
+        }
+
+
+        for (int k = 0; k < i; k++) {
+
+            degi+=ret[k*n+i];
+            ret[k*n+i] *= -1;
+            ret[i*n+k] = ret[k*n+i];
+
+
+
+
+        }
+        ret[i*n+i] = degi;
+
+
+    }
+
+
+    EXIT_FUNC;
+}
+
+
+void oneshot_unnormalized_laplacian_roll(double *points, int n, int dim, double *ret) {
+    ENTER_FUNC;
+    NUM_MULS((n*n-n)/2);
+    NUM_ADDS(n*n-n);
     int i;
-    for (i = 0; i < n-7; i+=8) {
+    for (i = 0; i < n; i++) {
         double degi, degi1, degi2, degi3, degi4, degi5, degi6, degi7;
         degi = degi1 = degi2 = degi3 = degi4 = degi5 = degi6 = degi7 = 0;
         double tmp;
