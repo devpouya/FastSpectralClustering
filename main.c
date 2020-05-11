@@ -58,7 +58,12 @@ int main(int argc, char *argv[]) {
     //float *laplacian = malloc(lines * lines * sizeof(float));
     //construct_unnormalized_laplacian(fully_connected, lines, laplacian);
     float *laplacian = calloc(lines*lines, sizeof(float));
-    oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
+
+    if (dim >=8){
+        oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
+    }else{
+        oneshot_unnormalized_laplacian_lowdim(points,lines,dim,laplacian);
+    }
     //compute the eigendecomposition and take the first k eigenvectors.
     myInt64 end1 = stop_tsc(start1);
     printf("Performing eigenvalue decomposition...\n");
@@ -107,7 +112,12 @@ int main(int argc, char *argv[]) {
     // kmeans(points, lines, k, 10, clusters);
     double timing_start = wtime();
     //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
-    elkan_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
+
+    if(k>=8){
+        elkan_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
+    }else{
+        elkan_kmeans_lowdim(eigenvectors, lines, k, 1000, 0.0001, clusters);
+    }
     double timing = wtime()-timing_start ;
     printf("Timing of kmeans: %f [sec] \n", timing);
 
