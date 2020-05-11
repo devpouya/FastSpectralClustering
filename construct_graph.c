@@ -245,31 +245,40 @@ void oneshot_unnormalized_laplacian(float *points, int n, int dim, float *ret) {
         degi =  0;
         float tmp;
         for (int j = i+1; j < n; j++) {
-
             tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
             degi+=tmp;
             ret[i*n+j] = tmp;
-
-
         }
-
-
         for (int k = 0; k < i; k++) {
-
             degi+=ret[k*n+i];
             ret[k*n+i] *= -1;
             ret[i*n+k] = ret[k*n+i];
-
-
-
-
         }
         ret[i*n+i] = degi;
-
-
     }
+    EXIT_FUNC;
+}
 
-
+void oneshot_unnormalized_laplacian_lowdim(float *points, int n, int dim, float *ret) {
+    ENTER_FUNC;
+    NUM_MULS((n*n-n)/2);
+    NUM_ADDS(n*n-n);
+    for (int i = 0; i < n; i++) {
+        float degi;
+        degi =  0;
+        float tmp;
+        for (int j = i+1; j < n; j++) {
+            tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
+            degi+=tmp;
+            ret[i*n+j] = tmp;
+        }
+        for (int k = 0; k < i; k++) {
+            degi+=ret[k*n+i];
+            ret[k*n+i] *= -1;
+            ret[i*n+k] = ret[k*n+i];
+        }
+        ret[i*n+i] = degi;
+    }
     EXIT_FUNC;
 }
 
