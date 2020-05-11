@@ -165,6 +165,7 @@ void construct_fully_connected_matrix(double *points, int lines, int dim, double
             ret[(i+1)*lines+j] = ret[j*lines+i+1];
             ret[(i+2)*lines+j] = ret[j*lines+i+2];
             ret[(i+3)*lines+j] = ret[j*lines+i+3];
+
         }
     }
     EXIT_FUNC;

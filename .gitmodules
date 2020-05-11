@@ -1,0 +1,3 @@
+[submodule "arpack-ng"]
+	path = arpack-ng
+	url = https://github.com/opencollab/arpack-ng.git
