@@ -5,7 +5,7 @@ CFLAGS := -O3 -ffast-math -Wall -Werror -Wno-unused-result
 CINCLUDES := -I$(PWD)/arpack-ng/ICB
 
 ifeq ($(UNAME), Linux)
-	CC := gcc
+	CC := gcc-7
 	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -lopenblas -llapacke -lgfortran -lm
 endif
 ifeq ($(UNAME), Darwin)
@@ -14,7 +14,7 @@ ifeq ($(UNAME), Darwin)
 	CLIBS := -L/usr/local/Cellar/openblas/0.3.9/lib -lopenblas -lgfortran
 endif
 
-SRC := main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c eig.c
+SRC := main.c init.c norms.c construct_graph.c kmeans_elkan.c kmeans_lloyd.c kmeans_harmeley.c util.c instrumentation.c eig.c
 
 all: clustering
 

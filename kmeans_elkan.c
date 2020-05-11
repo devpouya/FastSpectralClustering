@@ -9,7 +9,7 @@
 #include "instrumentation.h"
 #include "kmeans.h"
 #include "init.h"
-#include "utils.h"
+#include "util.h"
 
 #define MAX(x, y) ((x > y) ? x : y)
 
@@ -23,7 +23,7 @@ static float get_dist_centers(int i, int j, float *dist_centers, int k){
 
 static void comp_array_s(float *dist_centers, int k, float *ret_s){
     for(int i =0; i < k; i++){
-        float max = DBL_MAX;
+        float max = FLT_MAX;
         for(int j = 0; j < k; j++){
             if(j!=i){
                 NUM_MULS(1);
@@ -416,3 +416,4 @@ void elkan_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_er
 
     EXIT_FUNC;
 }
+

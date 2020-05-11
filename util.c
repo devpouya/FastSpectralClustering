@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "util.h"
+#include "instrumentation.h"
+#include "kmeans.h"
 
 struct file alloc_load_points_from_file(char *file) {
     FILE *fp;
@@ -116,25 +118,25 @@ void update_means(float *U, int *indices, int k, int n, float *ret) {
     EXIT_FUNC;
 }
 
-void print_cluster_indices(struct cluster *clusters, int num_clusters){
-    printf("Printing clustered point indices:\n");
-    for (int j = 0; j < num_clusters; j++) {
-        printf("Cluster %d: ", j);
-        printf("( ");
-        for(int e = 0; e < clusters[j].size; e++) {
-            printf("%d ", clusters[j].indices[e]);
-        }
-        printf(")  ");
-        printf("\n");
-    }
-
-    printf("CLUSTER SIZES\n");
-    for(int i = 0; i < num_clusters; i++) {
-        printf("Cluster %d has size: %d\n",i,clusters[i].size);
-    }
-}
-
-
+//void print_cluster_indices(struct cluster *clusters, int num_clusters){
+//    printf("Printing clustered point indices:\n");
+//    for (int j = 0; j < num_clusters; j++) {
+//        printf("Cluster %d: ", j);
+//        printf("( ");
+//        for(int e = 0; e < clusters[j].size; e++) {
+//            printf("%d ", clusters[j].indices[e]);
+//        }
+//        printf(")  ");
+//        printf("\n");
+//    }
+//
+//    printf("CLUSTER SIZES\n");
+//    for(int i = 0; i < num_clusters; i++) {
+//        printf("Cluster %d has size: %d\n",i,clusters[i].size);
+//    }
+//}
+//
+//
 int write_clustering_result(char *file, struct cluster *clusters, int num_clusters){
     FILE *fp;
     fp = fopen(file, "w");

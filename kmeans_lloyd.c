@@ -9,14 +9,14 @@
 #include "instrumentation.h"
 #include "kmeans.h"
 #include "init.h"
-#include "utils.h"
+#include "util.h"
 
 #define MAX(x, y) ((x > y) ? x : y)
 
 static int find_nearest_cluster_index(float *point, float *means, int k) {
     ENTER_FUNC;
     // use l2_norm
-    float gap = DBL_MAX;
+    float gap = FLT_MAX;
     int index = 0;
     for (int i = 0; i < k; i++) { // for every cluster check abs distance to point and take the minimal
         float norm = l2_norm_squared(point, &means[i*k], k);
@@ -91,7 +91,7 @@ void lloyd_kmeans(float *U, int n, int k, int max_iter, float stopping_error, st
 static int find_nearest_cluster_index_lowdim(float *point, float *means, int k) {
     ENTER_FUNC;
     // use l2_norm
-    float gap = DBL_MAX;
+    float gap = FLT_MAX;
     int index = 0;
     for (int i = 0; i < k; i++) { // for every cluster check abs distance to point and take the minimal
         float norm = l2_norm_squared_lowdim(point, &means[i*k], k);
@@ -154,3 +154,4 @@ void lloyd_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_er
     } // done with cluster i
     EXIT_FUNC;
 }
+

@@ -37,7 +37,7 @@ void init_kpp(float *U, int n, int k, float *ret) {
         float dists[n];
         for (int i = 0; i < n; i++) {
             //find closest point and add to sum
-            float dist = DBL_MAX;
+            float dist = FLT_MAX;
             for(int j = 0; j < c; j++) {
                 float tmp = l2_norm(&U[i*k],&ret[j*k],k);
                 if (tmp < dist) {

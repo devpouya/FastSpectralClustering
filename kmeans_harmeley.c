@@ -9,6 +9,7 @@
 #include "instrumentation.h"
 #include "kmeans.h"
 #include "init.h"
+#include "util.h"
 
 #define MAX(x, y) ((x > y) ? x : y)
 

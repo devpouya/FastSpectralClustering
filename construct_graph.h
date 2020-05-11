@@ -10,4 +10,5 @@ void construct_normalized_laplacian_rw_matrix(float *weighted_adj_matrix, int nu
 void construct_unnormalized_laplacian(float *graph, int n, float *ret);
 void construct_knn_matrix(float *points, int lines, int dim, int k, float *ret);
 void oneshot_unnormalized_laplacian(float *points, int n, int dim, float *ret);
+void oneshot_unnormalized_laplacian_lowdim(float *points, int n, int dim, float *ret);
 #endif
