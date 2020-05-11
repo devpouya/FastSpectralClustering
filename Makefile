@@ -19,7 +19,7 @@ ifeq ($(UNAME), Darwin)
 	CXXINCLUDES +=  -I/usr/local/Cellar/eigen/3.3.7/include/eigen3
 endif
 
-SRC := main.c init.c norms.c construct_graph.c kmeans_elkan.c kmeans_harmeley.c kmeans_lloyd.c util.c instrumentation.c
+SRC := main.c init.c norms.c construct_graph.c kmeans_elkan.c kmeans_hamerly.c kmeans_lloyd.c util.c instrumentation.c
 ifeq ($(EIGS_SOLVER), arpack)
 	EIGS := eigs_arpack.c arpack-ng/libarpack.a
 else ifeq ($(EIGS_SOLVER), lapack)

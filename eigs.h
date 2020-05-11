@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void smallest_eigenvalues(float *A, int n, int k, float *ret_eigenvalues, float *ret_eigenvectors);
+void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, double *ret_eigenvectors);
 
 #ifdef __cplusplus
 }

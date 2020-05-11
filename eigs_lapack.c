@@ -9,9 +9,9 @@
 #include "eigs.h"
 #include "util.h"
 
-static void all_eigenvalues(float *A, int n, float *ret_eigenvalues) {
+static void all_eigenvalues(double *A, int n, double *ret_eigenvalues) {
     int lda = n;
-    lapack_int info = LAPACKE_ssyev(LAPACK_ROW_MAJOR, 'V', 'U', n, A, lda, ret_eigenvalues);
+    lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, A, lda, ret_eigenvalues);
     /* Check for convergence */
     if (info > 0) {
         fprintf(stderr, "\033[31mWARNING: The algorithm failed to compute eigenvalues.\033[0m\n");
@@ -19,7 +19,7 @@ static void all_eigenvalues(float *A, int n, float *ret_eigenvalues) {
     }
 }
 
-void smallest_eigenvalues(float *A, int n, int k, float *ret_eigenvalues, float *ret_eigenvectors) {
+void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, double *ret_eigenvectors) {
     all_eigenvalues(A, n, ret_eigenvalues);
     copy_submatrix(A, n, n, k, ret_eigenvectors);
 }

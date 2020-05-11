@@ -13,13 +13,13 @@
 
 #define MAX(x, y) ((x > y) ? x : y)
 
-static int find_nearest_cluster_index(float *point, float *means, int k) {
+static int find_nearest_cluster_index(double *point, double *means, int k) {
     ENTER_FUNC;
     // use l2_norm
-    float gap = FLT_MAX;
+    double gap = FLT_MAX;
     int index = 0;
     for (int i = 0; i < k; i++) { // for every cluster check abs distance to point and take the minimal
-        float norm = l2_norm_squared(point, &means[i*k], k);
+        double norm = l2_norm_squared(point, &means[i*k], k);
         if(norm < gap) {
             gap = norm;
             index = i;
@@ -40,12 +40,12 @@ static int find_nearest_cluster_index(float *point, float *means, int k) {
  *   5. for each cluster j = 1..k
  *          - new centroid = mean of all points assigned to that cluster
  */
-void lloyd_kmeans(float *U, int n, int k, int max_iter, float stopping_error, struct cluster *ret) {
+void lloyd_kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
     ENTER_FUNC;
     // k is the number of columns in U matrix  U is a n by k matrix (here only!)
     int i = 0;
     // each row represents a cluster each column a dimension
-    float means[k*k];
+    double means[k*k];
     int indices[n];
     while (i < max_iter) {
         if (i < 1) {
@@ -88,13 +88,13 @@ void lloyd_kmeans(float *U, int n, int k, int max_iter, float stopping_error, st
  *
  *
  */
-static int find_nearest_cluster_index_lowdim(float *point, float *means, int k) {
+static int find_nearest_cluster_index_lowdim(double *point, double *means, int k) {
     ENTER_FUNC;
     // use l2_norm
-    float gap = FLT_MAX;
+    double gap = FLT_MAX;
     int index = 0;
     for (int i = 0; i < k; i++) { // for every cluster check abs distance to point and take the minimal
-        float norm = l2_norm_squared_lowdim(point, &means[i*k], k);
+        double norm = l2_norm_squared_lowdim(point, &means[i*k], k);
         if(norm < gap) {
             gap = norm;
             index = i;
@@ -115,12 +115,12 @@ static int find_nearest_cluster_index_lowdim(float *point, float *means, int k) 
  *   5. for each cluster j = 1..k
  *          - new centroid = mean of all points assigned to that cluster
  */
-void lloyd_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_error, struct cluster *ret) {
+void lloyd_kmeans_lowdim(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
     ENTER_FUNC;
     // k is the number of columns in U matrix  U is a n by k matrix (here only!)
     int i = 0;
     // each row represents a cluster each column a dimension
-    float means[k*k];
+    double means[k*k];
     int indices[n];
     while (i < max_iter) {
         if (i < 1) {

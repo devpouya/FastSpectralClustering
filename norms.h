@@ -9,7 +9,7 @@
 #define LOG_of_2 0.30102999566
 #define LOG_of_2_rec 3.32192809489
 union {
-    float d;
+    double d;
     struct{
 #ifdef  LITTLE_ENDIAN
         int i, j;
@@ -22,22 +22,22 @@ union {
 // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.9.4508&rep=rep1&type=pdf
 #define EXP(x) (eco.n.i = 1512775.3951951856938*x +1072632447, eco.d)
 
-float appx_exp(float x);
-float l2_norm(float *u, float *v, int dim);
-float l2_norm_lowdim(float *u, float *v, int dim);
-float l2_norm_squared(float *u, float *v, int dim);
-float l2_norm_squared_lowdim(float *u, float *v, int dim);
-float gaussian_similarity(float *u, float *v, int dim);
+double appx_exp(double x);
+double l2_norm(double *u, double *v, int dim);
+double l2_norm_lowdim(double *u, double *v, int dim);
+double l2_norm_squared(double *u, double *v, int dim);
+double l2_norm_squared_lowdim(double *u, double *v, int dim);
+double gaussian_similarity(double *u, double *v, int dim);
 
-float fast_gaussian_similarity(float *u, float *v, int dim);
-float fast_gaussian_similarity_lowdim(float *u, float *v, int dim);
-float appx_gaussian_similarity(float *u, float *v, int dim);
-float fast_LUT_exp(float x);
-float fast_exp(float x);
+double fast_gaussian_similarity(double *u, double *v, int dim);
+double fast_gaussian_similarity_lowdim(double *u, double *v, int dim);
+double appx_gaussian_similarity(double *u, double *v, int dim);
+double fast_LUT_exp(double x);
+double fast_exp(double x);
 
 
 // LUT
-static const float ADJUSTMENT_LUT[256] =
+static const double ADJUSTMENT_LUT[256] =
         {
             1.040389835,
             1.039159306,

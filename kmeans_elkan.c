@@ -13,7 +13,7 @@
 
 #define MAX(x, y) ((x > y) ? x : y)
 
-static float get_dist_centers(int i, int j, float *dist_centers, int k){
+static double get_dist_centers(int i, int j, double *dist_centers, int k){
     if(i>j){
         return dist_centers[i*k+j];
     }else{
@@ -21,13 +21,13 @@ static float get_dist_centers(int i, int j, float *dist_centers, int k){
     }
 }
 
-static void comp_array_s(float *dist_centers, int k, float *ret_s){
+static void comp_array_s(double *dist_centers, int k, double *ret_s){
     for(int i =0; i < k; i++){
-        float max = FLT_MAX;
+        double max = FLT_MAX;
         for(int j = 0; j < k; j++){
             if(j!=i){
                 NUM_MULS(1);
-                float half_dist = 0.5*dist_centers[i*k+j];
+                double half_dist = 0.5*dist_centers[i*k+j];
                 if(half_dist < max){
                     max = half_dist;
                 }
@@ -37,23 +37,23 @@ static void comp_array_s(float *dist_centers, int k, float *ret_s){
     }
 }
 
-static void comp_distance_between_centers(float *means, int k, float *ret_dist_centers){
+static void comp_distance_between_centers(double *means, int k, double *ret_dist_centers){
     ENTER_FUNC;
     for(int i = 0; i < k; i++){
         for(int j = 0; j <= i; j++){
             //symmetric matrix, only store in the lower matrix
             //TODO  better way to store (might be not worth it, seems computing the index result in worse execution)
-            float dist = l2_norm(&means[i*k], &means[j*k], k);
+            double dist = l2_norm(&means[i*k], &means[j*k], k);
             ret_dist_centers[i*k+j] = dist;
         }
     }
     EXIT_FUNC;
 }
 
-static void init_elkan(float *U, int n, int k, float *means, float *lb, float *ub, int *indices){
+static void init_elkan(double *U, int n, int k, double *means, double *lb, double *ub, int *indices){
     ENTER_FUNC;
 
-    float dist_centers[k*k];
+    double dist_centers[k*k];
     //initialization
     for(int i = 0; i<k; i++){
         for(int j = 0; j<k; j++){
@@ -68,7 +68,7 @@ static void init_elkan(float *U, int n, int k, float *means, float *lb, float *u
         //then use lemma 1 in https://www.aaai.org/Papers/ICML/2003/ICML03-022.pdf
         //to avoid redundant computation
         int cur_cluster_assigned = 0;
-        float dist_p_c = l2_norm(&U[i * k], &means[0*k], k);
+        double dist_p_c = l2_norm(&U[i * k], &means[0*k], k);
         lb[0*k+0] = 0;
         ub[i] = dist_p_c;
 
@@ -77,7 +77,7 @@ static void init_elkan(float *U, int n, int k, float *means, float *lb, float *u
             NUM_MULS(1);
             if (0.5 * dist_centers[cur_cluster_assigned * k + j] < dist_p_c) {
                 //first compute distance between current point and cluster j's mean
-                float dist_p_c_j = l2_norm(&U[i * k], &means[j * k], k);
+                double dist_p_c_j = l2_norm(&U[i * k], &means[j * k], k);
                 lb[i * k + j] = dist_p_c_j;
                 if (dist_p_c_j < dist_p_c) {
                     //found a closer cluster
@@ -99,23 +99,23 @@ static void init_elkan(float *U, int n, int k, float *means, float *lb, float *u
  * ELKAN
  */
 
-void elkan_kmeans(float *U, int n, int k, int max_iter, float stopping_error, struct cluster *ret) {
+void elkan_kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
     // printf("entering kmeans\n");
     ENTER_FUNC;
     // k is the number of columns in U matrix  U is a n by k matrix (here only!)
 
     // each row represents a cluster each column a dimension
-    float *means = malloc(k*k*sizeof(float));
-    float *new_means = malloc(k*k*sizeof(float));
+    double *means = malloc(k*k*sizeof(double));
+    double *new_means = malloc(k*k*sizeof(double));
     // each row represents the lower bound of the same point x and different centers (total k centers)
-    float *lb = malloc(n*k*sizeof(float));
-    float *ub = malloc(n*sizeof(float));
+    double *lb = malloc(n*k*sizeof(double));
+    double *ub = malloc(n*sizeof(double));
     int *indices = malloc(n*sizeof(int));
 //    int *r = malloc(n*sizeof(int));
     int r;
-    float *dist_centers = malloc(k*k*sizeof(float));
-    float *s_dist_centers = malloc(k*sizeof(float));
-    float delta[k];
+    double *dist_centers = malloc(k*k*sizeof(double));
+    double *s_dist_centers = malloc(k*sizeof(double));
+    double delta[k];
 //    for(int i = 0; i < n ; i++){r[i] = 1;}
 
     init_kpp(&U[0], n, k, means);
@@ -136,7 +136,7 @@ void elkan_kmeans(float *U, int n, int k, int max_iter, float stopping_error, st
         //step 2 and 3
         for (int i = 0; i < n; i++){
             r = 1;
-            float dist_p_c = 0;
+            double dist_p_c = 0;
             if(ub[i] <= s_dist_centers[indices[i]]){
                 //do nothing?
             }else{
@@ -153,7 +153,7 @@ void elkan_kmeans(float *U, int n, int k, int max_iter, float stopping_error, st
                             }
                             NUM_MULS(1);
                             if((dist_p_c > lb[i*k+j]) || (dist_p_c > 0.5*get_dist_centers(indices[i], j, dist_centers, k))){
-                                float dist_p_j = l2_norm(&U[i * k], &means[j*k], k);
+                                double dist_p_j = l2_norm(&U[i * k], &means[j*k], k);
                                 if(dist_p_j < dist_p_c){
                                     indices[i] = j;
                                 }
@@ -174,9 +174,9 @@ void elkan_kmeans(float *U, int n, int k, int max_iter, float stopping_error, st
         for(int i = 0; i<n; i++){
             for(int j = 0; j<k;j++) {
 //                    todo double check this c, m(c)
-                float temp = lb[i * k + j];
-//                float norm_temp =l2_norm(&means[j * k], &new_means[j * k], k);
-//                /*float norm_temp =*/ l2_norm((float[]){1.0, 1.0, 987, 234, 123, 34},(float[]){123,123,123,123,123,123} , 6);
+                double temp = lb[i * k + j];
+//                double norm_temp =l2_norm(&means[j * k], &new_means[j * k], k);
+//                /*double norm_temp =*/ l2_norm((double[]){1.0, 1.0, 987, 234, 123, 34},(double[]){123,123,123,123,123,123} , 6);
                 lb[i * k + j] = MAX(0, temp - delta[j]);
 //                      lb[i*k+j] = 0;
             }
@@ -232,23 +232,23 @@ void elkan_kmeans(float *U, int n, int k, int max_iter, float stopping_error, st
  */
 
 
-static void comp_distance_between_centers_lowdim(float *means, int k, float *ret_dist_centers){
+static void comp_distance_between_centers_lowdim(double *means, int k, double *ret_dist_centers){
     ENTER_FUNC;
     for(int i = 0; i < k; i++){
         for(int j = 0; j <= i; j++){
             //symmetric matrix, only store in the lower matrix
             //TODO  better way to store (might be not worth it, seems computing the index result in worse execution)
-            float dist = l2_norm_lowdim(&means[i*k], &means[j*k], k);
+            double dist = l2_norm_lowdim(&means[i*k], &means[j*k], k);
             ret_dist_centers[i*k+j] = dist;
         }
     }
     EXIT_FUNC;
 }
 
-static void init_elkan_lowdim(float *U, int n, int k, float *means, float *lb, float *ub, int *indices){
+static void init_elkan_lowdim(double *U, int n, int k, double *means, double *lb, double *ub, int *indices){
     ENTER_FUNC;
 
-    float dist_centers[k*k];
+    double dist_centers[k*k];
     //initialization
     for(int i = 0; i<k; i++){
         for(int j = 0; j<k; j++){
@@ -263,7 +263,7 @@ static void init_elkan_lowdim(float *U, int n, int k, float *means, float *lb, f
         //then use lemma 1 in https://www.aaai.org/Papers/ICML/2003/ICML03-022.pdf
         //to avoid redundant computation
         int cur_cluster_assigned = 0;
-        float dist_p_c = l2_norm_lowdim(&U[i * k], &means[0*k], k);
+        double dist_p_c = l2_norm_lowdim(&U[i * k], &means[0*k], k);
         lb[0*k+0] = 0;
         ub[i] = dist_p_c;
 
@@ -272,7 +272,7 @@ static void init_elkan_lowdim(float *U, int n, int k, float *means, float *lb, f
             NUM_MULS(1);
             if (0.5 * dist_centers[cur_cluster_assigned * k + j] < dist_p_c) {
                 //first compute distance between current point and cluster j's mean
-                float dist_p_c_j = l2_norm_lowdim(&U[i * k], &means[j * k], k);
+                double dist_p_c_j = l2_norm_lowdim(&U[i * k], &means[j * k], k);
                 lb[i * k + j] = dist_p_c_j;
                 if (dist_p_c_j < dist_p_c) {
                     //found a closer cluster
@@ -294,23 +294,23 @@ static void init_elkan_lowdim(float *U, int n, int k, float *means, float *lb, f
  * ELKAN
  */
 
-void elkan_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_error, struct cluster *ret) {
+void elkan_kmeans_lowdim(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
     // printf("entering kmeans\n");
     ENTER_FUNC;
     // k is the number of columns in U matrix  U is a n by k matrix (here only!)
 
     // each row represents a cluster each column a dimension
-    float *means = malloc(k*k*sizeof(float));
-    float *new_means = malloc(k*k*sizeof(float));
+    double *means = malloc(k*k*sizeof(double));
+    double *new_means = malloc(k*k*sizeof(double));
     // each row represents the lower bound of the same point x and different centers (total k centers)
-    float *lb = malloc(n*k*sizeof(float));
-    float *ub = malloc(n*sizeof(float));
+    double *lb = malloc(n*k*sizeof(double));
+    double *ub = malloc(n*sizeof(double));
     int *indices = malloc(n*sizeof(int));
 //    int *r = malloc(n*sizeof(int));
     int r;
-    float *dist_centers = malloc(k*k*sizeof(float));
-    float *s_dist_centers = malloc(k*sizeof(float));
-    float delta[k];
+    double *dist_centers = malloc(k*k*sizeof(double));
+    double *s_dist_centers = malloc(k*sizeof(double));
+    double delta[k];
 //    for(int i = 0; i < n ; i++){r[i] = 1;}
 
     init_kpp(&U[0], n, k, means);
@@ -331,7 +331,7 @@ void elkan_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_er
         //step 2 and 3
         for (int i = 0; i < n; i++){
             r = 1;
-            float dist_p_c = 0;
+            double dist_p_c = 0;
             if(ub[i] <= s_dist_centers[indices[i]]){
                 //do nothing?
             }else{
@@ -348,7 +348,7 @@ void elkan_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_er
                         }
                         NUM_MULS(1);
                         if((dist_p_c > lb[i*k+j]) || (dist_p_c > 0.5*get_dist_centers(indices[i], j, dist_centers, k))){
-                            float dist_p_j = l2_norm_lowdim(&U[i * k], &means[j*k], k);
+                            double dist_p_j = l2_norm_lowdim(&U[i * k], &means[j*k], k);
                             if(dist_p_j < dist_p_c){
                                 indices[i] = j;
                             }
@@ -369,9 +369,9 @@ void elkan_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_er
         for(int i = 0; i<n; i++){
             for(int j = 0; j<k;j++) {
 //                    todo double check this c, m(c)
-                float temp = lb[i * k + j];
-//                float norm_temp =l2_norm(&means[j * k], &new_means[j * k], k);
-//                /*float norm_temp =*/ l2_norm((float[]){1.0, 1.0, 987, 234, 123, 34},(float[]){123,123,123,123,123,123} , 6);
+                double temp = lb[i * k + j];
+//                double norm_temp =l2_norm(&means[j * k], &new_means[j * k], k);
+//                /*double norm_temp =*/ l2_norm((double[]){1.0, 1.0, 987, 234, 123, 34},(double[]){123,123,123,123,123,123} , 6);
                 lb[i * k + j] = MAX(0, temp - delta[j]);
 //                      lb[i*k+j] = 0;
             }

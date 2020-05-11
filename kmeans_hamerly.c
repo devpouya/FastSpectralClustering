@@ -18,8 +18,8 @@
  * 1) init DS
  * 2) init kpp
  */
-static void initialize(float *clusters_center, float *U, int *clusters_size, float *upper_bounds
-        , float *lower_bounds, int *cluster_assignments, int k, int n) {
+static void initialize(double *clusters_center, double *U, int *clusters_size, double *upper_bounds
+        , double *lower_bounds, int *cluster_assignments, int k, int n) {
     ENTER_FUNC;
     clusters_size[0] = n; // first contains all
     for (int i = 1; i < k; i++) {
@@ -41,14 +41,14 @@ static void initialize(float *clusters_center, float *U, int *clusters_size, flo
  * 1) find the two closest centers,
  * 2) update the bounds if closest changed, the assignments and the cluster sizes
  */
-static void point_all_clusters(float *U, float *clusters_center, int *cluster_assignments
-        , float *upper_bounds, float *lower_bounds, int *clusters_size, int k, int i) {
+static void point_all_clusters(double *U, double *clusters_center, int *cluster_assignments
+        , double *upper_bounds, double *lower_bounds, int *clusters_size, int k, int i) {
     ENTER_FUNC;
     int closest_center_1 = 0;
-    float closest_center_1_dist = FLT_MAX;
-    float closest_center_2_dist = FLT_MAX;
+    double closest_center_1_dist = FLT_MAX;
+    double closest_center_2_dist = FLT_MAX;
     for (int j = 0; j < k; j++) {
-        float dist = l2_norm(U + i * k, clusters_center + j * k, k);
+        double dist = l2_norm(U + i * k, clusters_center + j * k, k);
         // Find distance between the point and the center.
         if (dist < closest_center_1_dist) {
             closest_center_2_dist = closest_center_1_dist;
@@ -77,12 +77,12 @@ static void point_all_clusters(float *U, float *clusters_center, int *cluster_as
  * 2) reassign new centers
  * return maximal dist moved;
  */
-static float move_centers(float *new_clusters_centers, int *clusters_size, float *clusters_center
-        , float *centers_dist_moved, int k) {
+static double move_centers(double *new_clusters_centers, int *clusters_size, double *clusters_center
+        , double *centers_dist_moved, int k) {
     ENTER_FUNC;
-    float dist_moved = 0;
+    double dist_moved = 0;
     for (int j = 0; j < k; j++) {
-        float dist = 0;
+        double dist = 0;
         if (clusters_size[j] > 0) {
             for (int l = 0; l < k; l++) { // update
                 if (new_clusters_centers[j*k + l] == clusters_size[j]) {
@@ -107,8 +107,8 @@ static float move_centers(float *new_clusters_centers, int *clusters_size, float
  * ALGO 5 - UPDATE BOUNDS ---------------------------------------------------------
  * 1) update the new bounds
  */
-static void update_bounds(float *upper_bounds, float *lower_bounds, float *centers_dist_moved
-        , int *cluster_assignments, float max_dist_moved, int n) {
+static void update_bounds(double *upper_bounds, double *lower_bounds, double *centers_dist_moved
+        , int *cluster_assignments, double max_dist_moved, int n) {
     ENTER_FUNC;
     for (int i = 0; i < n; i++) {
         NUM_ADDS(2);
@@ -123,26 +123,26 @@ static void update_bounds(float *upper_bounds, float *lower_bounds, float *cente
  * Implementation of the following algorithms as presented in the paper:
  *      https://epubs.siam.org/doi/pdf/10.1137/1.9781611972801.12
  */
-void hamerly_kmeans(float *U, int n, int k, int max_iter, float stopping_error, struct cluster *ret) {
+void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
     ENTER_FUNC;
     // initial centers
-    float clusters_center[k*k];
+    double clusters_center[k*k];
     // tmp for next iteration
-    float new_clusters_centers[k*k];
+    double new_clusters_centers[k*k];
     // cluster sizes
     int clusters_size[k];
     // n upper bounds (of closest center)
-    float upper_bounds[n];
+    double upper_bounds[n];
     // n lower bounds (of 2nd strict closest center)
-    float lower_bounds[n];
+    double lower_bounds[n];
     // stores cluster index for all points
     int cluster_assignments[n];
     // Algorithm 2: init + kpp -------------------
     initialize(clusters_center, U, clusters_size, upper_bounds, lower_bounds, cluster_assignments, k, n);
     // Distance to nearest other cluster for each cluster.
-    float dist_nearest_cluster[k];
+    double dist_nearest_cluster[k];
     // distance of centers moved between two iteration
-    float centers_dist_moved[k];
+    double centers_dist_moved[k];
     int iteration = 0;
     while (iteration < max_iter) {
         // Initialization after each iteration
@@ -151,10 +151,10 @@ void hamerly_kmeans(float *U, int n, int k, int max_iter, float stopping_error, 
         }
         // min distance between each two centers {update s} --------------------------
         for (int i = 0; i < k; i++) { // for each cluster
-            float min_dist = FLT_MAX;
+            double min_dist = FLT_MAX;
             for (int j = 0; j < k; j++) { // look at the distances to all cluster
                 if (i != j) { // is 0
-                    float dist = 0;
+                    double dist = 0;
                     for (int l = 0; l < k; l++) { // iterate over column = dimension
                         NUM_MULS(1);
                         NUM_ADDS(3);
@@ -174,7 +174,7 @@ void hamerly_kmeans(float *U, int n, int k, int max_iter, float stopping_error, 
         // ALGO 1: line 5
         for (int i = 0; i < n; i++) {
             // line 6: max_d = max(s(a(i))/2, l(i)) ???
-            float max_d = fmax(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
+            double max_d = fmax(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
             // ALGO 1: line7: {first bound test}
             if (upper_bounds[i] > max_d) {
                 upper_bounds[i] = l2_norm(U + i * k, clusters_center + cluster_assignments[i] * k, k);
@@ -194,12 +194,12 @@ void hamerly_kmeans(float *U, int n, int k, int max_iter, float stopping_error, 
             }
         }
         // ALGO 4 - MOVE-CENTERS: check for distance moved then move the centers ---------
-        float max_dist_moved = move_centers(new_clusters_centers, clusters_size
+        double max_dist_moved = move_centers(new_clusters_centers, clusters_size
                 , clusters_center, centers_dist_moved, k);
         // ALGO 5 - Update-bounds : for all U update upper and lower distance bounds ---------------
         update_bounds(upper_bounds, lower_bounds, centers_dist_moved, cluster_assignments, max_dist_moved, n);
         // transfer new state to current
-        memcpy(clusters_center, new_clusters_centers, k * k * sizeof(float));
+        memcpy(clusters_center, new_clusters_centers, k * k * sizeof(double));
         iteration++;
     }
     // write into convenient data-structure struct cluster
@@ -242,14 +242,14 @@ void hamerly_kmeans(float *U, int n, int k, int max_iter, float stopping_error, 
  * 1) find the two closest centers,
  * 2) update the bounds if closest changed, the assignments and the cluster sizes
  */
-static void point_all_clusters_lowdim(float *U, float *clusters_center, int *cluster_assignments
-        , float *upper_bounds, float *lower_bounds, int *clusters_size, int k, int i) {
+static void point_all_clusters_lowdim(double *U, double *clusters_center, int *cluster_assignments
+        , double *upper_bounds, double *lower_bounds, int *clusters_size, int k, int i) {
     ENTER_FUNC;
     int closest_center_1 = 0;
-    float closest_center_1_dist = FLT_MAX;
-    float closest_center_2_dist = FLT_MAX;
+    double closest_center_1_dist = FLT_MAX;
+    double closest_center_2_dist = FLT_MAX;
     for (int j = 0; j < k; j++) {
-        float dist = l2_norm_lowdim(U + i * k, clusters_center + j * k, k);
+        double dist = l2_norm_lowdim(U + i * k, clusters_center + j * k, k);
         // Find distance between the point and the center.
         if (dist < closest_center_1_dist) {
             closest_center_2_dist = closest_center_1_dist;
@@ -278,12 +278,12 @@ static void point_all_clusters_lowdim(float *U, float *clusters_center, int *clu
  * 2) reassign new centers
  * return maximal dist moved;
  */
-static float move_centers_lowdim(float *new_clusters_centers, int *clusters_size, float *clusters_center
-        , float *centers_dist_moved, int k) {
+static double move_centers_lowdim(double *new_clusters_centers, int *clusters_size, double *clusters_center
+        , double *centers_dist_moved, int k) {
     ENTER_FUNC;
-    float dist_moved = 0;
+    double dist_moved = 0;
     for (int j = 0; j < k; j++) {
-        float dist = 0;
+        double dist = 0;
         if (clusters_size[j] > 0) {
             for (int l = 0; l < k; l++) { // update
                 if (new_clusters_centers[j*k + l] == clusters_size[j]) {
@@ -310,26 +310,26 @@ static float move_centers_lowdim(float *new_clusters_centers, int *clusters_size
  * Implementation of the following algorithms as presented in the paper:
  *      https://epubs.siam.org/doi/pdf/10.1137/1.9781611972801.12
  */
-void hamerly_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_error, struct cluster *ret) {
+void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stopping_error, struct cluster *ret) {
     ENTER_FUNC;
     // initial centers
-    float clusters_center[k*k];
+    double clusters_center[k*k];
     // tmp for next iteration
-    float new_clusters_centers[k*k];
+    double new_clusters_centers[k*k];
     // cluster sizes
     int clusters_size[k];
     // n upper bounds (of closest center)
-    float upper_bounds[n];
+    double upper_bounds[n];
     // n lower bounds (of 2nd strict closest center)
-    float lower_bounds[n];
+    double lower_bounds[n];
     // stores cluster index for all points
     int cluster_assignments[n];
     // Algorithm 2: init + kpp -------------------
     initialize(clusters_center, U, clusters_size, upper_bounds, lower_bounds, cluster_assignments, k, n);
     // Distance to nearest other cluster for each cluster.
-    float dist_nearest_cluster[k];
+    double dist_nearest_cluster[k];
     // distance of centers moved between two iteration
-    float centers_dist_moved[k];
+    double centers_dist_moved[k];
     int iteration = 0;
     while (iteration < max_iter) {
         // Initialization after each iteration
@@ -338,10 +338,10 @@ void hamerly_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_
         }
         // min distance between each two centers {update s} --------------------------
         for (int i = 0; i < k; i++) { // for each cluster
-            float min_dist = FLT_MAX;
+            double min_dist = FLT_MAX;
             for (int j = 0; j < k; j++) { // look at the distances to all cluster
                 if (i != j) { // is 0
-                    float dist = 0;
+                    double dist = 0;
                     for (int l = 0; l < k; l++) { // iterate over column = dimension
                         NUM_MULS(1);
                         NUM_ADDS(3);
@@ -361,7 +361,7 @@ void hamerly_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_
         // ALGO 1: line 5
         for (int i = 0; i < n; i++) {
             // line 6: max_d = max(s(a(i))/2, l(i)) ???
-            float max_d = fmax(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
+            double max_d = fmax(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
             // ALGO 1: line7: {first bound test}
             if (upper_bounds[i] > max_d) {
                 upper_bounds[i] = l2_norm_lowdim(U + i * k, clusters_center + cluster_assignments[i] * k, k);
@@ -381,12 +381,12 @@ void hamerly_kmeans_lowdim(float *U, int n, int k, int max_iter, float stopping_
             }
         }
         // ALGO 4 - MOVE-CENTERS: check for distance moved then move the centers ---------
-        float max_dist_moved = move_centers_lowdim(new_clusters_centers, clusters_size
+        double max_dist_moved = move_centers_lowdim(new_clusters_centers, clusters_size
                 , clusters_center, centers_dist_moved, k);
         // ALGO 5 - Update-bounds : for all U update upper and lower distance bounds ---------------
         update_bounds(upper_bounds, lower_bounds, centers_dist_moved, cluster_assignments, max_dist_moved, n);
         // transfer new state to current
-        memcpy(clusters_center, new_clusters_centers, k * k * sizeof(float));
+        memcpy(clusters_center, new_clusters_centers, k * k * sizeof(double));
         iteration++;
     }
     // write into convenient data-structure struct cluster

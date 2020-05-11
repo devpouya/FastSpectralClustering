@@ -19,10 +19,10 @@ struct file alloc_load_points_from_file(char *file) {
     int dim;
     fscanf(fp, "%d\n", &dim);
     printf("Dimension = %d \n" , dim);
-    float *points = malloc(lines * dim * sizeof(float));
+    double *points = malloc(lines * dim * sizeof(double));
     for (int i = 0; i < lines; ++i) {
         for (int j = 0; j < dim; ++j){
-            fscanf(fp, "%f", &points[i*dim + j]);
+            fscanf(fp, "%lf", &points[i*dim + j]);
         }
     }
     struct file f;
@@ -35,8 +35,8 @@ struct file alloc_load_points_from_file(char *file) {
 /***
  * Inspired by http://www.mymathlib.com
  * */
-void copy_submatrix(float *srcmat, int nrows, int ncols, int dest_cols, float *ret) {
-    int numb_bytes = sizeof(float) * dest_cols;
+void copy_submatrix(double *srcmat, int nrows, int ncols, int dest_cols, double *ret) {
+    int numb_bytes = sizeof(double) * dest_cols;
 
     for(srcmat+=0; nrows > 0; srcmat += ncols, ret+=dest_cols, nrows--) {
         memcpy(ret,srcmat,numb_bytes);
@@ -45,7 +45,7 @@ void copy_submatrix(float *srcmat, int nrows, int ncols, int dest_cols, float *r
 
 /* Auxiliary routine: printing a matrix */
 /* copied from intel lapack example: https://software.intel.com/sites/products/documentation/doclib/mkl_sa/11/mkl_lapack_examples/lapacke_cgeev_row.c.htm */
-void print_matrix(char* desc, int m, int n, float* a, int lda) {
+void print_matrix(char* desc, int m, int n, double* a, int lda) {
     int i, j;
     printf( "\n %s\n", desc );
     for( i = 0; i < m; i++ ) {
@@ -98,11 +98,11 @@ int compareFile(FILE * fPtr1, FILE * fPtr2, int * line, int * col)
         return -1;
 }
 
-void update_means(float *U, int *indices, int k, int n, float *ret) {
+void update_means(double *U, int *indices, int k, int n, double *ret) {
     ENTER_FUNC;
     NUM_ADDS(n*k);
     NUM_DIVS(k*k);
-    float *tmp_means = calloc(k * k, sizeof(float));
+    double *tmp_means = calloc(k * k, sizeof(double));
     int *sizes = calloc(k, sizeof(int));;
     for (int i = 0; i < n ; i++) { // iterate over each point
         for (int j = 0; j < k; j++) { // iterate over each indices

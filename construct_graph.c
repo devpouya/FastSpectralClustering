@@ -6,19 +6,19 @@
 #include "instrumentation.h"
 #include "construct_graph.h"
 
-static float *TheArray;
+static double *TheArray;
 static int cmp(const void *a, const void *b){
     int ia = *(int *)a;
     int ib = *(int *)b;
     return (TheArray[ia] > TheArray[ib]) - (TheArray[ia] < TheArray[ib]);
 }
 
-static inline void calculate_diagonal_degree_matrix(float * weighted_adj_matrix, int n, float *ret){
+static inline void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n, double *ret){
     ENTER_FUNC;
     NUM_ADDS(n*n);
     int i;
     for (i = 0; i < n-7; i+=8) {
-        float d_i = 0,d_i1 = 0,d_i2= 0,d_i3 = 0,d_i4 = 0,d_i5 = 0,d_i6 = 0,d_i7 = 0;
+        double d_i = 0,d_i1 = 0,d_i2= 0,d_i3 = 0,d_i4 = 0,d_i5 = 0,d_i6 = 0,d_i7 = 0;
         int j;
         for (j = 0; j < n-7;j+=8) {
             d_i += weighted_adj_matrix[i * n + j];
@@ -116,7 +116,7 @@ static inline void calculate_diagonal_degree_matrix(float * weighted_adj_matrix,
     }
 
     for (; i < n; i++) {
-        float d_i = 0;
+        double d_i = 0;
         int j;
         for (j = 0; j < n;j++) {
             d_i += weighted_adj_matrix[i * n + j];
@@ -134,7 +134,7 @@ static inline void calculate_diagonal_degree_matrix(float * weighted_adj_matrix,
 
 
 
-void construct_fully_connected_matrix(float *points, int lines, int dim, float *ret) {
+void construct_fully_connected_matrix(double *points, int lines, int dim, double *ret) {
     ENTER_FUNC;
     for (int i = 0; i < lines-3; i+=4) {
         for (int j = i+1; j < lines; j+=4) {
@@ -173,7 +173,7 @@ void construct_fully_connected_matrix(float *points, int lines, int dim, float *
 
 
 
-void construct_eps_neighborhood_matrix(float *points, int lines, int dim, float *ret) {
+void construct_eps_neighborhood_matrix(double *points, int lines, int dim, double *ret) {
     ENTER_FUNC;
     for (int i = 0; i < lines; ++i) {
         for (int j = 0; j < lines; ++j) {
@@ -183,9 +183,9 @@ void construct_eps_neighborhood_matrix(float *points, int lines, int dim, float 
     EXIT_FUNC;
 }
 
-void construct_normalized_laplacian_sym_matrix(float *weighted_adj_matrix, int num_points, float *ret){
+void construct_normalized_laplacian_sym_matrix(double *weighted_adj_matrix, int num_points, double *ret){
     ENTER_FUNC;
-    float sqrt_inv_degree_matrix[num_points];  // '1-d' array
+    double sqrt_inv_degree_matrix[num_points];  // '1-d' array
     calculate_diagonal_degree_matrix(weighted_adj_matrix, num_points, sqrt_inv_degree_matrix); //load degree_matrix temporarily in sqrt_inv_degree_matrix
     NUM_SQRTS(num_points);
     for (int i =0; i < num_points; i++){
@@ -214,9 +214,9 @@ void construct_normalized_laplacian_sym_matrix(float *weighted_adj_matrix, int n
     EXIT_FUNC;
 }
 
-void construct_normalized_laplacian_rw_matrix(float *weighted_adj_matrix, int num_points, float *ret) {
+void construct_normalized_laplacian_rw_matrix(double *weighted_adj_matrix, int num_points, double *ret) {
     ENTER_FUNC;
-    float inv_degree_matrix[num_points];
+    double inv_degree_matrix[num_points];
     calculate_diagonal_degree_matrix(weighted_adj_matrix, num_points, inv_degree_matrix); //load degree_matrix temporarily in sqrt_inv_degree_matrix
     NUM_SQRTS(num_points);
     for (int i = 0; i < num_points; i++){
@@ -236,14 +236,14 @@ void construct_normalized_laplacian_rw_matrix(float *weighted_adj_matrix, int nu
     EXIT_FUNC;
 }
 
-void oneshot_unnormalized_laplacian(float *points, int n, int dim, float *ret) {
+void oneshot_unnormalized_laplacian(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
     NUM_ADDS(n*n-n);
     for (int i = 0; i < n; i++) {
-        float degi;
+        double degi;
         degi =  0;
-        float tmp;
+        double tmp;
         for (int j = i+1; j < n; j++) {
             tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
             degi+=tmp;
@@ -259,14 +259,14 @@ void oneshot_unnormalized_laplacian(float *points, int n, int dim, float *ret) {
     EXIT_FUNC;
 }
 
-void oneshot_unnormalized_laplacian_lowdim(float *points, int n, int dim, float *ret) {
+void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
     NUM_ADDS(n*n-n);
     for (int i = 0; i < n; i++) {
-        float degi;
+        double degi;
         degi =  0;
-        float tmp;
+        double tmp;
         for (int j = i+1; j < n; j++) {
             tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
             degi+=tmp;
@@ -283,15 +283,15 @@ void oneshot_unnormalized_laplacian_lowdim(float *points, int n, int dim, float 
 }
 
 
-void oneshot_unnormalized_laplacian_roll(float *points, int n, int dim, float *ret) {
+void oneshot_unnormalized_laplacian_roll(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
     NUM_ADDS(n*n-n);
     int i;
     for (i = 0; i < n; i++) {
-        float degi, degi1, degi2, degi3, degi4, degi5, degi6, degi7;
+        double degi, degi1, degi2, degi3, degi4, degi5, degi6, degi7;
         degi = degi1 = degi2 = degi3 = degi4 = degi5 = degi6 = degi7 = 0;
-        float tmp;
+        double tmp;
         int j;
         for (j = i+1; j < n-7; j+=8) {
 
@@ -960,8 +960,8 @@ void oneshot_unnormalized_laplacian_roll(float *points, int n, int dim, float *r
 
     }
     for(; i < n; i++) {
-        float degi = 0;
-        float tmp;
+        double degi = 0;
+        double tmp;
         for (int j = i+1; j < n; j++) {
 
             tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
@@ -985,10 +985,10 @@ void oneshot_unnormalized_laplacian_roll(float *points, int n, int dim, float *r
     EXIT_FUNC;
 }
 
-void construct_unnormalized_laplacian(float *graph, int n, float *ret) {
+void construct_unnormalized_laplacian(double *graph, int n, double *ret) {
     ENTER_FUNC;
-    // float* degrees = (float *)malloc(n * n * sizeof(float));
-    float degrees[n];
+    // double* degrees = (double *)malloc(n * n * sizeof(double));
+    double degrees[n];
     calculate_diagonal_degree_matrix(graph, n, degrees);
     //NUM_ADDS(n*n);
     NUM_MULS(n*n);
@@ -1013,9 +1013,9 @@ void construct_unnormalized_laplacian(float *graph, int n, float *ret) {
     EXIT_FUNC;
 }
 
-void construct_knn_matrix(float *points, int lines, int dim, int k, float *ret) {
+void construct_knn_matrix(double *points, int lines, int dim, int k, double *ret) {
     ENTER_FUNC;
-    float vals[lines];
+    double vals[lines];
     int indices[lines];
 
     for (int i = 0; i < lines; ++i) {
