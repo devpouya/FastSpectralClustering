@@ -10,6 +10,7 @@ ifeq ($(UNAME), Linux)
 	CC := gcc
 	CXX := g++
 	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -lopenblas -llapacke -lgfortran -lm -lstdc++
+	CXXINCLUDES += -I /usr/include/eigen3
 endif
 ifeq ($(UNAME), Darwin)
 	CC := gcc-9
