@@ -111,6 +111,8 @@ int main(int argc, char *argv[]) {
     double timing_start = wtime();
     //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
 
+   // hamerly_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
+
     if(k>=8){
         elkan_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
     }else{

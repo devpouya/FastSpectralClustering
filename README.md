@@ -74,6 +74,8 @@ Openblas compiler: `git clone https://github.com/xianyi/OpenBLAS.git`, `cd openb
 
 `sudo apt-get install $(cat requirements/apt-requirements.txt)`
 
+`sudo apt-get install libeigen3-dev`
+
 lapack: `sudo apt-get install liblapacke-dev`
 
 ##### macOS

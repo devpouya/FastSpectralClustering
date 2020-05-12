@@ -61,6 +61,7 @@ static void point_all_clusters(double *U, double *clusters_center, int *cluster_
     // if the closest center changed : ALGO 1 line 12 UPDATE
     if (closest_center_1 != cluster_assignments[i]) {
         // update params
+        NUM_ADDS(2);
         clusters_size[cluster_assignments[i]] -= 1;
         clusters_size[closest_center_1] += 1;
         upper_bounds[i] = closest_center_1_dist;
