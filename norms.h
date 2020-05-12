@@ -24,8 +24,12 @@ union {
 
 double appx_exp(double x);
 double l2_norm(double *u, double *v, int dim);
+double l2_norm_base(double *u, double *v, int dim);
+double l2_norm_vec(double *u, double *v, int dim);
 double l2_norm_lowdim(double *u, double *v, int dim);
 double l2_norm_squared(double *u, double *v, int dim);
+double l2_norm_squared_base(double *u, double *v, int dim);
+double l2_norm_squared_vec(double *u, double *v, int dim);
 double l2_norm_squared_lowdim(double *u, double *v, int dim);
 double gaussian_similarity(double *u, double *v, int dim);
 

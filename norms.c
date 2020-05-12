@@ -53,7 +53,6 @@ double fast_gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_MULS(1);
     double inner = EXP(-0.5 * l2_norm_squared(u, v, dim));
-
     EXIT_FUNC;
     return inner;
 }
@@ -182,7 +181,7 @@ double l2_norm_vec(double *u, double *v, int dim) {
     return norm;
 }
 
-double l2_norm_squared(double *u, double *v, int dim) {
+double l2_norm_squared_base(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3 * dim);
     NUM_MULS(dim);
@@ -259,6 +258,10 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
 
 double l2_norm(double *u, double *v, int dim) {
     return l2_norm_vec(u, v, dim);
+}
+
+double l2_norm_squared(double *u, double *v, int dim) {
+    return l2_norm_squared_vec(u, v, dim);
 }
 
 double l2_norm_lowdim(double *u, double *v, int dim){

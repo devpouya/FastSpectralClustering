@@ -7,6 +7,14 @@
 #include "construct_graph.h"
 
 static double *TheArray;
+
+/**
+ * Util methods within this class
+ * @param weighted_adj_matrix
+ * @param n
+ * @param ret
+ */
+
 static int cmp(const void *a, const void *b){
     int ia = *(int *)a;
     int ib = *(int *)b;
@@ -132,8 +140,6 @@ static inline void calculate_diagonal_degree_matrix(double * weighted_adj_matrix
     EXIT_FUNC;
 }
 
-
-
 void construct_fully_connected_matrix(double *points, int lines, int dim, double *ret) {
     ENTER_FUNC;
     for (int i = 0; i < lines-3; i+=4) {
@@ -171,8 +177,6 @@ void construct_fully_connected_matrix(double *points, int lines, int dim, double
     EXIT_FUNC;
 }
 
-
-
 void construct_eps_neighborhood_matrix(double *points, int lines, int dim, double *ret) {
     ENTER_FUNC;
     for (int i = 0; i < lines; ++i) {
@@ -182,6 +186,36 @@ void construct_eps_neighborhood_matrix(double *points, int lines, int dim, doubl
     }
     EXIT_FUNC;
 }
+
+void construct_knn_matrix(double *points, int lines, int dim, int k, double *ret) {
+    ENTER_FUNC;
+    double vals[lines];
+    int indices[lines];
+
+    for (int i = 0; i < lines; ++i) {
+        for(int ii = 0; ii < lines; ++ii) {
+            indices[ii] = ii;
+        }
+        for (int j = 0; j < lines; ++j) {
+            ret[i*lines + j] = 0.0;
+            vals[j] = l2_norm(&points[i*dim], &points[j*dim], dim);
+        }
+        TheArray = vals;
+        size_t len = sizeof(vals) / sizeof(*vals);
+        qsort(indices, len, sizeof(*indices), cmp);
+        for (int s = 0; s < k+1; ++s) {
+            ret[i*lines + indices[s]] = (indices[s] != i) ? 1.0 : 0;
+        }
+    }
+    EXIT_FUNC;
+}
+
+/**
+ * Normalized laplacian
+ * @param weighted_adj_matrix
+ * @param num_points
+ * @param ret
+ */
 
 void construct_normalized_laplacian_sym_matrix(double *weighted_adj_matrix, int num_points, double *ret){
     ENTER_FUNC;
@@ -236,11 +270,81 @@ void construct_normalized_laplacian_rw_matrix(double *weighted_adj_matrix, int n
     EXIT_FUNC;
 }
 
-void oneshot_unnormalized_laplacian(double *points, int n, int dim, double *ret) {
+/**
+ * Unnormalized laplacian
+ * @param points
+ * @param n
+ * @param dim
+ * @param ret
+ */
+
+void oneshot_unnormalized_laplacian_base(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
     NUM_ADDS((n*n-n)/2);
     for (int i = 0; i < n; i++) {
+        double degi;
+        degi =  0;
+        double tmp;
+        for (int j = i+1; j < n; j++) {
+            tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
+            degi+=tmp;
+            ret[i*n+j] = tmp;
+
+        }
+        for(int k = 0; k < i; k++){
+            degi+=ret[k*n+i];
+            ret[k*n+i] *= -1;
+
+        }
+        ret[i*n+i] = degi/2;
+    }
+    EXIT_FUNC;
+}
+
+void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *ret) {
+    ENTER_FUNC;
+    NUM_MULS((n*n-n)/2);
+    NUM_ADDS((n*n-n)/2);
+    int i;
+    for (i = 0; i < n-3; i+=4) {
+        double deg, deg1, deg2, deg3;
+        deg =  0, deg1 =  0, deg2 =  0, deg3 =  0;
+        double tmp, tmp1, tmp2, tmp3;
+        for (int j = i+1; j < n; j+=1) {
+            NUM_MULS(1);
+            tmp = EXP(-0.5 * l2_norm_squared(&points[i * dim], &points[j * dim], dim));
+            tmp1 = EXP(-0.5 * l2_norm_squared(&points[(i+1) * dim], &points[j * dim], dim));
+            tmp2 = EXP(-0.5 * l2_norm_squared(&points[(i+2) * dim], &points[j * dim], dim));
+            tmp3 = EXP(-0.5 * l2_norm_squared(&points[(i+3) * dim], &points[j * dim], dim));
+
+            ret[i*n+j] = tmp;
+            ret[(i+1)*n+j] = tmp1;
+            ret[(i+2)*n+j] = tmp2;
+            ret[(i+3)*n+j] = tmp3;
+
+            deg += tmp;
+            deg1 += tmp1;
+            deg2 += tmp2;
+            deg3 += tmp3;
+        }
+        for(int k = 0; k < i*4-4; k++){
+            deg+=ret[k*n+i];
+            deg1+=ret[k*n+i];
+            deg2+=ret[k*n+i];
+            deg3+=ret[k*n+i];
+            ret[k*n+i] *= -1;
+            ret[k*n+i+1] *= -1;
+            ret[k*n+i+2] *= -1;
+            ret[k*n+i+3] *= -1;
+        }
+
+        ret[i*n+i] = deg*0.5;
+        ret[(i+1)*n+i+1] = deg1*0.5;
+        ret[(i+2)*n+i+2] = deg2*0.5;
+        ret[(i+3)*n+i+3] = deg3*0.5;
+    }
+    for (; i < n; i++) {
         double degi;
         degi =  0;
         double tmp;
@@ -282,7 +386,6 @@ void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, doubl
     }
     EXIT_FUNC;
 }
-
 
 void oneshot_unnormalized_laplacian_roll(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
@@ -964,25 +1067,17 @@ void oneshot_unnormalized_laplacian_roll(double *points, int n, int dim, double 
         double degi = 0;
         double tmp;
         for (int j = i+1; j < n; j++) {
-
             tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
             degi+=tmp;
             ret[i*n+j] = tmp;
-
-
         }
         for (int j = 0; j < i; ++j) {
             degi+=ret[j*n+i];
             ret[j*n+i] *= -1;
             ret[i*n+j] = ret[j*n+i];
-
-
-
         }
         ret[i*n+i] = degi;
-
     }
-
     EXIT_FUNC;
 }
 
@@ -1014,25 +1109,15 @@ void construct_unnormalized_laplacian(double *graph, int n, double *ret) {
     EXIT_FUNC;
 }
 
-void construct_knn_matrix(double *points, int lines, int dim, int k, double *ret) {
-    ENTER_FUNC;
-    double vals[lines];
-    int indices[lines];
 
-    for (int i = 0; i < lines; ++i) {
-        for(int ii = 0; ii < lines; ++ii) {
-            indices[ii] = ii;
-        }
-        for (int j = 0; j < lines; ++j) {
-            ret[i*lines + j] = 0.0;
-            vals[j] = l2_norm(&points[i*dim], &points[j*dim], dim);
-        }
-        TheArray = vals;
-        size_t len = sizeof(vals) / sizeof(*vals);
-        qsort(indices, len, sizeof(*indices), cmp);
-        for (int s = 0; s < k+1; ++s) {
-            ret[i*lines + indices[s]] = (indices[s] != i) ? 1.0 : 0;
-        }
-    }
-    EXIT_FUNC;
+/**
+ * Generic methods for main.c
+ * @param points
+ * @param n
+ * @param dim
+ * @param ret
+ */
+
+void oneshot_unnormalized_laplacian(double *points, int n, int dim, double *ret) {
+     oneshot_unnormalized_laplacian_base(points, n, dim, ret);
 }
