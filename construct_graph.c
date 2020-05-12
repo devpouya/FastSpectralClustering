@@ -271,12 +271,12 @@ void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, doubl
             degi+=tmp;
             ret[i*n+j] = tmp;
         }
-        for (int k = 0; k < i; k++) {
+        for(int k = 0; k < i; k++){
             degi+=ret[k*n+i];
             ret[k*n+i] *= -1;
-            ret[i*n+k] = ret[k*n+i];
+
         }
-        ret[i*n+i] = degi;
+        ret[i*n+i] = degi/2;
     }
     EXIT_FUNC;
 }
