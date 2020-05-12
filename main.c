@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
 
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
-    printf("%d, %d", lines, k);
+    printf("%d, %d\n", lines, k);
 
     printf("Performing k-means base_clustering...\n");
     // U (8x2) is the datasets in points.txt for now => k = 2

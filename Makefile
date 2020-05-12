@@ -1,8 +1,8 @@
 UNAME := $(shell uname)
 PWD := $(shell pwd)
 
-CFLAGS := -O3 -ffast-math -march=skylake -mfma -Wall -Werror -Wno-unused-result
-CXXFLAGS := -O3 -ffast-math -march=skylake -mfma -Wall -Werror -Wno-unused-result
+CFLAGS := -O3 -ffast-math -march=skylake -fno-tree-vectorize -mavx2 -mfma -Wall -Werror -Wno-unused-result
+CXXFLAGS := -O3 -ffast-math -march=skylake -fno-tree-vectorize -mavx2 -mfma -Wall -Werror -Wno-unused-result
 CINCLUDES := -I$(PWD)/arpack-ng/ICB
 CXXINCLUDES := -I$(PWD)/spectra/include
 
@@ -10,7 +10,7 @@ ifeq ($(UNAME), Linux)
 	CC := gcc
 	CXX := g++
 	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -lopenblas -llapacke -lgfortran -lm -lstdc++
-	CXXINCLUDES += -I /usr/include/eigen3
+    CXXINCLUDES += -I /usr/include/eigen3
 endif
 ifeq ($(UNAME), Darwin)
 	CC := gcc-9
