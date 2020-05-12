@@ -247,6 +247,8 @@ void oneshot_unnormalized_laplacian(double *points, int n, int dim, double *ret)
         for (int j = i+1; j < n; j++) {
             tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
             degi+=tmp;
+            ret[i*n+j] = tmp;
+
         }
         for(int k = 0; k < i; k++){
             degi+=ret[k*n+i];
