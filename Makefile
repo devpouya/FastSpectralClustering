@@ -35,10 +35,10 @@ clustering: $(SRC) $(EIGS)
 	$(CC) $(CFLAGS) -o clustering $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
 
 base_clustering: $(SRC) $(EIGS)
-	$(CC) $(CFLAGS) -DSEED=30 -o base_clustering $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
+	$(CC) $(CFLAGS) -DSEED=20 -o base_clustering $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
 
 validation: $(SRC) $(EIGS)
-	$(CC) $(CFLAGS) -DSEED=30 -DVALIDATION -o validation $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
+	$(CC) $(CFLAGS) -DSEED=20 -DVALIDATION -o validation $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
 
 profiling: $(SRC) $(EIGS)
 	$(CC) $(CFLAGS) -DPROFILING -DINSTRUMENTATION -o profiling $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
