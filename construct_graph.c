@@ -239,7 +239,7 @@ void construct_normalized_laplacian_rw_matrix(double *weighted_adj_matrix, int n
 void oneshot_unnormalized_laplacian(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
-    NUM_ADDS(n*n-n);
+    NUM_ADDS((n*n-n)/2);
     for (int i = 0; i < n; i++) {
         double degi;
         degi =  0;
@@ -247,12 +247,7 @@ void oneshot_unnormalized_laplacian(double *points, int n, int dim, double *ret)
         for (int j = i+1; j < n; j++) {
             tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
             degi+=tmp;
-            ret[i*n+j] = tmp;
-        }
-        for (int k = 0; k < i; k++) {
-            degi+=ret[k*n+i];
-            ret[k*n+i] *= -1;
-            ret[i*n+k] = ret[k*n+i];
+            ret[i*n+j] = -1*tmp;
         }
         ret[i*n+i] = degi;
     }
