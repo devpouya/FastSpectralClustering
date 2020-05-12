@@ -142,12 +142,12 @@ the runtime, and the flops for each method.
                                            
 - Optimization:
 
-  - Transform to float instead of double (Zuowen)
+  - (done,doesn't work)Transform to float instead of double (Zuowen)
   - vectorize laplacian (Julien)
   - profile hamerly and elkan => decide which one to use (Leo, Pouya)
     - optimize chosen variant of kmeans (Pouya)
-  - Clean up kmeans (Zuowen)
+  - (done)Clean up kmeans (Zuowen)
   - Generate datasets with varying n, k, dim (Leo)
   - Create separate performance plots for graph construction and kmeans (Pouya)
-  - Case distinction for l2 norm (Zuowen)
+  - (done)Case distinction for l2 norm (Zuowen)
   - roofline plots
