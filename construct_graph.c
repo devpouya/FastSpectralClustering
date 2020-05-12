@@ -1119,5 +1119,5 @@ void construct_unnormalized_laplacian(double *graph, int n, double *ret) {
  */
 
 void oneshot_unnormalized_laplacian(double *points, int n, int dim, double *ret) {
-     oneshot_unnormalized_laplacian_base(points, n, dim, ret);
+     oneshot_unnormalized_laplacian_vec(points, n, dim, ret);
 }
