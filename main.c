@@ -14,6 +14,7 @@
 #include "construct_graph.h"
 #include "kmeans.h"
 #include "util.h"
+#include "eigs.h"
 
 /*
  * The file that the program reads from is stored in the following format, assuming that
@@ -42,7 +43,6 @@ int main(int argc, char *argv[]) {
     double *points = f.points;
     int k = atoi(argv[2]);
     int n = lines;
-    int lda = n;
 
     // Construct the matrices and print them
     // fully-connected matrix
@@ -59,14 +59,9 @@ int main(int argc, char *argv[]) {
     //compute the eigendecomposition and take the first k eigenvectors.
     myInt64 end1 = stop_tsc(start1);
     printf("Performing eigenvalue decomposition...\n");
-    double *w = malloc(lines * sizeof(double));
-    lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, laplacian, lda, w);
-    /* Check for convergence */
-    if (info > 0) {
-        fprintf(stderr, "ERROR: The algorithm failed to compute eigenvalues.\n");
-        exit(1);
-    }
-    myInt64 start2 = start_tsc();
+    double *eigenvalues = malloc(k * sizeof(double));
+    double *eigenvectors = malloc(n * k * sizeof(double));
+    smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
 
     // printf("Eigenvalues:\n");
     // for (int i = 0; i < n; i++) {
@@ -78,10 +73,7 @@ int main(int argc, char *argv[]) {
     printf("%d, %d", lines, k);
 
     printf("Performing k-means base_clustering...\n");
-    // U (8x2) is the datasets in points.txt for now => k = 2
-    // number of cluster <=> # columns of U
-    double *small_laplacian = malloc(lines*k* sizeof(double));
-    copy_submatrix(laplacian,lines,lines,k,small_laplacian);
+
     // init datastructure
     struct cluster clusters[k];
     for (int i = 0; i < k; i++) {
@@ -91,11 +83,12 @@ int main(int argc, char *argv[]) {
     }
     // try with different max_iter
     // kmeans(points, lines, k, 10, clusters);
-    double timing_start = wtime();
+    // double timing_start = wtime();
     //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
-    kmeans(small_laplacian, lines, k, 100, 0.0001, clusters);
-    double timing = wtime()-timing_start ;
-    printf("Timing of kmeans: %f [sec] \n", timing);
+    myInt64 start2 = start_tsc();
+    kmeans(eigenvectors, k, k, 100, 0.0001, clusters);
+    // double timing = wtime()-timing_start ;
+    // printf("Timing of kmeans: %f [sec] \n", timing);
 
     uint64_t runtime = stop_tsc(start2) + end1;
 
@@ -106,11 +99,11 @@ int main(int argc, char *argv[]) {
     //write result in output file
     write_clustering_result(argv[3], clusters, k);
 
-    free(fully_connected);
-    free(laplacian);
-    free(small_laplacian);
-    free(w);
-    free(f.points);
+    // free(fully_connected);
+    // free(laplacian);
+    // free(small_laplacian);
+    // free(w);
+    // free(f.points);
 
     PROFILER_LIST();
 

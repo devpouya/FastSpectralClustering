@@ -1,0 +1,6 @@
+[submodule "arpack-ng"]
+	path = arpack-ng
+	url = https://github.com/opencollab/arpack-ng.git
+[submodule "spectra"]
+	path = spectra
+	url = https://github.com/yixuan/spectra.git
