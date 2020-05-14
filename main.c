@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
     // double timing_start = wtime();
     //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
     myInt64 start2 = start_tsc();
-    kmeans(eigenvectors, k, k, 100, 0.0001, clusters);
+    kmeans(eigenvectors, n, k, 100, 0.0001, clusters);
     // double timing = wtime()-timing_start ;
     // printf("Timing of kmeans: %f [sec] \n", timing);
 
