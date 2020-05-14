@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     myInt64 end1 = stop_tsc(start1);
     printf("Performing eigenvalue decomposition...\n");
 
-    double *eigenvalues = malloc(k * sizeof(double));
+    double *eigenvalues = malloc(n * sizeof(double));
     double *eigenvectors = malloc(n * k * sizeof(double));
     smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
 
