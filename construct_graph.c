@@ -281,7 +281,7 @@ void construct_normalized_laplacian_rw_matrix(double *weighted_adj_matrix, int n
 void oneshot_unnormalized_laplacian_base(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
-    NUM_ADDS((n*n-n)/2);
+    NUM_ADDS(n*n-n);
     for (int i = 0; i < n; i++) {
         double degi;
         degi =  0;
@@ -290,16 +290,16 @@ void oneshot_unnormalized_laplacian_base(double *points, int n, int dim, double 
             tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
             degi+=tmp;
             ret[i*n+j] = tmp;
-
         }
-        for(int k = 0; k < i; k++){
+        for (int k = 0; k < i; k++) {
             degi+=ret[k*n+i];
             ret[k*n+i] *= -1;
-
+            ret[i*n+k] = ret[k*n+i];
         }
-        ret[i*n+i] = degi/2;
+        ret[i*n+i] = degi;
     }
     EXIT_FUNC;
+
 }
 
 void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *ret) {
@@ -377,14 +377,15 @@ void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, doubl
             degi+=tmp;
             ret[i*n+j] = tmp;
         }
-        for(int k = 0; k < i; k++){
+        for (int k = 0; k < i; k++) {
             degi+=ret[k*n+i];
             ret[k*n+i] *= -1;
-
+            ret[i*n+k] = ret[k*n+i];
         }
-        ret[i*n+i] = degi/2;
+        ret[i*n+i] = degi;
     }
     EXIT_FUNC;
+
 }
 
 void oneshot_unnormalized_laplacian_roll(double *points, int n, int dim, double *ret) {
