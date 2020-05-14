@@ -111,13 +111,13 @@ int main(int argc, char *argv[]) {
     double timing_start = wtime();
     //kmeans(points, lines, dim, k, 100, 0.0001, clusters); // (for kmeans test purposes)
 
-     hamerly_kmeans(eigenvectors, lines, k, 100, 0.0001, clusters);
+     lloyd_kmeans(eigenvectors, lines, k, 100, 0.0001, clusters);
 
-//    if(k>=8){
-//        elkan_kmeans(eigenvectors, lines, k, 100, 0.0001, clusters);
-//    }else{
-//        elkan_kmeans_lowdim(eigenvectors, lines, k, 100, 0.0001, clusters);
-//    }
+    if(k>=8){
+        elkan_kmeans(eigenvectors, lines, k, 100, 0.0001, clusters);
+    }else{
+        elkan_kmeans_lowdim(eigenvectors, lines, k, 100, 0.0001, clusters);
+    }
     double timing = wtime()-timing_start ;
     printf("Timing of kmeans: %f [sec] \n", timing);
 
