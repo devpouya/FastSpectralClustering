@@ -64,7 +64,6 @@ void init_kpp(double *U, int n, int k, double *ret) {
             }
         }
         for (int i = 0; i < k; i++) {
-
             for (int j = 0; j < k; j++) {
                 ret[c*k + j] = U[index*k+j];
             }
@@ -72,5 +71,3 @@ void init_kpp(double *U, int n, int k, double *ret) {
     }
     EXIT_FUNC;
 }
-
-

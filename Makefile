@@ -1,32 +1,40 @@
 UNAME := $(shell uname)
 PWD := $(shell pwd)
 
-CFLAGS := -O3 -ffast-math -march=skylake -fno-tree-vectorize -mavx2 -mfma -Wall -Werror -Wno-unused-result
-CXXFLAGS := -O3 -ffast-math -march=skylake -fno-tree-vectorize -mavx2 -mfma -Wall -Werror -Wno-unused-result
+CFLAGS := -O3 -ffast-math -march=skylake -mfma -Wall -Werror -Wno-unused-result
+CXXFLAGS := -O3 -ffast-math -march=skylake -mfma -Wall -Werror -Wno-unused-result
 CINCLUDES := -I$(PWD)/arpack-ng/ICB
 CXXINCLUDES := -I$(PWD)/spectra/include
 
 ifeq ($(UNAME), Linux)
 	CC := gcc
 	CXX := g++
-	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -lopenblas -llapacke -lgfortran -lm -lstdc++
+	CLIBS := -lm
     CXXINCLUDES += -I /usr/include/eigen3
 endif
 ifeq ($(UNAME), Darwin)
 	CC := gcc-9
 	CXX := g++-9
 	CINCLUDES += -I/usr/local/Cellar/openblas/0.3.9/include
-	CLIBS := -L/usr/local/Cellar/openblas/0.3.9/lib -lopenblas -lgfortran -lstdc++
+	CLIBS := -L/usr/local/Cellar/openblas/0.3.9/lib
 	CXXINCLUDES +=  -I/usr/local/Cellar/eigen/3.3.7/include/eigen3
 endif
 
-SRC := main.c init.c norms.c construct_graph.c kmeans_elkan.c kmeans_hamerly.c kmeans_lloyd.c util.c instrumentation.c
+SRC := main.c init.c norms.c construct_graph.c kmeans_elkan.c kmeans_lloyd.c kmeans_hamerly.c util.c instrumentation.c
 ifeq ($(EIGS_SOLVER), arpack)
 	EIGS := eigs_arpack.c arpack-ng/libarpack.a
+    CLIBS += -lopenblas -lgfortran
 else ifeq ($(EIGS_SOLVER), lapack)
 	EIGS := eigs_lapack.c
+	ifeq ($(UNAME), Linux)
+		CLIBS += -L/usr/lib/x86_64-linux-gnu/lib -llapacke
+	endif
+	ifeq ($(UNAME), Darwin)
+		CLIBS += -lopenblas
+	endif
 else
 	EIGS := eigs_spectra.o
+	CLIBS += -lstdc++
 endif
 
 all: clustering
@@ -35,10 +43,10 @@ clustering: $(SRC) $(EIGS)
 	$(CC) $(CFLAGS) -o clustering $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
 
 base_clustering: $(SRC) $(EIGS)
-	$(CC) $(CFLAGS) -DSEED=20 -o base_clustering $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
+	$(CC) $(CFLAGS) -DSEED=30 -o base_clustering $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
 
 validation: $(SRC) $(EIGS)
-	$(CC) $(CFLAGS) -DSEED=20 -DVALIDATION -o validation $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
+	$(CC) $(CFLAGS) -DSEED=30 -DVALIDATION -o validation $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
 
 profiling: $(SRC) $(EIGS)
 	$(CC) $(CFLAGS) -DPROFILING -DINSTRUMENTATION -o profiling $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)

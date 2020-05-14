@@ -15,9 +15,6 @@ using namespace Spectra;
 
 void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, double *ret_eigenvectors) {
     Eigen::MatrixXd M = Eigen::Map<Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> >(A, n, n);
-//    Eigen::MatrixXd Mt = M.transpose();
-//    M = M + Mt;
-    //std::cout<<M<<std::endl;
     // Construct matrix operation object using the wrapper class
     DenseSymShiftSolve<double> op(M);
     // Construct eigen solver object with shift 0
@@ -54,4 +51,3 @@ void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, doub
 //         }
 //         printf("\n");
 //     }
-// }

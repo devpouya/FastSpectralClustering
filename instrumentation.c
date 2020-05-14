@@ -8,6 +8,7 @@
 
 #include "instrumentation.h"
 
+// Timer from NorthWestern University Kmeans: https://github.com/serban/kmeans.git
 double wtime(void){
     double now_time;
     struct timeval  etstart;

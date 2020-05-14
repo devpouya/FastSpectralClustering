@@ -143,13 +143,15 @@ the runtime, and the flops for each method.
   - MATLAB
                                            
 - Optimization:
-
-  - (done,doesn't work)Transform to float instead of double (Zuowen)
-  - vectorize laplacian (Julien)
-  - profile hamerly and elkan => decide which one to use (Leo, Pouya)
-    - optimize chosen variant of kmeans (Pouya)
-  - (done)Clean up kmeans (Zuowen)
-  - Generate datasets with varying n, k, dim (Leo)
-  - Create separate performance plots for graph construction and kmeans (Pouya)
-  - (done)Case distinction for l2 norm (Zuowen)
+  - Algorithm-level 
+    - direct computation of Laplacian (Pouya)
+    - more efficient k-means algorithm (Leo, Zuowen, Pouya) (all should read)
+  - Unrolling + accumulators for l2 norm (Zuowen)
+  - Reduce range of exp + use Taylor expansion (Pouya)
+  - Analyze cache behavior of find_nearest_cluster_index (Julien)
   - roofline plots
+  - Case distinction for l2 (no unroll for small dim)
+  - debug arpacke for high-dim, (actually also low dim. i.e.points.txt)
+  - normalization as preprocessing
+  - start vectorization
+  - start plannning, what/how to present - lead to priorities of the works in the following weeks. (actually only 2)

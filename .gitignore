@@ -1,10 +1,8 @@
 a.out
 .idea/
-clustering
 base_clustering
 validation
 profiling
 countops
-out.txt
-base_output
 *.o
+out.txt
