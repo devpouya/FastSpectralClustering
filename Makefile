@@ -9,7 +9,7 @@ CXXINCLUDES := -I$(PWD)/spectra/include
 ifeq ($(UNAME), Linux)
 	CC := gcc
 	CXX := g++
-	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -lopenblas -llapacke -lgfortran -lm -lstdc++
+	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -llapacke -lgfortran -lm -lstdc++
     CXXINCLUDES += -I /usr/include/eigen3
 endif
 ifeq ($(UNAME), Darwin)
@@ -23,6 +23,9 @@ endif
 SRC := main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
 ifeq ($(EIGS_SOLVER), arpack)
 	EIGS := eigs_arpack.c arpack-ng/libarpack.a
+    ifeq ($(UNAME), Linux)
+    	CLIBS += -lopenblas
+    endif
 else ifeq ($(EIGS_SOLVER), lapack)
 	EIGS := eigs_lapack.c
 else

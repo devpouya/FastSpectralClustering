@@ -74,12 +74,6 @@ void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, doub
     dseupd_c(rvec, howmny, select, d, z, ldz, sigma, bmat, N, which, nev, tol,
             resid, ncv, V, ldv, iparam, ipntr, workd, workl, lworkl, &info);
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < nev; j++) {
-            printf("%f, ", ret_eigenvectors[i*nev + j]);
-        }
-        printf("\n");
-    }
 
     transpose(z, N, nev, ret_eigenvectors);
 
