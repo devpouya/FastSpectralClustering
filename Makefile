@@ -9,27 +9,32 @@ CXXINCLUDES := -I$(PWD)/spectra/include
 ifeq ($(UNAME), Linux)
 	CC := gcc
 	CXX := g++
-	CLIBS := -L/usr/lib/x86_64-linux-gnu/lib -llapacke -lgfortran -lm -lstdc++
+	CLIBS := -lm
     CXXINCLUDES += -I /usr/include/eigen3
 endif
 ifeq ($(UNAME), Darwin)
 	CC := gcc-9
 	CXX := g++-9
 	CINCLUDES += -I/usr/local/Cellar/openblas/0.3.9/include
-	CLIBS := -L/usr/local/Cellar/openblas/0.3.9/lib -lopenblas -lgfortran -lstdc++
+	CLIBS := -L/usr/local/Cellar/openblas/0.3.9/lib
 	CXXINCLUDES +=  -I/usr/local/Cellar/eigen/3.3.7/include/eigen3
 endif
 
 SRC := main.c init.c norms.c construct_graph.c kmeans.c util.c instrumentation.c
 ifeq ($(EIGS_SOLVER), arpack)
 	EIGS := eigs_arpack.c arpack-ng/libarpack.a
-    ifeq ($(UNAME), Linux)
-    	CLIBS += -lopenblas
-    endif
+    CLIBS += -lopenblas -lgfortran
 else ifeq ($(EIGS_SOLVER), lapack)
 	EIGS := eigs_lapack.c
+	ifeq ($(UNAME), Linux)
+		CLIBS += -L/usr/lib/x86_64-linux-gnu/lib -llapacke
+	endif
+	ifeq ($(UNAME), Darwin)
+		CLIBS += -lopenblas
+	endif
 else
 	EIGS := eigs_spectra.o
+	CLIBS += -lstdc++
 endif
 
 all: clustering
