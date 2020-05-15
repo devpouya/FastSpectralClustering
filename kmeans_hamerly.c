@@ -100,7 +100,7 @@ static inline void move_centers(double *new_clusters_centers, int *clusters_size
             dist = l2_norm(clusters_center + j*k, new_clusters_centers + j*k, k);
         }
         centers_dist_moved[j] = dist;
-        NUM_ADDS(1);
+//        NUM_ADDS(1);
         /*
         if (dist > dist_moved) {
             dist_moved2 = dist_moved;
@@ -275,12 +275,13 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
  * 1) find the two closest centers,
  * 2) update the bounds if closest changed, the assignments and the cluster sizes
  */
-static void point_all_clusters_lowdim(double *U, double *clusters_center, int *cluster_assignments
+static inline void point_all_clusters_lowdim(double *U, double *clusters_center, int *cluster_assignments
         , double *upper_bounds, double *lower_bounds, int *clusters_size, int k, int i) {
     ENTER_FUNC;
     int closest_center_1 = 0;
     double closest_center_1_dist = DBL_MAX;
     double closest_center_2_dist = DBL_MAX;
+    //inline later? maybe
     for (int j = 0; j < k; j++) {
         double dist = l2_norm_lowdim(U + i * k, clusters_center + j * k, k);
         // Find distance between the point and the center.
@@ -312,10 +313,12 @@ static void point_all_clusters_lowdim(double *U, double *clusters_center, int *c
  * 2) reassign new centers
  * return maximal dist moved;
  */
-static double move_centers_lowdim(double *new_clusters_centers, int *clusters_size, double *clusters_center
+
+static inline void move_centers_lowdim(double *new_clusters_centers, int *clusters_size, double *clusters_center
         , double *centers_dist_moved, int k) {
     ENTER_FUNC;
-    double dist_moved = 0;
+    //double dist_moved = 0;
+    //double dist_moved2 = 0;
     for (int j = 0; j < k; j++) {
         double dist = 0;
         if (clusters_size[j] > 0) {
@@ -330,13 +333,16 @@ static double move_centers_lowdim(double *new_clusters_centers, int *clusters_si
             dist = l2_norm_lowdim(clusters_center + j*k, new_clusters_centers + j*k, k);
         }
         centers_dist_moved[j] = dist;
-        NUM_ADDS(1);
+//        NUM_ADDS(1);
+        /*
         if (dist > dist_moved) {
+            dist_moved2 = dist_moved;
             dist_moved = dist;
         }
+         */
     }
     EXIT_FUNC;
-    return dist_moved;
+    //return dist_moved;
 }
 
 
@@ -352,20 +358,23 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
     // tmp for next iteration
     double new_clusters_centers[k*k];
     // cluster sizes
-    int clusters_size[k];
+    //int clusters_size[k];
+    int *clusters_size = calloc(k, sizeof(int));
     // n upper bounds (of closest center)
-    double upper_bounds[n];
+    //double upper_bounds[n];
     // n lower bounds (of 2nd strict closest center)
-    double lower_bounds[n];
+    //double lower_bounds[n];
+    double *lower_bounds = calloc(n, sizeof(double));
+    double *upper_bounds = calloc(n, sizeof(double));
     // stores cluster index for all points
-    int cluster_assignments[n];
+    //int cluster_assignments[n];
+    int *cluster_assignments = calloc(n, sizeof(int));
     // Algorithm 2: init + kpp -------------------
     initialize(clusters_center, U, clusters_size, upper_bounds, lower_bounds, cluster_assignments, k, n);
     // Distance to nearest other cluster for each cluster.
     double dist_nearest_cluster[k];
     // distance of centers moved between two iteration
-    //double centers_dist_moved[k];
-    double *centers_dist_moved = calloc(k, sizeof(double));
+    double centers_dist_moved[k];
     int iteration = 0;
     while (iteration < max_iter) {
         // Initialization after each iteration
@@ -407,7 +416,7 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
                 NUM_ADDS(1);
                 if (upper_bounds[i] > max_d) {
                     // Iterate over all centers and find first and second closest distances and update DS
-                    point_all_clusters_lowdim(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
+                    point_all_clusters(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
                             , clusters_size, k, i);
                 }
             }
@@ -420,7 +429,11 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
             }
         }
         // ALGO 4 - MOVE-CENTERS: check for distance moved then move the centers ---------
-        move_centers_lowdim(new_clusters_centers, clusters_size
+        /*
+        double max_dist_moved = move_centers(new_clusters_centers, clusters_size
+                , clusters_center, centers_dist_moved, k);
+        */
+        move_centers(new_clusters_centers, clusters_size
                 , clusters_center, centers_dist_moved, k);
 
         // ALGO 5 - Update-bounds : for all U update upper and lower distance bounds ---------------
