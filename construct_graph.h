@@ -11,6 +11,7 @@ void construct_unnormalized_laplacian(double *graph, int n, double *ret);
 void construct_knn_matrix(double *points, int lines, int dim, int k, double *ret);
 void oneshot_unnormalized_laplacian(double *points, int n, int dim, double *ret);
 void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, double *ret);
+void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int dim, double *ret);
 void oneshot_unnormalized_laplacian_base(double *points, int n, int dim, double *ret);
 void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *ret);
 #endif

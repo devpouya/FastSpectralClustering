@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     if (dim >=8){
         oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
     }else{
-        oneshot_unnormalized_laplacian_lowdim(points,lines,dim,laplacian);
+        oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
     }
 
     uint64_t  end1 = stop_tsc(start1);
@@ -81,6 +81,22 @@ int main(int argc, char *argv[]) {
     printf("%" PRIu64 "\n", runtime);
     printf("%" PRIu64 "\n", NUM_FLOPS);
 
+#ifdef VALIDATION
+   char *my_argv; // = {"./base_clustering" , argv[1] , argv[2] , "./base_output"};
+   my_argv = concat("./base_clustering ", argv[1]);
+   my_argv = concat(my_argv, " ");
+   my_argv = concat(my_argv, argv[2]);
+   my_argv = concat(my_argv, " ./base_output");
+   system(my_argv);
+   int line, col;
+   FILE* fpt1 = fopen("./base_output", "r");
+   FILE* fpt2 = fopen(argv[3], "r");
+   if (compareFile(fpt1, fpt2, &line, &col) != 0){
+       printf("ERROR! optimized version gives different result as base clustering\n");
+   }else{
+       printf("Result Correct!\n");
+   }
+#endif
 
     return 0;
 }

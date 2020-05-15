@@ -60,7 +60,7 @@ double fast_gaussian_similarity(double *u, double *v, int dim) {
 double fast_gaussian_similarity_lowdim(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_MULS(1);
-    double inner = exp(-0.5 * l2_norm_squared_lowdim(u, v, dim));
+    double inner = EXP(-0.5 * l2_norm_squared_lowdim(u, v, dim));
 
     EXIT_FUNC;
     return inner;
