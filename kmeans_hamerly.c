@@ -8,10 +8,82 @@
 #include "norms.h"
 #include "instrumentation.h"
 #include "kmeans.h"
-#include "init.h"
+//#include "init.h"
 #include "util.h"
 
 #define MAX(x, y) ((x > y) ? x : y)
+
+static inline void cumulative_sum(double *probs, int n, double *ret) {
+    ENTER_FUNC;
+    NUM_ADDS(n);
+    ret[0] = probs[0];
+    double ret_tmp = ret[0];
+    for(int i = 1; i < n; i++) {
+        ret[i] += ret_tmp;//+probs[i];
+        ret_tmp = ret[i];
+    }
+    EXIT_FUNC;
+}
+
+static inline void init_kpp(double *U, int n, int k, double *ret) {
+    ENTER_FUNC;
+    // add a random initial point to the centers
+#ifdef SEED
+    srand(SEED);
+#else
+    srand(time(0));
+#endif
+    int ind = ((int)rand()%n);
+//    printf("ind = %d\n", ind);
+    //ret[0] = U[((int)rand()%n)*k];
+    for(int j = 0; j < k; j++) {
+        ret[j] = U[ind*k+j];
+    }
+    double sum = 0;
+    for (int c = 1; c < k; c++) {
+
+        sum = 0;
+        double dists[n];
+        for (int i = 0; i < n; i++) {
+            //find closest point and add to sum
+            double dist = DBL_MAX;
+            for(int j = 0; j < c; j++) {
+                double tmp = l2_norm(&U[i*k],&ret[j*k],k);
+                if (tmp < dist) {
+                    dist = tmp;
+                }
+            }
+            sum += dist;
+            dists[i] = dist;
+
+        }
+        double inv_sum = 1/sum;
+        for(int i = 0; i < n; i++) {
+            dists[i] *= inv_sum;
+        }
+        double cumsums[n];
+
+        int index = 0;
+        cumulative_sum(dists, n, cumsums);
+        double r = rand()/((double)RAND_MAX);
+//        printf("r = %lf\n", r);
+        for(int i = 0; i < n; i++) {
+            if(r < cumsums[i]) {
+                index = i;
+//                printf("picked index:%d\n",index);
+                break;
+            }
+        }
+        for (int i = 0; i < k; i++) {
+
+            for (int j = 0; j < k; j++) {
+                ret[c*k + j] = U[index*k+j];
+            }
+        }
+    }
+    EXIT_FUNC;
+}
+
 
 /*
  * ALGO 2: INITIALIZE ---------------------------------------------------------
@@ -128,14 +200,17 @@ static inline void update_bounds(double *upper_bounds, double *lower_bounds, dou
         }
     }
     for (int i = 0; i < n; i++) {
-        NUM_ADDS(2);
-        upper_bounds[i] += centers_dist_moved[cluster_assignments[i]];
-        if (max_moved == centers_dist_moved[cluster_assignments[i]]){
+        NUM_ADDS(3);
+        double tmp = centers_dist_moved[cluster_assignments[i]];
+        upper_bounds[i] += tmp;
+        if (max_moved == tmp){
             lower_bounds[i] -= second_max_moved;
         } else {
             lower_bounds[i] -= max_moved;
         }
     }
+
+
     EXIT_FUNC;
 }
 
@@ -266,8 +341,96 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
  */
 
 
+static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
+    ENTER_FUNC;
+    // add a random initial point to the centers
+#ifdef SEED
+    srand(SEED);
+#else
+    srand(time(0));
+#endif
+    int ind = ((int)rand()%n);
+//    printf("ind = %d\n", ind);
+    //ret[0] = U[((int)rand()%n)*k];
+    for(int j = 0; j < k; j++) {
+        ret[j] = U[ind*k+j];
+    }
+    double sum = 0;
+    for (int c = 1; c < k; c++) {
 
+        sum = 0;
+        double dists[n];
+        for (int i = 0; i < n; i++) {
+            //find closest point and add to sum
+            double dist = DBL_MAX;
+            for(int j = 0; j < c; j++) {
+                double tmp = l2_norm_lowdim(&U[i*k],&ret[j*k],k);
+                if (tmp < dist) {
+                    dist = tmp;
+                }
+            }
+            sum += dist;
+            dists[i] = dist;
 
+        }
+        double inv_sum = 1/sum;
+        //double tmp = dists[0]*inv_sum;
+
+        for(int i = 0; i < n; i++) {
+            dists[i] *= inv_sum;
+            //dists[i] += tmp;
+            //tmp = dists[i];
+        }
+        //double cumsums[n];
+
+        int index = 0;
+
+        double tmp = dists[0];
+        for(int i = 1; i < n; i++) {
+            dists[i] += tmp;
+            tmp = dists[i];
+
+        }
+
+        //cumulative_sum(dists, n, dists);
+
+        double r = rand()/((double)RAND_MAX);
+//        printf("r = %lf\n", r);
+        for(int i = 0; i < n; i++) {
+            if(r < dists[i]) {
+                index = i;
+//                printf("picked index:%d\n",index);
+                break;
+            }
+        }
+        for (int i = 0; i < k; i++) {
+
+            for (int j = 0; j < k; j++) {
+                ret[c*k + j] = U[index*k+j];
+            }
+        }
+    }
+    EXIT_FUNC;
+}
+
+static inline void initialize_lowdim(double *clusters_center, double *U, int *clusters_size, double *upper_bounds
+        , double *lower_bounds, int *cluster_assignments, int k, int n) {
+    ENTER_FUNC;
+    clusters_size[0] = n; // first contains all
+    /*
+    for (int i = 1; i < k; i++) {
+        clusters_size[i] = 0;
+    }
+    */
+    for (int i = 0; i < n; i++) {
+        upper_bounds[i] = DBL_MAX;
+        //lower_bounds[i] = 0;
+        //cluster_assignments[i] = 0;
+    }
+    // perform kpp for init assignments
+    init_kpp_lowdim(U, n, k, clusters_center);
+    EXIT_FUNC;
+}
 
 /*
  * ALGO 3 - POINT ALL CLUSTER --------------------------------------------------
@@ -370,7 +533,7 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
     //int cluster_assignments[n];
     int *cluster_assignments = calloc(n, sizeof(int));
     // Algorithm 2: init + kpp -------------------
-    initialize(clusters_center, U, clusters_size, upper_bounds, lower_bounds, cluster_assignments, k, n);
+    initialize_lowdim(clusters_center, U, clusters_size, upper_bounds, lower_bounds, cluster_assignments, k, n);
     // Distance to nearest other cluster for each cluster.
     double dist_nearest_cluster[k];
     // distance of centers moved between two iteration
