@@ -659,6 +659,8 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
     // distance of centers moved between two iteration
     double centers_dist_moved[k];
     int iteration = 0;
+
+    double *mask = calloc(n, sizeof(double));
     while (iteration < max_iter) {
         // Initialization after each iteration
         for (int i = 0; i < k*k; i++) {
@@ -687,23 +689,78 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
                 }
             }
         }
+//        // ALGO 1: line 5
+//        for (int i = 0; i < n; i++) {
+//            // line 6: max_d = max(s(a(i))/2, l(i)) ???
+//            double max_d = fmax(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
+//            // ALGO 1: line7: {first bound test}
+//            NUM_ADDS(1);
+//            if (upper_bounds[i] > max_d) {
+//                upper_bounds[i] = l2_norm_lowdim(U + i * k, clusters_center + cluster_assignments[i] * k, k);
+//                // ALGO 1: line 9 {second bound test}
+//                NUM_ADDS(1);
+//                if (upper_bounds[i] > max_d) {
+//                    // Iterate over all centers and find first and second closest distances and update DS
+//                    point_all_clusters(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
+//                            , clusters_size, k, i);
+//                }
+//            }
+//        }
+
+////    vectorizing mask computation
         // ALGO 1: line 5
-        for (int i = 0; i < n; i++) {
-            // line 6: max_d = max(s(a(i))/2, l(i)) ???
-            double max_d = fmax(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
-            // ALGO 1: line7: {first bound test}
-            NUM_ADDS(1);
-            if (upper_bounds[i] > max_d) {
+        double dist_nearest_cluster_seq[n];
+        for (int i = 0; i < n; i++){
+            dist_nearest_cluster_seq[i] = dist_nearest_cluster[cluster_assignments[i]];
+        }
+//        _mm256_load_pd
+
+        __m256d lb_vec, ub_vec,  dist_nearest_cluster_seq_vec;
+        __m256d cmp_max_vec, cmp_max_vec1;
+        __m256d lb_vec1, ub_vec1, dist_nearest_cluster_seq_vec1;
+        __m256d mask_vec, mask_vec1;
+        double max_d_arr[n];
+        int j;
+        for (j = 0; j < n-7; j+=8) {
+            lb_vec = _mm256_load_pd(lower_bounds+j);
+            lb_vec1 = _mm256_load_pd(lower_bounds+j+4);
+            dist_nearest_cluster_seq_vec = _mm256_load_pd(dist_nearest_cluster_seq+j);
+            dist_nearest_cluster_seq_vec1 = _mm256_load_pd(dist_nearest_cluster_seq+j+4);
+
+            cmp_max_vec = _mm256_max_pd(lb_vec, dist_nearest_cluster_seq_vec);
+            cmp_max_vec1 = _mm256_max_pd(lb_vec1, dist_nearest_cluster_seq_vec1);
+
+            mask_vec = _mm256_cmp_pd(ub_vec, cmp_max_vec, _CMP_GT_OQ);
+            mask_vec1 = _mm256_cmp_pd(ub_vec1, cmp_max_vec1, _CMP_GT_OQ);
+
+            _mm256_store_pd(max_d_arr+j, cmp_max_vec);
+            _mm256_store_pd(max_d_arr+j+4, cmp_max_vec1);
+            _mm256_store_pd(mask+j,mask_vec);
+            _mm256_store_pd(mask+j+4,mask_vec1);
+        }
+
+        for (; j<n; j++){
+            NUM_ADDS(2);
+            max_d_arr[j] = MAX(lower_bounds[j], dist_nearest_cluster[cluster_assignments[j]]);
+            mask[j] = upper_bounds[j] > max_d_arr[j];
+        }
+
+        for (int i = 0; i < n; i++){
+            if (mask[i]!=0) {
                 upper_bounds[i] = l2_norm_lowdim(U + i * k, clusters_center + cluster_assignments[i] * k, k);
                 // ALGO 1: line 9 {second bound test}
                 NUM_ADDS(1);
-                if (upper_bounds[i] > max_d) {
+                if (upper_bounds[i] > max_d_arr[i]) {
                     // Iterate over all centers and find first and second closest distances and update DS
                     point_all_clusters(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
                             , clusters_size, k, i);
                 }
             }
         }
+
+
+        memset(mask, 0, n*sizeof(int));
+
         // To compute new mean: size calculated in point all clusters, sum now, divide in move!
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < k; j++) {
