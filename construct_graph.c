@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <immintrin.h>
+#include <string.h>
+
 
 #include "norms.h"
 #include "instrumentation.h"
@@ -336,6 +338,89 @@ void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *
 
 }
 
+#define BLOCKSIZE 1024
+
+void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int dim, double *ret) {
+    ENTER_FUNC;
+    NUM_MULS((n*n-n)/2);
+    NUM_ADDS(n*n-n);
+
+    double degrees[n];
+    double tmp;
+    memset(degrees, 0, n * sizeof(double));
+
+    int i;
+    for (i = 0; i < n-(BLOCKSIZE-1); i += BLOCKSIZE) {
+        for (int i1 = i; i1 < i+BLOCKSIZE; i1++) {
+            for (int j1 = i1+1; j1 < i+BLOCKSIZE; j1++) {
+                tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j1 * dim], dim);
+                ret[i1*n + j1] = -tmp;
+                degrees[i1] += tmp;
+                degrees[j1] += tmp;
+            }
+        }
+        int j;
+        for (j = i+BLOCKSIZE; j < n-(BLOCKSIZE-1); j += BLOCKSIZE) {
+            for (int i1 = i; i1 < i+BLOCKSIZE; i1++) {
+                for (int j1 = j; j1 < j+BLOCKSIZE; j1++) {
+                    tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j1 * dim], dim);
+                    ret[i1*n + j1] = -tmp;
+                    degrees[i1] += tmp;
+                    degrees[j1] += tmp;
+                }
+            }
+        }
+        for (; j < n; j++) {
+            tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
+            ret[i*n + j] = -tmp;
+            degrees[i] += tmp;
+            degrees[j] += tmp;
+        }
+    }
+    for (; i < n; i++) {
+        for (int j = i+1; j < n; j++) {
+            tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
+            ret[i*n + j] = -tmp;
+            degrees[i] += tmp;
+            degrees[j] += tmp;
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        ret[i*n + i] = degrees[i] * 0.5;
+    }
+
+    // for (int i = 0; i < n; i++) {
+    //     for (int j = 0; j < n; j++) {
+    //         printf("%lf ", ret[i*n + j]);
+    //     }
+    //     printf("\n");
+    // }
+
+    // printf("\n");
+    // for (int i = 0; i < n; i++) {
+    //     printf("%lf ", degrees[i]);
+    // }
+    // printf("\n");
+
+    // for (int i = 0; i < n; i += 1) {
+    //     double degi;
+    //     degi =  0;
+    //     double tmp;
+    //     for (int j = i+1; j < n; j++) {
+    //         tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
+    //         degi+=tmp;
+    //         ret[i*n+j] = tmp;
+    //     }
+    //     for (int k = 0; k < i; k++) {
+    //         degi+=ret[k*n+i];
+    //         ret[k*n+i] *= -1;
+    //     }
+    //     ret[i*n+i] = degi/2;
+    // }
+    EXIT_FUNC;
+}
+
 void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
@@ -352,10 +437,16 @@ void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, doubl
         for (int k = 0; k < i; k++) {
             degi+=ret[k*n+i];
             ret[k*n+i] *= -1;
-            ret[i*n+k] = ret[k*n+i];
         }
-        ret[i*n+i] = degi;
+        ret[i*n+i] = degi/2;
     }
+
+    // for (int i = 0; i < n; i++) {
+    //     for (int j = 0; j < n; j++) {
+    //         printf("%lf ", ret[i*n+j]);
+    //     }
+    //     printf("\n");
+    // }
     EXIT_FUNC;
 
 }

@@ -26,6 +26,82 @@
  * <Dim. 0 of point n-1> <Dim. 1 of point n-1> <Dim. 2 of point n-1> ... <Dim. d of point n-1>\n
  * arguments: dataset_path, number of clusters (k)
  */
+
+int main(int argc, char *argv[]) {
+
+    if (argc != 4) {
+        return 1;
+    }
+
+    struct file f = alloc_load_points_from_file(argv[1]);
+    int dim = f.dimension;
+    int lines = f.lines;
+    double *points = f.points;
+    int k = atoi(argv[2]);
+    int n = lines;
+
+    uint64_t  start1 = start_tsc();
+    double *laplacian = calloc(lines*lines, sizeof(double));
+
+    if (dim >=8){
+        oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
+    }else{
+        oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
+    }
+
+    uint64_t  end1 = stop_tsc(start1);
+
+    printf("%" PRIu64 "\n", end1);
+    printf("%" PRIu64 "\n", NUM_FLOPS);
+
+    double *eigenvalues = malloc(k * sizeof(double));
+    double *eigenvectors = malloc(n * k * sizeof(double));
+    smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
+
+    uint64_t  start2 = start_tsc();
+
+    struct cluster clusters[k];
+    for (int i = 0; i < k; i++) {
+        clusters[i].mean = malloc(k * sizeof(double)); // k is the "dimension" here
+        clusters[i].size = 0;
+        clusters[i].indices = malloc(lines * sizeof(int)); // at most
+    }
+
+    if(k>=8){
+        hamerly_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
+    }else{
+        hamerly_kmeans_lowdim(eigenvectors, lines, k, 1000, 0.0001, clusters);
+    }
+
+    uint64_t runtime = stop_tsc(start2);
+
+    write_clustering_result(argv[3], clusters, k);
+
+    PROFILER_LIST();
+
+    printf("%" PRIu64 "\n", runtime);
+    printf("%" PRIu64 "\n", NUM_FLOPS);
+
+#ifdef VALIDATION
+   char *my_argv; // = {"./base_clustering" , argv[1] , argv[2] , "./base_output"};
+   my_argv = concat("./base_clustering ", argv[1]);
+   my_argv = concat(my_argv, " ");
+   my_argv = concat(my_argv, argv[2]);
+   my_argv = concat(my_argv, " ./base_output");
+   system(my_argv);
+   int line, col;
+   FILE* fpt1 = fopen("./base_output", "r");
+   FILE* fpt2 = fopen(argv[3], "r");
+   if (compareFile(fpt1, fpt2, &line, &col) != 0){
+       printf("ERROR! optimized version gives different result as base clustering\n");
+   }else{
+       printf("Result Correct!\n");
+   }
+#endif
+
+    return 0;
+}
+
 //int main(int argc, char *argv[]) {
 //
 //    if (argc != 4) {
