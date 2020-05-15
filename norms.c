@@ -257,11 +257,11 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
  */
 
 double l2_norm(double *u, double *v, int dim) {
-    return l2_norm_vec(u, v, dim);
+    return l2_norm_base(u, v, dim);
 }
 
 double l2_norm_squared(double *u, double *v, int dim) {
-    return l2_norm_squared_vec(u, v, dim);
+    return l2_norm_squared_base(u, v, dim);
 }
 
 double l2_norm_lowdim(double *u, double *v, int dim){
