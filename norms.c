@@ -158,8 +158,8 @@ double l2_norm_vec(double *u, double *v, int dim) {
     for (i = 0; i < dim - 7; i+=8) {
         v_u1 = _mm256_loadu_pd(u + i);
         v_v1 = _mm256_loadu_pd(v + i);
-        v_u2 = _mm256_loadu_pd(u + i + 4);
-        v_v2 = _mm256_loadu_pd(v + i + 4);
+        v_u2 = v_u1+4;
+        v_v2 = v_v1+4;
 
         v_sub1 = _mm256_sub_pd(v_u1, v_v1);
         v_sub2 = _mm256_sub_pd(v_u2, v_v2);
@@ -225,8 +225,8 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
     for (i = 0; i < dim - 7; i+=8) {
         v_u1 = _mm256_loadu_pd(u + i);
         v_v1 = _mm256_loadu_pd(v + i);
-        v_u2 = _mm256_loadu_pd(u + i + 4);
-        v_v2 = _mm256_loadu_pd(v + i + 4);
+        v_u2 = v_u1+4;
+        v_v2 = v_v1+4;
 
         v_sub1 = _mm256_sub_pd(v_u1, v_v1);
         v_sub2 = _mm256_sub_pd(v_u2, v_v2);
