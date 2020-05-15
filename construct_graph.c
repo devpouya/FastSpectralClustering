@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <immintrin.h>
 
 #include "norms.h"
 #include "instrumentation.h"
@@ -305,63 +306,34 @@ void oneshot_unnormalized_laplacian_base(double *points, int n, int dim, double 
 void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
-    NUM_ADDS((n*n-n)/2);
-    int i;
-    for (i = 0; i < n-3; i+=4) {
-        double deg, deg1, deg2, deg3;
-        deg =  0, deg1 =  0, deg2 =  0, deg3 =  0;
-        double tmp, tmp1, tmp2, tmp3;
-        for (int j = i+1; j < n; j+=1) {
-            NUM_MULS(1);
-            tmp = EXP(-0.5 * l2_norm_squared(&points[i * dim], &points[j * dim], dim));
-            tmp1 = EXP(-0.5 * l2_norm_squared(&points[(i+1) * dim], &points[j * dim], dim));
-            tmp2 = EXP(-0.5 * l2_norm_squared(&points[(i+2) * dim], &points[j * dim], dim));
-            tmp3 = EXP(-0.5 * l2_norm_squared(&points[(i+3) * dim], &points[j * dim], dim));
+    NUM_ADDS(n*n-n);
+    __m256d v_tmp, v_degrees, zeros;
+    zeros = _mm256_setzero_pd();
 
-            ret[i*n+j] = tmp;
-            ret[(i+1)*n+j] = tmp1;
-            ret[(i+2)*n+j] = tmp2;
-            ret[(i+3)*n+j] = tmp3;
-
-            deg += tmp;
-            deg1 += tmp1;
-            deg2 += tmp2;
-            deg3 += tmp3;
-        }
-        for(int k = 0; k < i*4-4; k++){
-            deg+=ret[k*n+i];
-            deg1+=ret[k*n+i];
-            deg2+=ret[k*n+i];
-            deg3+=ret[k*n+i];
-            ret[k*n+i] *= -1;
-            ret[k*n+i+1] *= -1;
-            ret[k*n+i+2] *= -1;
-            ret[k*n+i+3] *= -1;
-        }
-
-        ret[i*n+i] = deg*0.5;
-        ret[(i+1)*n+i+1] = deg1*0.5;
-        ret[(i+2)*n+i+2] = deg2*0.5;
-        ret[(i+3)*n+i+3] = deg3*0.5;
-    }
-    for (; i < n; i++) {
-        double degi;
-        degi =  0;
+    for (int i = 0; i < n; i+=1) {
+        v_degrees = zeros;
+        int j;
         double tmp;
-        for (int j = i+1; j < n; j++) {
-            tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
-            degi+=tmp;
-            ret[i*n+j] = tmp;
-
+        double degi = 0;
+        for (j = i+1; j < n-3; j+=4) {
+            v_tmp = fast_gaussian_similarity_vec(&points[i * dim], &points[j * dim], dim);
+            v_degrees = _mm256_add_pd(v_degrees, v_tmp);
+            _mm256_storeu_pd(&ret[i*n+j], v_tmp);
         }
-        for(int k = 0; k < i; k++){
+        for (; j < n; j++) {
+            tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
+            degi += tmp;
+            ret[i*n+j] = tmp;
+        }
+        for (int k = 0; k < i; k++) {
             degi+=ret[k*n+i];
             ret[k*n+i] *= -1;
-
+            ret[i*n+k] = ret[k*n+i];
         }
-        ret[i*n+i] = degi/2;
+        ret[i*n+i] = degi;
     }
     EXIT_FUNC;
+
 }
 
 void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, double *ret) {
