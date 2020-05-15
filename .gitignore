@@ -6,3 +6,4 @@ profiling
 countops
 *.o
 out.txt
+base_output
