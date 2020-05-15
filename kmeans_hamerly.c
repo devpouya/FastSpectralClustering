@@ -474,7 +474,9 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
         double inv_sum = 1/sum;
 
         __m256d inv_vec = _mm256_set1_pd(inv_sum);
+
         __m256d dists_vec, dists_vec2;
+
         for(i = 0; i < n-7; i+=8) {
             dists_vec = _mm256_load_pd(dists+i);
             dists_vec2 = _mm256_load_pd(dists+i+4);
@@ -486,6 +488,7 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             _mm256_store_pd(dists+i+4,dists_vec2);
 
         }
+
         for(; i < n-3; i+=4) {
             dists_vec = _mm256_load_pd(dists+i);
             dists_vec = _mm256_mul_pd(dists_vec,inv_vec);
@@ -496,6 +499,7 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
         }
 
         int index = 0;
+        /*
         __m256d offset = _mm256_setzero_pd();
         for(i = 0; i< n-7; i+=8) {
             __m256d x = _mm256_loadu_pd(dists+i);
@@ -516,8 +520,9 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             __m256d t3 = _mm256_permute2f128_pd(out,out,17);
             offset = _mm256_permute_pd(t3,255);
         }
+         */
         double tmp = dists[0];
-        for(; i < n; i++) {
+        for(int i = 0; i < n; i++) {
             dists[i] += tmp;
             tmp = dists[i];
         }
