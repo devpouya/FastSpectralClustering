@@ -305,65 +305,6 @@ void oneshot_unnormalized_laplacian_base(double *points, int n, int dim, double 
 
 }
 
- static void print_m256d(__m256d d) {
-   double *a = (double *) &d;
-   printf("{%lf %lf %lf %lf}\n", a[0], a[1], a[2], a[3]);
- }
-
-#define BLOCKSIZE 1024
-
-void oneshot_unnormalized_laplacian_blocked_vec(double *points, int n, int dim, double *ret) {
-    ENTER_FUNC;
-    NUM_MULS((n*n-n)/2);
-    NUM_ADDS(n*n-n);
-
-    double degrees[n];
-    double tmp;
-    memset(degrees, 0, n * sizeof(double));
-
-    int i;
-    for (i = 0; i < n-(BLOCKSIZE-1); i += BLOCKSIZE) {
-        for (int i1 = i; i1 < i+BLOCKSIZE; i1++) {
-            for (int j1 = i1+1; j1 < i+BLOCKSIZE; j1++) {
-                tmp = fast_gaussian_similarity_vec(&points[i1 * dim], &points[j1 * dim], dim);
-                ret[i1*n + j1] = -tmp;
-                degrees[i1] += tmp;
-                degrees[j1] += tmp;
-            }
-        }
-        int j;
-        for (j = i+BLOCKSIZE; j < n-(BLOCKSIZE-1); j += BLOCKSIZE) {
-            for (int i1 = i; i1 < i+BLOCKSIZE; i1++) {
-                for (int j1 = j; j1 < j+BLOCKSIZE; j1++) {
-                    tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j1 * dim], dim);
-                    ret[i1*n + j1] = -tmp;
-                    degrees[i1] += tmp;
-                    degrees[j1] += tmp;
-                }
-            }
-        }
-        for (; j < n; j++) {
-            tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
-            ret[i*n + j] = -tmp;
-            degrees[i] += tmp;
-            degrees[j] += tmp;
-        }
-    }
-    for (; i < n; i++) {
-        for (int j = i+1; j < n; j++) {
-            tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
-            ret[i*n + j] = -tmp;
-            degrees[i] += tmp;
-            degrees[j] += tmp;
-        }
-    }
-
-    for (int i = 0; i < n; i++) {
-        ret[i*n + i] = degrees[i] * 0.5;
-    }
-    EXIT_FUNC;
-}
-
 void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
@@ -378,24 +319,115 @@ void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *
         double degi = 0;
         for (j = i+1; j < n-3; j+=4) {
             v_tmp = fast_gaussian_similarity_vec(&points[i * dim], &points[j * dim], dim);
-            print_m256d(v_tmp);
             v_degrees = _mm256_add_pd(v_degrees, v_tmp);
             _mm256_storeu_pd(&ret[i*n+j], v_tmp);
         }
         for (; j < n; j++) {
             tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
-            printf("hey");
             degi += tmp;
             ret[i*n+j] = tmp;
         }
         for (int k = 0; k < i; k++) {
             degi+=ret[k*n+i];
             ret[k*n+i] *= -1;
-            ret[i*n+k] = ret[k*n+i];
+            // ret[i*n+k] = ret[k*n+i];
         }
         ret[i*n+i] = degi;
     }
     EXIT_FUNC;
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            printf("%lf ", ret[i*n + j]);
+        }
+        printf("\n");
+    }
+
+}
+
+
+#define BLOCKSIZE_HD 32
+
+//static void print_m256d(__m256d d) {
+//    double *a = (double *) &d;
+//    printf("vector: {%lf %lf %lf %lf}\n", a[0], a[1], a[2], a[3]);
+//}
+
+void oneshot_unnormalized_laplacian_vec_blocked(double *points, int n, int dim, double *ret) {
+    ENTER_FUNC;
+    NUM_MULS((n*n-n)/2);
+    NUM_ADDS(n*n-n);
+
+    double degrees[n];
+    __m256d tmp_vec;
+    double tmp;
+    memset(degrees, 0, n * sizeof(double));
+
+    int i;
+    for (i = 0; i < n-(BLOCKSIZE_HD-1); i += BLOCKSIZE_HD) {
+        for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
+            int j1;
+            for (j1 = i1+1; j1 < i+BLOCKSIZE_HD-3; j1 += 4) {
+                //printf("scalar: {%lf %lf %lf %lf}\n", tmp1, tmp2, tmp3, tmp4);
+                tmp_vec = fast_gaussian_similarity_vec(&points[i1 * dim], &points[j1 * dim], dim);
+                //print_m256d(tmp_vec);
+                _mm256_storeu_pd(&ret[i1*n + j1], -tmp_vec);
+                // degrees[i1] += tmp1 + tmp2 + tmp3 + tmp4;
+                degrees[i1] += -ret[i1*n + j1] - ret[i1*n + j1+1] - ret[i1*n + j1+2] - ret[i1*n + j1+3];
+                __m256d degreesj = _mm256_loadu_pd(&degrees[j1]);
+                __m256d newdegrees = _mm256_add_pd(degreesj, tmp_vec);
+                _mm256_storeu_pd(&degrees[j1], newdegrees);
+                // degrees[j1] += tmp1;
+                // degrees[j1+1] += tmp2;
+                // degrees[j1+2] += tmp3;
+                // degrees[j1+3] += tmp4;
+            }
+            for (; j1 < i+BLOCKSIZE_HD; j1++) {
+                tmp = fast_gaussian_similarity(&points[i1 * dim], &points[j1 * dim], dim);
+                ret[i1*n + j1] = -tmp;
+                degrees[i1] += tmp;
+                degrees[j1] += tmp;
+            }
+        }
+        int j;
+        for (j = i+BLOCKSIZE_HD; j < n-(BLOCKSIZE_HD-1); j += BLOCKSIZE_HD) {
+            for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
+                for (int j1 = j; j1 < j+BLOCKSIZE_HD-3; j1 += 4) {
+                    // tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j1 * dim], dim);
+                    // ret[i1*n + j1] = -tmp;
+                    // degrees[i1] += tmp;
+                    // degrees[j1] += tmp;
+                    tmp_vec = fast_gaussian_similarity_vec(&points[i1 * dim], &points[j1 * dim], dim);
+                    // tmp_vec = _mm256_set1_pd(1);
+                    _mm256_storeu_pd(&ret[i1*n + j1], -tmp_vec);
+                    degrees[i1] += -ret[i1*n + j1] - ret[i1*n + j1+1] -ret[i1*n + j1+2] - ret[i1*n + j1+3];
+                    __m256d degreesj = _mm256_loadu_pd(&degrees[j1]);
+                    __m256d newdegrees = _mm256_add_pd(degreesj, tmp_vec);
+                    _mm256_storeu_pd(&degrees[j1], newdegrees);
+                }
+            }
+        }
+        for (; j < n; j++) {
+            for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
+                tmp = fast_gaussian_similarity(&points[i1 * dim], &points[j * dim], dim);
+                ret[i1*n + j] = -tmp;
+                degrees[i1] += tmp;
+                degrees[j] += tmp;
+            }
+        }
+    }
+    for (; i < n; i++) {
+        for (int j = i+1; j < n; j++) {
+            tmp = fast_gaussian_similarity(&points[i * dim], &points[j * dim], dim);
+            ret[i*n + j] = -tmp;
+            degrees[i] += tmp;
+            degrees[j] += tmp;
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        ret[i*n + i] = degrees[i] * 0.5;
+    }
 
 //    for (int i = 0; i < n; i++) {
 //        for (int j = 0; j < n; j++) {
@@ -404,11 +436,10 @@ void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *
 //        printf("\n");
 //    }
 
+    EXIT_FUNC;
 }
 
-/*
- * Low DIM
- */
+#define BLOCKSIZE_LD 1024
 
 void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
@@ -420,9 +451,9 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
     memset(degrees, 0, n * sizeof(double));
 
     int i;
-    for (i = 0; i < n-(BLOCKSIZE-1); i += BLOCKSIZE) {
-        for (int i1 = i; i1 < i+BLOCKSIZE; i1++) {
-            for (int j1 = i1+1; j1 < i+BLOCKSIZE; j1++) {
+    for (i = 0; i < n-(BLOCKSIZE_LD-1); i += BLOCKSIZE_LD) {
+        for (int i1 = i; i1 < i+BLOCKSIZE_LD; i1++) {
+            for (int j1 = i1+1; j1 < i+BLOCKSIZE_LD; j1++) {
                 tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j1 * dim], dim);
                 ret[i1*n + j1] = -tmp;
                 degrees[i1] += tmp;
@@ -430,9 +461,9 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
             }
         }
         int j;
-        for (j = i+BLOCKSIZE; j < n-(BLOCKSIZE-1); j += BLOCKSIZE) {
-            for (int i1 = i; i1 < i+BLOCKSIZE; i1++) {
-                for (int j1 = j; j1 < j+BLOCKSIZE; j1++) {
+        for (j = i+BLOCKSIZE_LD; j < n-(BLOCKSIZE_LD-1); j += BLOCKSIZE_LD) {
+            for (int i1 = i; i1 < i+BLOCKSIZE_LD; i1++) {
+                for (int j1 = j; j1 < j+BLOCKSIZE_LD; j1++) {
                     tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j1 * dim], dim);
                     ret[i1*n + j1] = -tmp;
                     degrees[i1] += tmp;
@@ -441,10 +472,12 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
             }
         }
         for (; j < n; j++) {
-            tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
-            ret[i*n + j] = -tmp;
-            degrees[i] += tmp;
-            degrees[j] += tmp;
+            for (int i1 = i; i1 < i+BLOCKSIZE_LD; i1++) {
+                tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j * dim], dim);
+                ret[i1*n + j] = -tmp;
+                degrees[i1] += tmp;
+                degrees[j] += tmp;
+            }
         }
     }
     for (; i < n; i++) {
@@ -467,27 +500,6 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
     //     printf("\n");
     // }
 
-    // printf("\n");
-    // for (int i = 0; i < n; i++) {
-    //     printf("%lf ", degrees[i]);
-    // }
-    // printf("\n");
-
-    // for (int i = 0; i < n; i += 1) {
-    //     double degi;
-    //     degi =  0;
-    //     double tmp;
-    //     for (int j = i+1; j < n; j++) {
-    //         tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
-    //         degi+=tmp;
-    //         ret[i*n+j] = tmp;
-    //     }
-    //     for (int k = 0; k < i; k++) {
-    //         degi+=ret[k*n+i];
-    //         ret[k*n+i] *= -1;
-    //     }
-    //     ret[i*n+i] = degi/2;
-    // }
     EXIT_FUNC;
 }
 

@@ -40,19 +40,25 @@ int main(int argc, char *argv[]) {
     int k = atoi(argv[2]);
     int n = lines;
 
+    double *laplacian = calloc(lines * lines, sizeof(double));
     uint64_t  start1 = start_tsc();
-    double *laplacian = calloc(lines*lines, sizeof(double));
-
     // if (dim >=8){
-    oneshot_unnormalized_laplacian_blocked(points,lines,dim,laplacian);
+    // oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
     // }else{
-    // oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
+    //oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
     // }
+
+    //oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
+    oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
+
 
     uint64_t  end1 = stop_tsc(start1);
 
     printf("%" PRIu64 "\n", end1);
     printf("%" PRIu64 "\n", NUM_FLOPS);
+
+    PROFILER_LIST();
+    return 0;
 
     double *eigenvalues = malloc(k * sizeof(double));
     double *eigenvectors = malloc(n * k * sizeof(double));

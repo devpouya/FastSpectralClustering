@@ -20,7 +20,7 @@ union {
     } n; } eco;
 
 // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.9.4508&rep=rep1&type=pdf
-#define EXP(x) (eco.n.i = 1512775.3951951856938*x +1072632447, eco.d)
+#define EXP(x) (eco.n.j = 1512775.3951951856938*x +1072632447, eco.d)
 
 double appx_exp(double x);
 double l2_norm(double *u, double *v, int dim);

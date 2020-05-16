@@ -10,7 +10,7 @@ number_clusters = input("enter number of clusters  ")
 output_path = "output/validation/"+input("enter the output file name (result in /output/validation/): ")
 
 subprocess.run(["make"])
-subprocess.run(["./base_clustering", dataset_path, number_clusters, output_path])
+subprocess.run(["./clustering", dataset_path, number_clusters, output_path])
 
 
 f = open(output_path, "r")
