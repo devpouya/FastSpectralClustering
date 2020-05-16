@@ -15,19 +15,16 @@
 #define MAKE_MASK(i0, i1, i2, i3) (i3 << 3 | i2 << 2 | i1 << 1 | i0)
 #define MAX(x, y) ((x > y) ? x : y)
 
-static inline void cumulative_sum(double *probs, int n, double *ret) {
+static void cumulative_sum(double *probs, int n, double *ret) {
     ENTER_FUNC;
-    NUM_ADDS(n);
     ret[0] = probs[0];
-    double ret_tmp = ret[0];
     for(int i = 1; i < n; i++) {
-        ret[i] += ret_tmp;//+probs[i];
-        ret_tmp = ret[i];
+        ret[i] = ret[i-1]+probs[i];
     }
     EXIT_FUNC;
 }
 
-static inline void init_kpp(double *U, int n, int k, double *ret) {
+static void init_kpp(double *U, int n, int k, double *ret) {
     ENTER_FUNC;
     // add a random initial point to the centers
 #ifdef SEED
@@ -48,7 +45,7 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
         double dists[n];
         for (int i = 0; i < n; i++) {
             //find closest point and add to sum
-            double dist = DBL_MAX;
+            double dist = FLT_MAX;
             for(int j = 0; j < c; j++) {
                 double tmp = l2_norm(&U[i*k],&ret[j*k],k);
                 if (tmp < dist) {
@@ -59,12 +56,10 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
             dists[i] = dist;
 
         }
-        double inv_sum = 1/sum;
         for(int i = 0; i < n; i++) {
-            dists[i] *= inv_sum;
+            dists[i] /= sum;
         }
         double cumsums[n];
-
         int index = 0;
         cumulative_sum(dists, n, cumsums);
         double r = rand()/((double)RAND_MAX);
@@ -85,7 +80,6 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
     }
     EXIT_FUNC;
 }
-
 
 /*
  * ALGO 2: INITIALIZE ---------------------------------------------------------
@@ -361,14 +355,15 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
 
     for (int c = 1; c < k; c++) {
         sum = 0;
-        double *dists = malloc(n* sizeof(double));
+//        double *dists = malloc(n* sizeof(double));
+        double dists[n] __attribute__((aligned(32)));
 
         int i;
         //__m256d red81 = _mm256_setzero_pd();
         //__m256d red82 = _mm256_setzero_pd();
         //__m256d zero_vec = _mm256_setzero_pd();
 
-
+//        double sum1, sum2;
         for(i = 0; i < n-7; i+=8) {
             //double dist = DBL_MAX;
             __m256d dist_vec = _mm256_set1_pd(DBL_MAX);
@@ -416,8 +411,8 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             _mm256_store_pd(dists+i+4,dist_vec2);
 
             sum += dists[i]+dists[i+1]+dists[i+2]+dists[i+3]+dists[i+4]+dists[i+5]+dists[i+6]+dists[i+7];
-
         }
+
         /*
         double sum_out1[4] = {0.0,0.0,0.0,0.0};
         _mm256_storeu_pd(sum_out1,red81);
@@ -495,34 +490,42 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             dists[i] *= inv_sum;
         }
 
-        int index = 0;
         __m256d offset = _mm256_setzero_pd();
-        for(i = 0; i< n-7; i+=8) {
-            __m256d x = _mm256_loadu_pd(dists+i);
-            __m256d t0,t1, out, tmp;
-            t0 = _mm256_permute_pd(x,_MM_SHUFFLE(2,1,0,3));
-            t1 = _mm256_permute2f128_pd(t0,t0,41);
-            tmp = _mm256_blend_pd(t0,t1,MAKE_MASK(1,0,1,0));
-            x = _mm256_add_pd(x,tmp);
+        __m256i mask0011_int = _mm256_set_epi64x(-1, -1, 0, 0);
+        __m256d mask0011 = _mm256_castsi256_pd(mask0011_int);
+        __m256i mask0001_int = _mm256_set_epi64x(-1, 0 , 0 , 0);
+        __m256d mask0001 = _mm256_castsi256_pd(mask0001_int);
+        __m256i mask1000_int = _mm256_set_epi64x(0, 0 , 0 , -1);
+        __m256d mask1000 = _mm256_castsi256_pd(mask1000_int);
+        for(i = 0; i< n-3; i+=4) {
+            __m256d x = _mm256_load_pd(dists+i);
+            x = _mm256_add_pd(x, offset);
 
-            t0 = _mm256_permute_pd(x,_MM_SHUFFLE(1,0,3,2));
-            t1 = _mm256_permute2f128_pd(t0,t0,41);
-            tmp = _mm256_blend_pd(t0,t1,MAKE_MASK(1,0,1,0));
-            x = _mm256_add_pd(x,tmp);
+            __m256d t0 = _mm256_permute4x64_pd(x, _MM_SHUFFLE(2,1,0,3));
+            __m256d t1 = _mm256_and_pd(t0, mask0011);
 
-            out = _mm256_add_pd(x,_mm256_permute2f128_pd(x,x,41));
-            out = _mm256_add_pd(out,offset);
-            _mm256_storeu_pd(dists+i,out);
-            __m256d t3 = _mm256_permute2f128_pd(out,out,17);
-            offset = _mm256_permute_pd(t3,255);
+            __m256d t2 = _mm256_permute_pd(t0, MAKE_MASK(0,1,0,0));
+            __m256d t3 = _mm256_and_pd(t2, mask0001);
+
+            x = _mm256_add_pd(x,t1);
+            x = _mm256_add_pd(x,t3);
+
+            _mm256_store_pd(dists+i, x);
+
+            offset = _mm256_and_pd(x, mask1000);
         }
+
         double tmp = dists[0];
         for(; i < n; i++) {
             dists[i] += tmp;
             tmp = dists[i];
         }
 
+        for(int j = 0; j<10; j++){
+            printf(" %lf ", dists[j]);
+        }
 
+        int index = 0;
         double r = rand()/((double)RAND_MAX);
 //        printf("r = %lf\n", r);
         for(int i = 0; i < n; i++) {
@@ -653,6 +656,7 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
     for (int i = 0; i < n; i++) {
         upper_bounds[i] = DBL_MAX;
     }
+//    init_kpp(U, n, k, clusters_center);
     init_kpp_lowdim(U, n, k, clusters_center);
     // Distance to nearest other cluster for each cluster.
     double dist_nearest_cluster[k];
@@ -660,7 +664,7 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
     double centers_dist_moved[k];
     int iteration = 0;
 
-    double *mask = calloc(n, sizeof(double));
+//    double *mask = calloc(n, sizeof(double));
     while (iteration < max_iter) {
         // Initialization after each iteration
         for (int i = 0; i < k*k; i++) {
@@ -690,67 +694,16 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
             }
         }
 //        // ALGO 1: line 5
-//        for (int i = 0; i < n; i++) {
-//            // line 6: max_d = max(s(a(i))/2, l(i)) ???
-//            double max_d = fmax(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
-//            // ALGO 1: line7: {first bound test}
-//            NUM_ADDS(1);
-//            if (upper_bounds[i] > max_d) {
-//                upper_bounds[i] = l2_norm_lowdim(U + i * k, clusters_center + cluster_assignments[i] * k, k);
-//                // ALGO 1: line 9 {second bound test}
-//                NUM_ADDS(1);
-//                if (upper_bounds[i] > max_d) {
-//                    // Iterate over all centers and find first and second closest distances and update DS
-//                    point_all_clusters(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
-//                            , clusters_size, k, i);
-//                }
-//            }
-//        }
-
-////    vectorizing mask computation
-        // ALGO 1: line 5
-        double dist_nearest_cluster_seq[n];
-        for (int i = 0; i < n; i++){
-            dist_nearest_cluster_seq[i] = dist_nearest_cluster[cluster_assignments[i]];
-        }
-//        _mm256_load_pd
-
-        __m256d lb_vec, ub_vec,  dist_nearest_cluster_seq_vec;
-        __m256d cmp_max_vec, cmp_max_vec1;
-        __m256d lb_vec1, ub_vec1, dist_nearest_cluster_seq_vec1;
-        __m256d mask_vec, mask_vec1;
-        double max_d_arr[n];
-        int j;
-        for (j = 0; j < n-7; j+=8) {
-            lb_vec = _mm256_load_pd(lower_bounds+j);
-            lb_vec1 = _mm256_load_pd(lower_bounds+j+4);
-            dist_nearest_cluster_seq_vec = _mm256_load_pd(dist_nearest_cluster_seq+j);
-            dist_nearest_cluster_seq_vec1 = _mm256_load_pd(dist_nearest_cluster_seq+j+4);
-
-            cmp_max_vec = _mm256_max_pd(lb_vec, dist_nearest_cluster_seq_vec);
-            cmp_max_vec1 = _mm256_max_pd(lb_vec1, dist_nearest_cluster_seq_vec1);
-
-            mask_vec = _mm256_cmp_pd(ub_vec, cmp_max_vec, _CMP_GT_OQ);
-            mask_vec1 = _mm256_cmp_pd(ub_vec1, cmp_max_vec1, _CMP_GT_OQ);
-
-            _mm256_store_pd(max_d_arr+j, cmp_max_vec);
-            _mm256_store_pd(max_d_arr+j+4, cmp_max_vec1);
-            _mm256_store_pd(mask+j,mask_vec);
-            _mm256_store_pd(mask+j+4,mask_vec1);
-        }
-
-        for (; j<n; j++){
-            NUM_ADDS(2);
-            max_d_arr[j] = MAX(lower_bounds[j], dist_nearest_cluster[cluster_assignments[j]]);
-            mask[j] = upper_bounds[j] > max_d_arr[j];
-        }
-
-        for (int i = 0; i < n; i++){
-            if (mask[i]!=0) {
+        for (int i = 0; i < n; i++) {
+            // line 6: max_d = max(s(a(i))/2, l(i)) ???
+            double max_d = MAX(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
+            // ALGO 1: line7: {first bound test}
+            NUM_ADDS(1);
+            if (upper_bounds[i] > max_d) {
                 upper_bounds[i] = l2_norm_lowdim(U + i * k, clusters_center + cluster_assignments[i] * k, k);
                 // ALGO 1: line 9 {second bound test}
                 NUM_ADDS(1);
-                if (upper_bounds[i] > max_d_arr[i]) {
+                if (upper_bounds[i] > max_d) {
                     // Iterate over all centers and find first and second closest distances and update DS
                     point_all_clusters(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
                             , clusters_size, k, i);
@@ -758,8 +711,67 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
             }
         }
 
+//////    vectorizing mask computation
+//        // ALGO 1: line 5
+//        double dist_nearest_cluster_seq[n];
+//        for (int i = 0; i < n; i++){
+//            dist_nearest_cluster_seq[i] = dist_nearest_cluster[cluster_assignments[i]];
+//        }
+//
+//        __m256d lb_vec, dist_nearest_cluster_seq_vec;
+////        ub_vec,
+//        __m256d cmp_max_vec, cmp_max_vec1, dist_nearest_cluster_seq_vec1;
+//        __m256d lb_vec1; //, ub_vec1, dist_nearest_cluster_seq_vec1;
+////        __m256d mask_vec, mask_vec1;
+//        double max_d_arr[n];
+////        double mask[n];
+//        int j;
+//        for (j = 0; j < n-7; j+=8) {
+//            lb_vec = _mm256_load_pd(lower_bounds+j);
+//            lb_vec1 = _mm256_load_pd(lower_bounds+j+4);
+////            ub_vec = _mm256_load_pd(upper_bounds+j);
+////            ub_vec1 = _mm256_load_pd(upper_bounds+j+4);
+//            dist_nearest_cluster_seq_vec = _mm256_load_pd(dist_nearest_cluster_seq+j);
+//            dist_nearest_cluster_seq_vec1 = _mm256_load_pd(dist_nearest_cluster_seq+j+4);
+//
+//            cmp_max_vec = _mm256_max_pd(lb_vec, dist_nearest_cluster_seq_vec);
+//            cmp_max_vec1 = _mm256_max_pd(lb_vec1, dist_nearest_cluster_seq_vec1);
+//
+////            mask_vec = _mm256_cmp_pd(ub_vec, cmp_max_vec, _CMP_GT_OQ);
+////            mask_vec1 = _mm256_cmp_pd(ub_vec1, cmp_max_vec1, _CMP_GT_OQ);
+//
+//            _mm256_store_pd(max_d_arr+j, cmp_max_vec);
+//            _mm256_store_pd(max_d_arr+j+4, cmp_max_vec1);
+////            _mm256_store_pd(mask+j,mask_vec);
+////            _mm256_store_pd(mask+j+4,mask_vec1);
+//        }
+//
+//        for (; j<n; j++){
+//            NUM_ADDS(2);
+//            max_d_arr[j] = MAX(lower_bounds[j], dist_nearest_cluster_seq[j]);
+////            mask[j] = upper_bounds[j] > max_d_arr[j];
+//        }
+////        for (int i = 0; i < n; i++){
+////            printf(" %lf ", mask[i]);
+////        }
+////
+//        for (int i = 0; i < n; i++){
+//            if (upper_bounds[i] > max_d_arr[i]) {
+////                printf("entered here! ");
+//                upper_bounds[i] = l2_norm_lowdim(U + i * k, clusters_center + cluster_assignments[i] * k, k);
+//                // ALGO 1: line 9 {second bound test}
+//                NUM_ADDS(1);
+//                if (upper_bounds[i] > max_d_arr[i]) {
+////                    printf("entered here! 2");
+//                    // Iterate over all centers and find first and second closest distances and update DS
+//                    point_all_clusters(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
+//                            , clusters_size, k, i);
+//                }
+//            }
+//        }
 
-        memset(mask, 0, n*sizeof(int));
+
+//        memset(mask, 0, n*sizeof(int));
 
         // To compute new mean: size calculated in point all clusters, sum now, divide in move!
         for (int i = 0; i < n; i++) {
