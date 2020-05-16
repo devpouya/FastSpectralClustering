@@ -13,9 +13,83 @@
 /*
  * Inspired from https://www.tfzx.net/article/918974.html
  */
+
+// static void print_m256d(__m256d d) {
+//   double *a = (double *) &d;
+//   printf("{%lf %lf %lf %lf}\n", a[0], a[1], a[2], a[3]);
+// }
+
+// static void print_m128(__m128 d) {
+//   float *a = (float *) &d;
+//   printf("{%f %f %f %f}\n", a[0], a[1], a[2], a[3]);
+// }
+
+// static void print_m128i(__m128i d) {
+//   int *a = (int *) &d;
+//   printf("{%d %d %d %d}\n", a[0], a[1], a[2], a[3]);
+// }
+
+// static void print_m256(__m256 d) {
+//   float *a = (float *) &d;
+//   printf("{%f %f %f %f %f %f %f %f}\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+// }
+
+// static void print_m256i(__m256i d) {
+//   int *a = (int *) &d;
+//   printf("{%d %d %d %d %d %d %d %d}\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+// }
+
+// union test {
+//     double d;
+//     struct {
+//         int i;
+//         int j;
+//     } n;
+// };
+
+#define MAKE_MASK8(i0, i1, i2, i3, i4, i5, i6, i7) (i0 << 7 | i1 << 6 | i2 << 5 | i3 << 4 | i4 << 3 | i5 << 2 | i6 << 1 | i7)
+
+__m256d exp256_pd_fast(__m256d x) {
+    // printf("-------------\n");
+    __m256 to_float = _mm256_castpd_ps(x);  // zero latency
+    __m256d c1 = _mm256_set1_pd(1512775.3951951856938);
+    __m256d c2 = _mm256_set1_pd(1072632447);
+    __m256i selector = _mm256_set_epi32(3, 7, 2, 6, 1, 5, 0, 4);
+
+    __m256d temp = _mm256_fmadd_pd(c1, x, c2);  // latency 4
+    // print_m256d(temp);
+    // printf("%lf\n", C1 * 1 + C2);
+    __m128i temp_int = _mm256_cvtpd_epi32(temp);  // latency 7
+    // print_m128i(temp_int);
+    // printf("%d\n", (int) C1 * 1 + C2);
+    // __m128 temp_float_cast = _mm_cvtsi128_ps(temp_int);
+    // __m256i temp_int_broadcast = _mm256_broadcastsi128_si256(temp_int);
+    __m256i temp_int_extend = _mm256_castsi128_si256(temp_int);  // zero latency
+    // print_m256i(temp_int_extend);
+    __m256 temp_cast = _mm256_castsi256_ps(temp_int_extend);  // zero latency
+    // print_m256(temp_cast);
+    // __m256i selector = _mm256_set_epi32(7, 3, 6, 2, 5, 1, 4, 0);
+    __m256 permute = _mm256_permutevar8x32_ps(temp_cast, selector);  // latency 3
+    // print_m256(permute);
+    __m256 float_result = _mm256_blend_ps(to_float, permute, MAKE_MASK8(1, 0, 1, 0, 1, 0, 1, 0));  // latency 1
+    // print_m256(float_result);
+    // union test test;
+    // test.n.j = 1512775.3951951856938*1 +1072632447;
+    // printf("%lf\n", test.d);
+
+    __m256d result = _mm256_castps_pd(float_result);  // latency 0
+    // print_m256d(result);
+    // printf("---------sdf-----\n");
+    return result;
+}
+
 __m256d exp256_pd(__m256d in)
 {
-    __m256 x = _mm256_castpd_ps(in);
+    // print_m256d(in);
+    __m128 y = _mm256_cvtpd_ps(in);
+    // print_m128(y);
+    __m256 x = _mm256_castps128_ps256(y);
+    // print_m256(x);
 
     __m256 t, f, p, r;
     __m256i i, j;
@@ -52,8 +126,10 @@ __m256d exp256_pd(__m256d in)
     /* exp(x) = 2^i * p */
     j = _mm256_slli_epi32 (i, 23); /* i << 23 */
     r = _mm256_castsi256_ps (_mm256_add_epi32 (j, _mm256_castps_si256 (p))); /* r = p * 2^i */
-
-    __m256d out = _mm256_castps_pd(r);
+    
+    // print_m256(r);
+    __m128 temp = _mm256_castps256_ps128(r);
+    __m256d out = _mm256_cvtps_pd(temp);
 
     return out;
 }
@@ -106,8 +182,8 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
     NUM_ADDS(3*dim);
     NUM_MULS(dim);
 
-    double norms[4];
-    double norm1[4], norm2[4], norm3[4], norm4[4];
+    double norms[4] __attribute__((aligned(32)));
+    double norm1[4] __attribute__((aligned(32))), norm2[4] __attribute__((aligned(32))), norm3[4] __attribute__((aligned(32))), norm4[4] __attribute__((aligned(32)));
 
     __m256d v_u1, v_v1, v_v2, v_v3, v_v4, v_sub1, v_sub2, v_sub3, v_sub4;
     __m256d v_norm1, v_norm2, v_norm3, v_norm4, zeros, half, result;
@@ -136,10 +212,10 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
         v_norm4 = _mm256_fmadd_pd(v_sub4, v_sub4, v_norm4);
     }
     // use doubles
-    _mm256_storeu_pd(norm1, v_norm1);
-    _mm256_storeu_pd(norm2, v_norm2);
-    _mm256_storeu_pd(norm3, v_norm3);
-    _mm256_storeu_pd(norm4, v_norm4);
+    _mm256_store_pd(norm1, v_norm1);
+    _mm256_store_pd(norm2, v_norm2);
+    _mm256_store_pd(norm3, v_norm3);
+    _mm256_store_pd(norm4, v_norm4);
     // sum up entries of array for each one into one double => stored back in a array
     for(int j = 0; j < 4; j++) {
         norms[0] += norm1[j];
@@ -154,9 +230,23 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
         norms[2] += (u[i+2*dim] - v[i+2*dim]) * (u[i+2*dim] - v[i+2*dim]);
         norms[3] += (u[i+3*dim] - v[i+3*dim]) * (u[i+3*dim] - v[i+3*dim]);
     }
-    result = _mm256_loadu_pd(norms);
+    printf("norms[0]=%lf norms[1]=%lf norms[2]=%lf norms[3]=%lf\n", norms[0], norms[1], norms[2], norms[3]);
+    result = _mm256_load_pd(norms);
     result = _mm256_mul_pd(half, result);
-    result = exp256_pd(result);
+    result = exp256_pd_fast(result);
+    // printf("exp = ");
+    // print_m256d(result);
+    // printf("\n");
+    // __m256 test = _mm256_set1_ps(1);
+    // test = exp256_ps(test);
+    // printf("exp2 = ");
+    // print_m256(test);
+    // printf("\n");
+    // __m256d test2 = _mm256_set1_pd(2);
+    // test2 = exp256_pd_test(test2);
+    // printf("exp3 = ");
+    // print_m256d(test2);
+    // printf("\n");
     EXIT_FUNC;
     return result;
 }

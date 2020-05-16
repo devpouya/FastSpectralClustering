@@ -1,9 +1,9 @@
-#include <math.h>
-#include "instrumentation.h"
-#include <immintrin.h>
 
 #ifndef _NORMS_H
 #define _NORMS_H
+
+#include <math.h>
+#include <immintrin.h>
 
 #define SIGMA 1.0
 #define LOG2E 1.442695040
@@ -32,6 +32,7 @@ double l2_norm_squared(double *u, double *v, int dim);
 double l2_norm_squared_base(double *u, double *v, int dim);
 double l2_norm_squared_vec(double *u, double *v, int dim);
 double l2_norm_squared_lowdim(double *u, double *v, int dim);
+__m256d fast_gaussian_similarity_vec(double *u, double *v, int dim);
 double gaussian_similarity(double *u, double *v, int dim);
 
 __m256d exp256_pd(__m256d in);
