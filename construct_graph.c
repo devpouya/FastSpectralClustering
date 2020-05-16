@@ -437,19 +437,14 @@ void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, doubl
         for (int k = 0; k < i; k++) {
             degi+=ret[k*n+i];
             ret[k*n+i] *= -1;
+            ret[i*n+k] = ret[k*n+i];
         }
-        ret[i*n+i] = degi/2;
+        ret[i*n+i] = degi;
     }
-
-    // for (int i = 0; i < n; i++) {
-    //     for (int j = 0; j < n; j++) {
-    //         printf("%lf ", ret[i*n+j]);
-    //     }
-    //     printf("\n");
-    // }
     EXIT_FUNC;
 
 }
+
 
 void oneshot_unnormalized_laplacian_roll(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
