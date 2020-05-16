@@ -478,27 +478,39 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
         for(i = 0; i < n; i++){
             centers_dist_moved_seq[i] = centers_dist_moved[cluster_assignments[i]];
         }
-        __m256d tmp_vec, ub_vec, lb_vec, max_moved_vec, second_max_moved_vec;
+        __m256d tmp_vec, ub_vec, lb_vec;
         __m256d max_moved_tmp_equal_mask, max_moved_tmp_inequal_mask;
+        __m256d tmp_vec1, ub_vec1, lb_vec1;
+        __m256d max_moved_tmp_equal_mask1, max_moved_tmp_inequal_mask1;
         __m256d zero_vec = _mm256_setzero_pd();
-        max_moved_vec = _mm256_set1_pd(max_moved);
-        second_max_moved_vec = _mm256_set1_pd(second_max_moved);
-        for(i = 0; i < n-3; i+=4){
-            NUM_ADDS(12);
+        __m256d max_moved_vec = _mm256_set1_pd(max_moved);
+        __m256d second_max_moved_vec = _mm256_set1_pd(second_max_moved);
+        for(i = 0; i < n-7; i+=8){
+            NUM_ADDS(24);
             tmp_vec = _mm256_loadu_pd(centers_dist_moved_seq+i);
             ub_vec = _mm256_loadu_pd(upper_bounds+i);
             lb_vec = _mm256_loadu_pd(lower_bounds+i);
+            tmp_vec1 = _mm256_loadu_pd(centers_dist_moved_seq+i+4);
+            ub_vec1 = _mm256_loadu_pd(upper_bounds+i+4);
+            lb_vec1 = _mm256_loadu_pd(lower_bounds+i+4);
 
             ub_vec = _mm256_add_pd(ub_vec, tmp_vec);
+            ub_vec1 = _mm256_add_pd(ub_vec1, tmp_vec1);
 
             max_moved_tmp_equal_mask = _mm256_cmp_pd(max_moved_vec,tmp_vec,_CMP_EQ_OQ);
             max_moved_tmp_inequal_mask = _mm256_xor_pd(zero_vec, max_moved_tmp_equal_mask);
+            max_moved_tmp_equal_mask1 = _mm256_cmp_pd(max_moved_vec,tmp_vec1,_CMP_EQ_OQ);
+            max_moved_tmp_inequal_mask1 = _mm256_xor_pd(zero_vec, max_moved_tmp_equal_mask1);
 
             lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_equal_mask, second_max_moved_vec));
             lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_inequal_mask, max_moved_vec));
+            lb_vec1 = _mm256_sub_pd(lb_vec1, _mm256_and_pd(max_moved_tmp_equal_mask1, second_max_moved_vec));
+            lb_vec1 = _mm256_sub_pd(lb_vec1, _mm256_and_pd(max_moved_tmp_inequal_mask1, max_moved_vec));
 
             _mm256_storeu_pd(upper_bounds+i, ub_vec);
             _mm256_storeu_pd(lower_bounds+i, lb_vec);
+            _mm256_storeu_pd(upper_bounds+i+4, ub_vec1);
+            _mm256_storeu_pd(lower_bounds+i+4, lb_vec1);
         }
         for (; i < n; i++) {
             NUM_ADDS(3);
