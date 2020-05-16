@@ -6,7 +6,7 @@ rm -f $out
 for file in `ls datasets/perf_data | sort -n`; do
     i=${file%????}
     echo $i
-    info=`./clustering "./datasets/perf_data/${file}" 2 /dev/null | tail -2`
+    info=`./countops "./datasets/perf_data/${file}" 2 /dev/null | tail -2`
     info_array=(${info//:/ })
     runtime=${info_array[0]}
     flops=${info_array[1]}

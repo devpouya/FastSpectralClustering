@@ -1,10 +1,9 @@
 #!/bin/bash
 
-rm -r datasets/perf_data/
-mkdir datasets/perf_data
+rm -r datasets/perf_data/*
 
-i=5
-while [[ $i -lt 100 ]]; do
+i=200
+while [[ $i -lt 3000 ]]; do
     echo $i
-    python3 ./scripts/generate_gaussian.py 2 $i "./datasets/perf_data/${i}.txt"; i=`expr $i + 5`
+    python3 ./scripts/generate_gaussian.py 2 $i "./datasets/perf_data/${i}.txt"; i=`expr $i + 200`
 done

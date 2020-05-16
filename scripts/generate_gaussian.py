@@ -29,7 +29,7 @@ for i in range(k):
     points = np.append(points,st,axis=0)
 np.random.shuffle(points)
 """
-file = open(out, "w+")
+file = open("datasets/test_points/"+out, "w+")
 file.write("2\n")
 for i in range(n):
     for j in range(2):

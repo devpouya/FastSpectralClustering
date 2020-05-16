@@ -1,5 +1,6 @@
 #include <math.h>
 #include "instrumentation.h"
+#include <immintrin.h>
 
 #ifndef _NORMS_H
 #define _NORMS_H
@@ -33,12 +34,13 @@ double l2_norm_squared_vec(double *u, double *v, int dim);
 double l2_norm_squared_lowdim(double *u, double *v, int dim);
 double gaussian_similarity(double *u, double *v, int dim);
 
+__m256d exp256_pd(__m256d in);
 double fast_gaussian_similarity(double *u, double *v, int dim);
+__m256d fast_gaussian_similarity_vec(double *u, double *v, int dim);
 double fast_gaussian_similarity_lowdim(double *u, double *v, int dim);
 double appx_gaussian_similarity(double *u, double *v, int dim);
 double fast_LUT_exp(double x);
 double fast_exp(double x);
-
 
 // LUT
 static const double ADJUSTMENT_LUT[256] =

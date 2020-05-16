@@ -4,6 +4,12 @@
 #include <immintrin.h>
 
 
+/**
+ * Exp function
+ * @param x
+ * @return
+ */
+
 /*
  * Inspired from https://www.tfzx.net/article/918974.html
  */
@@ -52,12 +58,6 @@ __m256d exp256_pd(__m256d in)
     return out;
 }
 
-/**
- * Exp function
- * @param x
- * @return
- */
-
 double fast_LUT_exp(double x) {
     ENTER_FUNC;
     NUM_ADDS(1);
@@ -66,17 +66,6 @@ double fast_LUT_exp(double x) {
     int index = (int) (tmp>>12) & 0xFF;
     EXIT_FUNC;
     return ((double )(tmp<<32 ))* ADJUSTMENT_LUT[index];
-}
-
-double fast_exp(double x) {
-    ENTER_FUNC;
-    NUM_MULS(2);
-    NUM_DIVS(1);
-    NUM_ADDS(2);
-    int x1 = (long long) (6051102*x+1056478197);
-    int x2 = (long long) (1056478197-6051102*x);
-    EXIT_FUNC;
-    return ((double) x1)/((double) x2);
 }
 
 /**
@@ -96,7 +85,6 @@ double gaussian_similarity(double *u, double *v, int dim) {
     EXIT_FUNC;
     return inner;
 }
-
 
 double fast_gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
@@ -176,8 +164,8 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
 double fast_gaussian_similarity_lowdim(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_MULS(1);
-    double inner = exp(-0.5 * l2_norm_squared_lowdim(u, v, dim));
-
+    double inner = EXP(-0.5 * l2_norm_squared_lowdim(u, v, dim));
+    printf("%f",inner);
     EXIT_FUNC;
     return inner;
 }
@@ -209,7 +197,7 @@ double l2_norm_squared_lowdim(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3*dim);
     NUM_MULS(dim);
-    double norm = 0;
+    double norm = 0.0;
     for (int i = 0; i < dim; i++) {
         norm += (u[i] - v[i]) * (u[i] - v[i]);
     }
@@ -254,7 +242,6 @@ double l2_norm_base(double *u, double *v, int dim) {
     EXIT_FUNC;
     return norm;
 }
-
 
 double l2_norm_vec(double *u, double *v, int dim) {
     ENTER_FUNC;
@@ -357,6 +344,73 @@ __m256d l2_norm_4x1_vec(double *u, double *v, int dim) {
     return result;
 }
 
+/**
+ *
+ * @param u [i i+1 i+2 i+3]
+ * @param v j
+ * @param dim
+ * @return
+ */
+__m256d l2_norm_squared_4x1_vec(double *u, double *v, int dim) {
+    ENTER_FUNC;
+    NUM_ADDS(3*dim);
+    NUM_MULS(dim);
+    NUM_SQRTS(1);
+
+    double norms[4];
+    double norm1[4], norm2[4], norm3[4], norm4[4];
+
+    __m256d v_v1, v_u1, v_u2, v_u3, v_u4, v_sub1, v_sub2, v_sub3, v_sub4;
+    __m256d v_norm1, v_norm2, v_norm3, v_norm4, zeros, result;
+
+    zeros = _mm256_setzero_pd();
+    v_norm1 = zeros; v_norm2 = zeros; v_norm3 = zeros; v_norm4 = zeros;
+
+    int i;
+    for (i = 0; i < dim - 3; i+=4) {
+
+        v_u1 = _mm256_loadu_pd(u       + i);
+        v_u2 = _mm256_loadu_pd(u+dim   + i);
+        v_u3 = _mm256_loadu_pd(u+2*dim + i);
+        v_u4 = _mm256_loadu_pd(u+3*dim + i);
+
+        v_v1 = _mm256_loadu_pd(v + i);
+
+        v_sub1 = _mm256_sub_pd(v_u1, v_v1);
+        v_sub2 = _mm256_sub_pd(v_u2, v_v1);
+        v_sub3 = _mm256_sub_pd(v_u3, v_v1);
+        v_sub4 = _mm256_sub_pd(v_u4, v_v1);
+
+        v_norm1 = _mm256_fmadd_pd(v_sub1, v_sub1, v_norm1);
+        v_norm2 = _mm256_fmadd_pd(v_sub2, v_sub2, v_norm2);
+        v_norm3 = _mm256_fmadd_pd(v_sub3, v_sub3, v_norm3);
+        v_norm4 = _mm256_fmadd_pd(v_sub4, v_sub4, v_norm4);
+    }
+    // use doubles
+    _mm256_storeu_pd(norm1, v_norm1);
+    _mm256_storeu_pd(norm2, v_norm2);
+    _mm256_storeu_pd(norm3, v_norm3);
+    _mm256_storeu_pd(norm4, v_norm4);
+    // sum up entries of array for each one into one double => stored back in a array
+    for(int j = 0; j < 4; j++) {
+        norms[0] += norm1[j];
+        norms[1] += norm2[j];
+        norms[2] += norm3[j];
+        norms[3] += norm4[j];
+    }
+    // tail handling
+    for (; i < dim; i++) {
+        norms[0] += (u[i] - v[i]) * (u[i] - v[i]);
+        norms[1] += (u[i+dim] - v[i+dim]) * (u[i+dim] - v[i+dim]);
+        norms[2] += (u[i+2*dim] - v[i+2*dim]) * (u[i+2*dim] - v[i+2*dim]);
+        norms[3] += (u[i+3*dim] - v[i+3*dim]) * (u[i+3*dim] - v[i+3*dim]);
+    }
+    result = _mm256_loadu_pd(norms);
+    EXIT_FUNC;
+    return result;
+}
+
+
 double l2_norm_squared_base(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3 * dim);
@@ -433,11 +487,11 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
  */
 
 double l2_norm(double *u, double *v, int dim) {
-    return l2_norm_base(u, v, dim);
+    return l2_norm_vec(u, v, dim);
 }
 
 double l2_norm_squared(double *u, double *v, int dim) {
-    return l2_norm_squared_base(u, v, dim);
+    return l2_norm_squared_vec(u, v, dim);
 }
 
 double l2_norm_lowdim(double *u, double *v, int dim){

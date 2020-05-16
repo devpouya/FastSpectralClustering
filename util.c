@@ -184,3 +184,4 @@ int write_clustering_result(char *file, struct cluster *clusters, int num_cluste
     fclose(fp);
     return 0;
 }
+
