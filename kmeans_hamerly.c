@@ -165,12 +165,12 @@ static inline void move_centers(double *new_clusters_centers, int *clusters_size
         double dist = 0;
         if (clusters_size[j] > 0) {
             for (int l = 0; l < k; l++) { // update
-                if (new_clusters_centers[j*k + l] == clusters_size[j]) {
+//                if (new_clusters_centers[j*k + l] == clusters_size[j]) {
                     NUM_DIVS(1);
                     new_clusters_centers[j*k + l] = new_clusters_centers[j*k + l] / clusters_size[j];
-                } else { // don't update
-                    new_clusters_centers[j*k + l] = clusters_center[j*k + l];
-                }
+//                } else { // don't update
+//                    new_clusters_centers[j*k + l] = clusters_center[j*k + l];
+//                }
             }
             dist = l2_norm(clusters_center + j*k, new_clusters_centers + j*k, k);
         }
@@ -637,12 +637,12 @@ static inline void move_centers_lowdim(double *new_clusters_centers, int *cluste
         double dist = 0;
         if (clusters_size[j] > 0) {
             for (int l = 0; l < k; l++) { // update
-                if (new_clusters_centers[j*k + l] == clusters_size[j]) {
+//                if (new_clusters_centers[j*k + l] == clusters_size[j]) {
                     NUM_DIVS(1);
                     new_clusters_centers[j*k + l] = new_clusters_centers[j*k + l] / clusters_size[j];
-                } else { // don't update
-                    new_clusters_centers[j*k + l] = clusters_center[j*k + l];
-                }
+//                } else { // don't update
+//                    new_clusters_centers[j*k + l] = clusters_center[j*k + l];
+//                }
             }
             dist = l2_norm_lowdim(clusters_center + j*k, new_clusters_centers + j*k, k);
         }
@@ -817,7 +817,7 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
         double max_dist_moved = move_centers(new_clusters_centers, clusters_size
                 , clusters_center, centers_dist_moved, k);
         */
-        move_centers(new_clusters_centers, clusters_size
+        move_centers_lowdim(new_clusters_centers, clusters_size
                 , clusters_center, centers_dist_moved, k);
 
         // ALGO 5 - Update-bounds : for all U update upper and lower distance bounds ---------------
