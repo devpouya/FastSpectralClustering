@@ -22,6 +22,23 @@ static void print_m256d(__m256d d) {
 }
 */
 
+static inline __m256d LoadArbitrary(double*p0, double*p1, double*p2, double*p3) {
+    __m256d a, b, c, d, e, f;
+    a = _mm256_loadu_pd(p0);
+    b = _mm256_loadu_pd(p1);
+    c = _mm256_loadu_pd(p2-2);
+    d = _mm256_loadu_pd(p3-2);
+    e = _mm256_unpacklo_pd(a, b);
+    f = _mm256_unpacklo_pd(c, d);
+    return _mm256_blend_pd(e, f, 0b1100);
+}
+
+//static inline __m256d gatherArbitrary(int idx_offset, double *arr_address, double *mem){
+//    __m256i vindeces = _mm256_loadu_pd(arr_address + idx_offset);
+//
+//    return _mm256_i64gather_pd(mem,,8);
+//}
+
 static inline void cumulative_sum(double *probs, int n, double *ret) {
     ENTER_FUNC;
     ret[0] = probs[0];
@@ -289,12 +306,13 @@ static inline void point_all_clusters(double *U, double *clusters_center, int *c
     for (int j = 0; j < k; j++) {
         double dist = l2_norm(U + i * k, clusters_center + j * k, k);
         // Find distance between the point and the center.
-        NUM_ADDS(1);
         if (dist < closest_center_1_dist) {
+            NUM_ADDS(1);
             closest_center_2_dist = closest_center_1_dist;
             closest_center_1 = j;
             closest_center_1_dist = dist;
         } else if (dist < closest_center_2_dist) {
+            NUM_ADDS(1);
             closest_center_2_dist = dist;
         }
     }
@@ -424,23 +442,50 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
                 }
             }
         }
+
         // ALGO 1: line 5
-        for (int i = 0; i < n; i++) {
-            // line 6: max_d = max(s(a(i))/2, l(i)) ???
-            double max_d = fmax(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
-            // ALGO 1: line7: {first bound test}
+        __m256d lb_vec; __m256d lb_vec1;
+        __m256d dist_nearest_cluster_seq_vec;
+        __m256d cmp_max_vec, cmp_max_vec1, dist_nearest_cluster_seq_vec1;
+        double max_d_arr[n] __attribute__((aligned(32)));
+        int j;
+        for (j = 0; j < n-7; j+=8) {
+            NUM_ADDS(16);
+            lb_vec = _mm256_load_pd(lower_bounds+j);
+            lb_vec1 = _mm256_load_pd(lower_bounds+j+4);
+
+            dist_nearest_cluster_seq_vec = LoadArbitrary(dist_nearest_cluster+cluster_assignments[j],
+                                                         dist_nearest_cluster+cluster_assignments[j+1],
+                                                         dist_nearest_cluster+cluster_assignments[j+2],
+                                                         dist_nearest_cluster+cluster_assignments[j+3]);
+            dist_nearest_cluster_seq_vec1 = LoadArbitrary(dist_nearest_cluster+cluster_assignments[j+4],
+                                                         dist_nearest_cluster+cluster_assignments[j+5],
+                                                         dist_nearest_cluster+cluster_assignments[j+6],
+                                                         dist_nearest_cluster+cluster_assignments[j+7]);
+
+            cmp_max_vec = _mm256_max_pd(lb_vec, dist_nearest_cluster_seq_vec);
+            cmp_max_vec1 = _mm256_max_pd(lb_vec1, dist_nearest_cluster_seq_vec1);
+            _mm256_store_pd(max_d_arr+j, cmp_max_vec);
+            _mm256_store_pd(max_d_arr+j+4, cmp_max_vec1);
+        }
+        for (; j<n; j++){
+            NUM_ADDS(2);
+            max_d_arr[j] = MAX(lower_bounds[j], dist_nearest_cluster[cluster_assignments[j]]);
+        }
+        for (int i = 0; i < n; i++){
             NUM_ADDS(1);
-            if (upper_bounds[i] > max_d) {
-                upper_bounds[i] = l2_norm(U + i * k, clusters_center + cluster_assignments[i] * k, k);
+            if (upper_bounds[i] > max_d_arr[i]) {
+                upper_bounds[i] = l2_norm_lowdim(U + i * k, clusters_center + cluster_assignments[i] * k, k);
                 // ALGO 1: line 9 {second bound test}
                 NUM_ADDS(1);
-                if (upper_bounds[i] > max_d) {
+                if (upper_bounds[i] > max_d_arr[i]) {
                     // Iterate over all centers and find first and second closest distances and update DS
                     point_all_clusters(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
                             , clusters_size, k, i);
                 }
             }
         }
+
         // To compute new mean: size calculated in point all clusters, sum now, divide in move!
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < k; j++) {
@@ -474,23 +519,30 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
         }
 
         int i;
-        double centers_dist_moved_seq[n];
-        for(i = 0; i < n; i++){
-            centers_dist_moved_seq[i] = centers_dist_moved[cluster_assignments[i]];
-        }
-        __m256d tmp_vec, ub_vec, lb_vec;
+//        double centers_dist_moved_seq[n];
+//        for(i = 0; i < n; i++){
+//            centers_dist_moved_seq[i] = centers_dist_moved[cluster_assignments[i]];
+//        }
+        __m256d tmp_vec, ub_vec; //, lb_vec;
         __m256d max_moved_tmp_equal_mask, max_moved_tmp_inequal_mask;
-        __m256d tmp_vec1, ub_vec1, lb_vec1;
+        __m256d tmp_vec1, ub_vec1; //, lb_vec1;
         __m256d max_moved_tmp_equal_mask1, max_moved_tmp_inequal_mask1;
         __m256d zero_vec = _mm256_setzero_pd();
         __m256d max_moved_vec = _mm256_set1_pd(max_moved);
         __m256d second_max_moved_vec = _mm256_set1_pd(second_max_moved);
         for(i = 0; i < n-7; i+=8){
             NUM_ADDS(24);
-            tmp_vec = _mm256_loadu_pd(centers_dist_moved_seq+i);
+//            tmp_vec = _mm256_loadu_pd(centers_dist_moved_seq+i);
+            tmp_vec = LoadArbitrary(centers_dist_moved+cluster_assignments[i],
+                                    centers_dist_moved+cluster_assignments[i+1],
+                                    centers_dist_moved+cluster_assignments[i+2],
+                                    centers_dist_moved+cluster_assignments[i+3]);
+            tmp_vec1 = LoadArbitrary(centers_dist_moved+cluster_assignments[i+4],
+                                    centers_dist_moved+cluster_assignments[i+5],
+                                    centers_dist_moved+cluster_assignments[i+6],
+                                    centers_dist_moved+cluster_assignments[i+7]);
             ub_vec = _mm256_loadu_pd(upper_bounds+i);
             lb_vec = _mm256_loadu_pd(lower_bounds+i);
-            tmp_vec1 = _mm256_loadu_pd(centers_dist_moved_seq+i+4);
             ub_vec1 = _mm256_loadu_pd(upper_bounds+i+4);
             lb_vec1 = _mm256_loadu_pd(lower_bounds+i+4);
 
