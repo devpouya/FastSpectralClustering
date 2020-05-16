@@ -44,9 +44,9 @@ int main(int argc, char *argv[]) {
     double *laplacian = calloc(lines*lines, sizeof(double));
 
     // if (dim >=8){
-        oneshot_unnormalized_laplacian_vec(points,lines,dim,laplacian);
+        // oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
     // }else{
-        // oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
+        oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
     // }
 
     uint64_t  end1 = stop_tsc(start1);

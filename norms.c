@@ -182,6 +182,28 @@ double fast_gaussian_similarity(double *u, double *v, int dim) {
     return inner;
 }
 
+// __m256d fast_gaussian_similarity_2d_vec(double *u, double *v) {
+//     ENTER_FUNC;
+
+//     __m256d u1u2 = _mm256_loadu_pd(u);  // 2 points
+//     __m256d v1v2 = _mm256_loadu_pd(v);
+//     __m256d v3v4 = _mm256_loadu_pd(v + 4);
+//     __m256d v5v6 = _mm256_loadu_pd(v + 8);
+//     __m256d v7v8 = _mm256_loadu_pd(v + 12);
+
+//     __m256d u1u2_v1v2 = _mm256_sub_pd(u1u2, v1v2);
+//     __m256d u1u2_v3v4 = _mm256_sub_pd(u1u2, v3v4);
+//     __m256d u1u2_v5v6 = _mm256_sub_pd(u1u2, v5v6);
+//     __m256d u1u2_v7v8 = _mm256_sub_pd(u1u2, v7v8);
+
+//     __m256d u1u2_v1v2_2 = _mm256_mul_pd(u1u2_v1v2, u1u2_v1v2);
+//     __m256d u1u2_v3v4_2 = _mm256_mul_pd(u1u2_v3v4, u1u2_v3v4);
+//     __m256d u1u2_v5v6_2 = _mm256_mul_pd(u1u2_v5v6, u1u2_v5v6);
+//     __m256d u1u2_v7v8_2 = _mm256_mul_pd(u1u2_v7v8, u1u2_v7v8);
+
+//     __m256d norm_u1_v1 = 
+// }
+
 /**
  * Fast gaussian using simd exp
  * @param u [i]
@@ -242,7 +264,7 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
         norms[2] += (u[i+2*dim] - v[i+2*dim]) * (u[i+2*dim] - v[i+2*dim]);
         norms[3] += (u[i+3*dim] - v[i+3*dim]) * (u[i+3*dim] - v[i+3*dim]);
     }
-    printf("norms[0]=%lf norms[1]=%lf norms[2]=%lf norms[3]=%lf\n", norms[0], norms[1], norms[2], norms[3]);
+    // printf("norms[0]=%lf norms[1]=%lf norms[2]=%lf norms[3]=%lf\n", norms[0], norms[1], norms[2], norms[3]);
     result = _mm256_load_pd(norms);
     result = _mm256_mul_pd(half, result);
     result = exp256_pd_fast(result);
@@ -266,7 +288,7 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
 double fast_gaussian_similarity_lowdim(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_MULS(1);
-    double inner = exp(-0.5 * l2_norm_squared_lowdim(u, v, dim));
+    double inner = EXP(-0.5 * l2_norm_squared_lowdim(u, v, dim));
 
     EXIT_FUNC;
     return inner;
