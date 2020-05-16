@@ -4,6 +4,7 @@ base_clustering
 validation
 profiling
 countops
+clustering
 *.o
 out.txt
 base_output

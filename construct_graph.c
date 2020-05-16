@@ -336,6 +336,13 @@ void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *
     }
     EXIT_FUNC;
 
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            printf("%lf ", ret[i*n + j]);
+        }
+        printf("\n");
+    }
+
 }
 
 #define BLOCKSIZE 1024
