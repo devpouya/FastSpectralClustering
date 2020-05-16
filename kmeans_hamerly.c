@@ -15,6 +15,13 @@
 #define MAKE_MASK(i0, i1, i2, i3) (i3 << 3 | i2 << 2 | i1 << 1 | i0)
 #define MAX(x, y) ((x > y) ? x : y)
 
+/*
+static void print_m256d(__m256d d) {
+    double *a = (double *) &d;
+    printf("{%lf %lf %lf %lf}\n", a[0], a[1], a[2], a[3]);
+}
+*/
+
 static void cumulative_sum(double *probs, int n, double *ret) {
     ENTER_FUNC;
     ret[0] = probs[0];
@@ -494,40 +501,61 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
         }
 
         __m256d offset = _mm256_setzero_pd();
-        __m256i mask0011_int = _mm256_set_epi64x(-1, -1, 0, 0);
+        __m256i mask0111_int = _mm256_set_epi64x(-1, -1, -1, 0);
+        __m256d mask0111 = _mm256_castsi256_pd(mask0111_int);
+        __m256i mask0011_int = _mm256_set_epi64x(-1, -1 , 0 , 0);
         __m256d mask0011 = _mm256_castsi256_pd(mask0011_int);
         __m256i mask0001_int = _mm256_set_epi64x(-1, 0 , 0 , 0);
         __m256d mask0001 = _mm256_castsi256_pd(mask0001_int);
-        __m256i mask1000_int = _mm256_set_epi64x(0, 0 , 0 , -1);
-        __m256d mask1000 = _mm256_castsi256_pd(mask1000_int);
+        //__m256i mask1000_int = _mm256_set_epi64x(0, 0 , 0 , -1);
+        //__m256d mask1000 = _mm256_castsi256_pd(mask1000_int);
         for(i = 0; i< n-3; i+=4) {
             __m256d x = _mm256_load_pd(dists+i);
+            //printf("X IS:\n");
+            //print_m256d(x);
             x = _mm256_add_pd(x, offset);
+            //printf("AFTER OFFSET X IS\n");
+            //print_m256d(x);
 
             __m256d t0 = _mm256_permute4x64_pd(x, _MM_SHUFFLE(2,1,0,3));
-            __m256d t1 = _mm256_and_pd(t0, mask0011);
+            __m256d t1 = _mm256_and_pd(t0, mask0111);
+            //printf("T1 is:\n");
+            //print_m256d(t1);
+            __m256d t2 = _mm256_permute4x64_pd(x, _MM_SHUFFLE(1,0,2,3));
+            __m256d t3 = _mm256_and_pd(t2, mask0011);
+            //printf("T3 is:\n");
+            //print_m256d(t3);
 
-            __m256d t2 = _mm256_permute_pd(t0, MAKE_MASK(0,1,0,0));
-            __m256d t3 = _mm256_and_pd(t2, mask0001);
+            __m256d t4 = _mm256_permute4x64_pd(x,_MM_SHUFFLE(0,2,1,3));
+            __m256d t5 = _mm256_and_pd(t4, mask0001);
 
             x = _mm256_add_pd(x,t1);
+            //printf("X AFTER FIRST ADD\n");
+            //print_m256d(x);
             x = _mm256_add_pd(x,t3);
+            //printf("X Second AFTER ADD is:\n");
+            //print_m256d(x);
+
+            x = _mm256_add_pd(x,t5);
+            //printf("X Second AFTER ADD is:\n");
+            //print_m256d(x);
 
             _mm256_store_pd(dists+i, x);
 
-            offset = _mm256_and_pd(x, mask1000);
+            offset = _mm256_and_pd(x, mask0001);
+            offset = _mm256_permute4x64_pd(offset,_MM_SHUFFLE(0,2,1,3));
+            //printf("OFFSET\n");
+            //print_m256d(offset);
         }
 
 
-        double tmp = dists[0];
+        double tmp = dists[i-1];
         for(; i < n; i++) {
             dists[i] += tmp;
             tmp = dists[i];
         }
 
-        for(int j = 0; j<10; j++){
-            printf(" %lf ", dists[j]);
-        }
+
 
         int index = 0;
         double r = rand()/((double)RAND_MAX);
