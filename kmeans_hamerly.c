@@ -263,11 +263,7 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
                 ret[c*k+j] = U[index*k+j];
             }
         }
-
     }
-
-
-
     EXIT_FUNC;
 }
 
@@ -334,8 +330,9 @@ static inline void move_centers(double *new_clusters_centers, int *clusters_size
             }
             centers_dist_moved[j] = dist;
         }
-        EXIT_FUNC;
+
     }
+    EXIT_FUNC;
 }
 
 /*
@@ -353,6 +350,7 @@ static inline void update_bounds(double *upper_bounds, double *lower_bounds, dou
             max_moved = centers_dist_moved[i];
         }
     }
+
     for (int i = 0; i < n; i++) {
         NUM_ADDS(3);
         double tmp = centers_dist_moved[cluster_assignments[i]];
@@ -390,8 +388,9 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
     for (int i = 0; i < n; i++) {
         upper_bounds[i] = DBL_MAX;
     }
-
+//    printf("start init\n");
     init_kpp(U, n, k, clusters_center);
+//    printf("finished init\n");
     // Distance to nearest other cluster for each cluster.
     double dist_nearest_cluster[k];
     // distance of centers moved between two iteration
@@ -450,11 +449,68 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
             }
         }
         // ALGO 4 - MOVE-CENTERS: check for distance moved then move the centers ---------
-        move_centers(new_clusters_centers, clusters_size
-                , clusters_center, centers_dist_moved, k);
-
+//        move_centers(new_clusters_centers, clusters_size
+//                , clusters_center, centers_dist_moved, k);
+        for (int j = 0; j < k; j++) {
+            double dist = 0;
+            if (clusters_size[j] > 0) {
+                for (int l = 0; l < k; l++) { // update
+                    NUM_DIVS(1);
+                    new_clusters_centers[j * k + l] = new_clusters_centers[j * k + l] / clusters_size[j];
+                    dist = l2_norm(clusters_center + j * k, new_clusters_centers + j * k, k);
+                }
+                centers_dist_moved[j] = dist;
+            }
+        }
         // ALGO 5 - Update-bounds : for all U update upper and lower distance bounds ---------------
-        update_bounds(upper_bounds, lower_bounds, centers_dist_moved, cluster_assignments, n, k);
+//        update_bounds(upper_bounds, lower_bounds, centers_dist_moved, cluster_assignments, n, k);
+        double max_moved = 0;
+        double second_max_moved = 0;
+        for (int i = 0; i < k; i++) {
+            if (centers_dist_moved[i] > max_moved) {
+                second_max_moved = max_moved;
+                max_moved = centers_dist_moved[i];
+            }
+        }
+
+        int i;
+        double centers_dist_moved_seq[n];
+        for(i = 0; i < n; i++){
+            centers_dist_moved_seq[i] = centers_dist_moved[cluster_assignments[i]];
+        }
+        __m256d tmp_vec, ub_vec, lb_vec, max_moved_vec, second_max_moved_vec;
+        __m256d max_moved_tmp_equal_mask, max_moved_tmp_inequal_mask;
+        __m256d zero_vec = _mm256_setzero_pd();
+        max_moved_vec = _mm256_set1_pd(max_moved);
+        second_max_moved_vec = _mm256_set1_pd(second_max_moved);
+        for(i = 0; i < n-3; i+=4){
+            NUM_ADDS(12);
+            tmp_vec = _mm256_loadu_pd(centers_dist_moved_seq+i);
+            ub_vec = _mm256_loadu_pd(upper_bounds+i);
+            lb_vec = _mm256_loadu_pd(lower_bounds+i);
+
+            ub_vec = _mm256_add_pd(ub_vec, tmp_vec);
+
+            max_moved_tmp_equal_mask = _mm256_cmp_pd(max_moved_vec,tmp_vec,_CMP_EQ_OQ);
+            max_moved_tmp_inequal_mask = _mm256_xor_pd(zero_vec, max_moved_tmp_equal_mask);
+
+            lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_equal_mask, second_max_moved_vec));
+            lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_inequal_mask, max_moved_vec));
+
+            _mm256_storeu_pd(upper_bounds+i, ub_vec);
+            _mm256_storeu_pd(lower_bounds+i, lb_vec);
+        }
+        for (; i < n; i++) {
+            NUM_ADDS(3);
+            double tmp = centers_dist_moved[cluster_assignments[i]];
+            upper_bounds[i] += tmp;
+            if (max_moved == tmp){
+                lower_bounds[i] -= second_max_moved;
+            } else {
+                lower_bounds[i] -= max_moved;
+            }
+        }
+
         // transfer new state to current
         memcpy(clusters_center, new_clusters_centers, k * k * sizeof(double));
         iteration++;
