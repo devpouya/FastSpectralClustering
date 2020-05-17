@@ -43,6 +43,7 @@ static inline void cumulative_sum(double *probs, int n, double *ret) {
     ENTER_FUNC;
     ret[0] = probs[0];
     for(int i = 1; i < n; i++) {
+        NUM_ADDS(1);
         ret[i] = ret[i-1]+probs[i];
     }
     EXIT_FUNC;
