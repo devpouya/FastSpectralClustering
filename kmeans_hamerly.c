@@ -421,6 +421,7 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
             new_clusters_centers[i] = 0;
         }
         // min distance between each two centers {update s} --------------------------
+        /*
         for (int i = 0; i < k; i++) { // for each cluster
             double min_dist = DBL_MAX;
             for (int j = 0; j < k; j++) { // look at the distances to all cluster
@@ -432,6 +433,7 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
                         dist += (clusters_center[i*k+l] - clusters_center[j*k+l])
                                 *(clusters_center[i*k+l] - clusters_center[j*k+l]);
                     }
+
                     NUM_MULS(1);
                     NUM_SQRTS(1);
                     NUM_ADDS(1);
@@ -442,6 +444,42 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
                     }
                 }
             }
+        }
+        */
+        for (int i = 0; i < k; i++) { // for each cluster
+            double min_dist = DBL_MAX;
+            for (int j = 0; j < k; j++) { // look at the distances to all cluster
+
+                    double dist = 0;
+                    int l;
+                    __m256d dist_vec = _mm256_setzero_pd();
+                    for (l = 0; l < k-3; l+=4) { // iterate over column = dimension
+                        NUM_MULS(1);
+                        NUM_ADDS(3);
+                        __m256d cent1 = _mm256_loadu_pd(&clusters_center[i*k+l]);
+                        __m256d cent2 = _mm256_loadu_pd(&clusters_center[j*k+l]);
+                        __m256d tmp = _mm256_sub_pd(cent1,cent2);
+                        dist_vec = _mm256_fmadd_pd(tmp,tmp,dist_vec);
+
+                    }
+                    for(;l<k;l++) {
+                        dist += (clusters_center[i*k+l] - clusters_center[j*k+l])
+                                *(clusters_center[i*k+l] - clusters_center[j*k+l]);
+                    }
+                    double out[4];
+                    _mm256_storeu_pd(out,dist_vec);
+                    double tmp1 = out[0]+out[1]+out[2]+out[3];
+                    dist = tmp1 + dist;
+                    NUM_MULS(1);
+                    NUM_SQRTS(1);
+                    NUM_ADDS(1);
+                    dist = sqrt(dist) * 0.5;
+                    if (dist < min_dist) {
+                        min_dist = dist;
+                        dist_nearest_cluster[i] = dist;
+                    }
+                }
+
         }
 
         // ALGO 1: line 5
@@ -488,15 +526,47 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
         }
 
         // To compute new mean: size calculated in point all clusters, sum now, divide in move!
+        /*
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < k; j++) {
                 NUM_ADDS(1);
                 new_clusters_centers[cluster_assignments[i]*k+j] += U[i*k+j];
             }
         }
+        */
+
+        for(int i = 0; i < n; i++) {
+
+
+            int j;
+            for(j = 0; j < k-3; j+=4) {
+                __m256d sumvec = _mm256_loadu_pd(&new_clusters_centers[cluster_assignments[i]*k+j]);
+
+
+                __m256d uvec = _mm256_loadu_pd(&U[i*k+j]);
+
+
+                sumvec = _mm256_add_pd(uvec,sumvec);
+
+
+                _mm256_storeu_pd(&new_clusters_centers[cluster_assignments[i]*k+j],sumvec);
+
+
+            }
+            for(;j<k;j++){
+                new_clusters_centers[cluster_assignments[i]*k+j] += U[i*k+j];
+
+            }
+
+
+        }
+
+
+
         // ALGO 4 - MOVE-CENTERS: check for distance moved then move the centers ---------
 //        move_centers(new_clusters_centers, clusters_size
 //                , clusters_center, centers_dist_moved, k);
+        /*
         for (int j = 0; j < k; j++) {
             double dist = 0;
             if (clusters_size[j] > 0) {
@@ -508,8 +578,64 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
                 centers_dist_moved[j] = dist;
             }
         }
+        */
+        for(int j = 0; j < k; j++) {
+            double dist = 0;
+            int l;
+            double inv = (double) 1/clusters_size[j];
+            __m256d inv_vec = _mm256_set1_pd(inv);
+
+            for(l = 0; l < k-3; l+=4) {
+                __m256d clust_vec = _mm256_loadu_pd(&new_clusters_centers[j*k+l]);
+                clust_vec = _mm256_mul_pd(clust_vec,inv_vec);
+                _mm256_storeu_pd(&new_clusters_centers[j*k+l],clust_vec);
+
+            }
+            for(;l<k;l++) {
+                new_clusters_centers[j*k+l] *= inv;
+            }
+            centers_dist_moved[j] = dist;
+        }
+        /*
+        __m256d max_all = _mm256_setzero_pd();
+        __m256d second_max = _mm256_setzero_pd();
+        int p;
+        for(p = 0; p <k-3; p+=4) {
+            __m256d curr = _mm256_load_pd(centers_dist_moved+p);
+            second_max = max_all;
+            max_all = _mm256_max_pd(curr,max_all);
+        }
+        __m256d y = _mm256_permute2f128_pd(max_all,max_all,1);
+        __m256d m1 = _mm256_max_pd(max_all,y);
+        __m256d m2 = _mm256_permute_pd(m1,5);
+        __m256d m = _mm256_max_pd(m1,m2);
+        double out1[4];
+        double out2[4];
+        _mm256_store_pd(out1,m);
+        _mm256_store_pd(out2,second_max);
+
+        double max_moved = out1[0];
+        double second_max_moved=0;
+        double tmp_max = out2[0];
+        for(int i = 0; i < 4; i++) {
+            double curr = out2[i];
+            if (curr > tmp_max) {
+                second_max_moved = tmp_max;
+                tmp_max = curr;
+            }
+        }
+        for(; p <k; p++) {
+            double curr = centers_dist_moved[p];
+            if (curr > max_moved){
+                second_max_moved = max_moved;
+                max_moved = curr;
+
+            }
+        }
+        */
         // ALGO 5 - Update-bounds : for all U update upper and lower distance bounds ---------------
 //        update_bounds(upper_bounds, lower_bounds, centers_dist_moved, cluster_assignments, n, k);
+
         double max_moved = 0;
         double second_max_moved = 0;
         for (int i = 0; i < k; i++) {
@@ -519,7 +645,7 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
             }
         }
 
-        int i;
+
 //        double centers_dist_moved_seq[n];
 //        for(i = 0; i < n; i++){
 //            centers_dist_moved_seq[i] = centers_dist_moved[cluster_assignments[i]];
@@ -531,6 +657,7 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
         __m256d zero_vec = _mm256_setzero_pd();
         __m256d max_moved_vec = _mm256_set1_pd(max_moved);
         __m256d second_max_moved_vec = _mm256_set1_pd(second_max_moved);
+        int i;
         for(i = 0; i < n-7; i+=8){
             NUM_ADDS(24);
 //            tmp_vec = _mm256_loadu_pd(centers_dist_moved_seq+i);
