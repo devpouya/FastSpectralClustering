@@ -49,20 +49,17 @@ int main(int argc, char *argv[]) {
 
     //uint64_t start1 = start_tsc();
     oneshot_unnormalized_laplacian_vec_blocked(points, lines, dim, laplacian);
+    //oneshot_unnormalized_laplacian_vec(points, lines, dim, laplacian);
     //oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
-    //oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
+    //oneshot_unnormalized_laplacian_base(points,lines,dim,laplacian);
 
     //runs[i] = stop_tsc(start1);
     //num_flops[i] = NUM_FLOPS;
 
 
+    PROFILER_LIST();
+    return 0;
 
-
-//    printf("%" PRIu64 "\n", end1);
-//    printf("%" PRIu64 "\n", NUM_FLOPS);
-
-     PROFILER_LIST_MEDIAN();
-     return 0;
 
     double *eigenvalues = malloc(k * sizeof(double));
     double *eigenvectors = malloc(n * k * sizeof(double));
