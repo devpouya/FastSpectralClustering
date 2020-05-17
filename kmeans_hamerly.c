@@ -106,7 +106,7 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
             for(int j = 0; j < c; j++) {
                 comp03 = _mm256_load_pd(&dist_to_cluster[j][i]);
                 comp47 = _mm256_load_pd(&dist_to_cluster[j][i+4]);
-
+                NUM_ADDS(8);
                 dist_vec = _mm256_min_pd(comp03,dist_vec);
                 dist_vec2 = _mm256_min_pd(comp47,dist_vec2);
 
@@ -124,7 +124,7 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
             */
             _mm256_store_pd(dists+i,dist_vec);
             _mm256_store_pd(dists+i+4,dist_vec2);
-
+            NUM_ADDS(8);
             sum += dists[i]+dists[i+1]+dists[i+2]+dists[i+3]+dists[i+4]+dists[i+5]+dists[i+6]+dists[i+7];
         }
 
@@ -142,7 +142,6 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
             double tmp2 = l2_norm_vec(&U[(i+2)*k],&ret[(c-1)*k],k);
             double tmp3 = l2_norm_vec(&U[(i+3)*k],&ret[(c-1)*k],k);
 
-
             dist_to_cluster[(c-1)][i] = tmp;
             dist_to_cluster[(c-1)][i+1] = tmp1;
             dist_to_cluster[(c-1)][i+2] = tmp2;
@@ -150,6 +149,7 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
             __m256d comp03;
             for(int j = 0; j < c; j++) {
                 comp03 = _mm256_load_pd(&dist_to_cluster[j][i]);
+                NUM_ADDS(4);
                 dist_vec = _mm256_min_pd(comp03,dist_vec);
             }
             /*
@@ -160,8 +160,8 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
             red4 = _mm256_add_pd(red2,red3);
              */
             _mm256_store_pd(dists+i,dist_vec);
+            NUM_ADDS(4);
             sum += dists[i]+dists[i+1]+dists[i+2]+dists[i+3];
-
         }
         //double sum_out3[4] = {0.0,0.0,0.0,0.0};
         //_mm256_storeu_pd(sum_out3,red4);
@@ -172,15 +172,17 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
             dist_to_cluster[(c-1)][i] = tmp;
             for(int j = 0; j < c; j++) {
                 double tmp22 = dist_to_cluster[j][i];
+                NUM_ADDS(1);
                 if (tmp22 < dist) {
                     dist = tmp22;
                 }
             }
+            NUM_ADDS(1);
             sum += dist;
             dists[i] = dist;
         }
 
-
+        NUM_DIVS(1);
         double inv_sum = 1/sum;
 
         __m256d inv_vec = _mm256_set1_pd(inv_sum);
@@ -190,7 +192,7 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
         for(i = 0; i < n-7; i+=8) {
             dists_vec = _mm256_load_pd(dists+i);
             dists_vec2 = _mm256_load_pd(dists+i+4);
-
+            NUM_MULS(8);
             dists_vec = _mm256_mul_pd(dists_vec,inv_vec);
             dists_vec2 = _mm256_mul_pd(dists_vec2,inv_vec);
 
@@ -201,10 +203,12 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
 
         for(; i < n-3; i+=4) {
             dists_vec = _mm256_load_pd(dists+i);
+            NUM_MULS(4);
             dists_vec = _mm256_mul_pd(dists_vec,inv_vec);
             _mm256_store_pd(dists+i,dists_vec);
         }
         for(;i<n;i++) {
+            NUM_MULS(1);
             dists[i] *= inv_sum;
         }
 
@@ -221,6 +225,7 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
             __m256d x = _mm256_load_pd(dists+i);
             //printf("X IS:\n");
             //print_m256d(x);
+            NUM_ADDS(4);
             x = _mm256_add_pd(x, offset);
             //printf("AFTER OFFSET X IS\n");
             //print_m256d(x);
@@ -259,6 +264,7 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
 
         double tmp = dists[i-1];
         for(; i < n; i++) {
+            NUM_ADDS(1);
             dists[i] += tmp;
             tmp = dists[i];
         }
@@ -266,9 +272,11 @@ static inline void init_kpp(double *U, int n, int k, double *ret) {
 
 
         int index = 0;
+        NUM_DIVS(1);
         double r = rand()/((double)RAND_MAX);
 //        printf("r = %lf\n", r);
         for(int i = 0; i < n; i++) {
+            NUM_ADDS(1);
             if(r < dists[i]) {
                 index = i;
 //                printf("picked index:%d\n",index);
@@ -364,6 +372,7 @@ static inline void update_bounds(double *upper_bounds, double *lower_bounds, dou
     double max_moved = 0;
     double second_max_moved = 0;
     for (int i = 0; i < k; i++) {
+        NUM_ADDS(1);
         if (centers_dist_moved[i] > max_moved) {
             second_max_moved = max_moved;
             max_moved = centers_dist_moved[i];
@@ -373,7 +382,9 @@ static inline void update_bounds(double *upper_bounds, double *lower_bounds, dou
     for (int i = 0; i < n; i++) {
         NUM_ADDS(3);
         double tmp = centers_dist_moved[cluster_assignments[i]];
+        NUM_ADDS(1);
         upper_bounds[i] += tmp;
+        NUM_ADDS(1);
         if (max_moved == tmp){
             lower_bounds[i] -= second_max_moved;
         } else {
@@ -454,32 +465,36 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
                     int l;
                     __m256d dist_vec = _mm256_setzero_pd();
                     for (l = 0; l < k-3; l+=4) { // iterate over column = dimension
-                        NUM_MULS(1);
-                        NUM_ADDS(3);
                         __m256d cent1 = _mm256_loadu_pd(&clusters_center[i*k+l]);
                         __m256d cent2 = _mm256_loadu_pd(&clusters_center[j*k+l]);
+                        NUM_ADDS(12);
                         __m256d tmp = _mm256_sub_pd(cent1,cent2);
+                        NUM_MULS(4);
+                        NUM_ADDS(4);
                         dist_vec = _mm256_fmadd_pd(tmp,tmp,dist_vec);
 
                     }
                     for(;l<k;l++) {
+                        NUM_ADDS(3);
+                        NUM_MULS(1);
                         dist += (clusters_center[i*k+l] - clusters_center[j*k+l])
                                 *(clusters_center[i*k+l] - clusters_center[j*k+l]);
                     }
                     double out[4];
                     _mm256_storeu_pd(out,dist_vec);
+                    NUM_ADDS(3);
                     double tmp1 = out[0]+out[1]+out[2]+out[3];
+                    NUM_ADDS(1);
                     dist = tmp1 + dist;
                     NUM_MULS(1);
                     NUM_SQRTS(1);
-                    NUM_ADDS(1);
                     dist = sqrt(dist) * 0.5;
+                    NUM_ADDS(1);
                     if (dist < min_dist) {
                         min_dist = dist;
                         dist_nearest_cluster[i] = dist;
                     }
                 }
-
         }
 
         // ALGO 1: line 5
@@ -489,7 +504,6 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
         double max_d_arr[n] __attribute__((aligned(32)));
         int j;
         for (j = 0; j < n-7; j+=8) {
-            NUM_ADDS(16);
             lb_vec = _mm256_load_pd(lower_bounds+j);
             lb_vec1 = _mm256_load_pd(lower_bounds+j+4);
 
@@ -501,14 +515,14 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
                                                          dist_nearest_cluster+cluster_assignments[j+5],
                                                          dist_nearest_cluster+cluster_assignments[j+6],
                                                          dist_nearest_cluster+cluster_assignments[j+7]);
-
+            NUM_ADDS(8);
             cmp_max_vec = _mm256_max_pd(lb_vec, dist_nearest_cluster_seq_vec);
             cmp_max_vec1 = _mm256_max_pd(lb_vec1, dist_nearest_cluster_seq_vec1);
             _mm256_store_pd(max_d_arr+j, cmp_max_vec);
             _mm256_store_pd(max_d_arr+j+4, cmp_max_vec1);
         }
         for (; j<n; j++){
-            NUM_ADDS(2);
+            NUM_ADDS(1);
             max_d_arr[j] = MAX(lower_bounds[j], dist_nearest_cluster[cluster_assignments[j]]);
         }
         for (int i = 0; i < n; i++){
@@ -536,29 +550,17 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
         */
 
         for(int i = 0; i < n; i++) {
-
-
             int j;
             for(j = 0; j < k-3; j+=4) {
                 __m256d sumvec = _mm256_loadu_pd(&new_clusters_centers[cluster_assignments[i]*k+j]);
-
-
                 __m256d uvec = _mm256_loadu_pd(&U[i*k+j]);
-
-
+                NUM_ADDS(4);
                 sumvec = _mm256_add_pd(uvec,sumvec);
-
-
                 _mm256_storeu_pd(&new_clusters_centers[cluster_assignments[i]*k+j],sumvec);
-
-
             }
             for(;j<k;j++){
                 new_clusters_centers[cluster_assignments[i]*k+j] += U[i*k+j];
-
             }
-
-
         }
 
 
@@ -582,16 +584,17 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
         for(int j = 0; j < k; j++) {
             double dist = 0;
             int l;
+            NUM_DIVS(1);
             double inv = (double) 1/clusters_size[j];
             __m256d inv_vec = _mm256_set1_pd(inv);
-
             for(l = 0; l < k-3; l+=4) {
                 __m256d clust_vec = _mm256_loadu_pd(&new_clusters_centers[j*k+l]);
+                NUM_MULS(4);
                 clust_vec = _mm256_mul_pd(clust_vec,inv_vec);
                 _mm256_storeu_pd(&new_clusters_centers[j*k+l],clust_vec);
-
             }
             for(;l<k;l++) {
+                NUM_MULS(1);
                 new_clusters_centers[j*k+l] *= inv;
             }
             centers_dist_moved[j] = dist;
@@ -639,6 +642,7 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
         double max_moved = 0;
         double second_max_moved = 0;
         for (int i = 0; i < k; i++) {
+            NUM_ADDS(1);
             if (centers_dist_moved[i] > max_moved) {
                 second_max_moved = max_moved;
                 max_moved = centers_dist_moved[i];
@@ -659,7 +663,6 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
         __m256d second_max_moved_vec = _mm256_set1_pd(second_max_moved);
         int i;
         for(i = 0; i < n-7; i+=8){
-            NUM_ADDS(24);
 //            tmp_vec = _mm256_loadu_pd(centers_dist_moved_seq+i);
             tmp_vec = LoadArbitrary(centers_dist_moved+cluster_assignments[i],
                                     centers_dist_moved+cluster_assignments[i+1],
@@ -673,15 +676,15 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
             lb_vec = _mm256_loadu_pd(lower_bounds+i);
             ub_vec1 = _mm256_loadu_pd(upper_bounds+i+4);
             lb_vec1 = _mm256_loadu_pd(lower_bounds+i+4);
-
+            NUM_ADDS(8);
             ub_vec = _mm256_add_pd(ub_vec, tmp_vec);
             ub_vec1 = _mm256_add_pd(ub_vec1, tmp_vec1);
-
+            NUM_ADDS(8);
             max_moved_tmp_equal_mask = _mm256_cmp_pd(max_moved_vec,tmp_vec,_CMP_EQ_OQ);
             max_moved_tmp_inequal_mask = _mm256_xor_pd(zero_vec, max_moved_tmp_equal_mask);
             max_moved_tmp_equal_mask1 = _mm256_cmp_pd(max_moved_vec,tmp_vec1,_CMP_EQ_OQ);
             max_moved_tmp_inequal_mask1 = _mm256_xor_pd(zero_vec, max_moved_tmp_equal_mask1);
-
+            NUM_ADDS(16);
             lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_equal_mask, second_max_moved_vec));
             lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_inequal_mask, max_moved_vec));
             lb_vec1 = _mm256_sub_pd(lb_vec1, _mm256_and_pd(max_moved_tmp_equal_mask1, second_max_moved_vec));
@@ -693,9 +696,10 @@ void hamerly_kmeans(double *U, int n, int k, int max_iter, double stopping_error
             _mm256_storeu_pd(lower_bounds+i+4, lb_vec1);
         }
         for (; i < n; i++) {
-            NUM_ADDS(3);
             double tmp = centers_dist_moved[cluster_assignments[i]];
+            NUM_ADDS(1);
             upper_bounds[i] += tmp;
+            NUM_ADDS(2);
             if (max_moved == tmp){
                 lower_bounds[i] -= second_max_moved;
             } else {
@@ -792,7 +796,7 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             for(int j = 0; j < c; j++) {
                 comp03 = _mm256_load_pd(&dist_to_cluster[j][i]);
                 comp47 = _mm256_load_pd(&dist_to_cluster[j][i+4]);
-
+                NUM_ADDS(8);
                 dist_vec = _mm256_min_pd(comp03,dist_vec);
                 dist_vec2 = _mm256_min_pd(comp47,dist_vec2);
 
@@ -810,7 +814,7 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             */
             _mm256_store_pd(dists+i,dist_vec);
             _mm256_store_pd(dists+i+4,dist_vec2);
-
+            NUM_ADDS(8);
             sum += dists[i]+dists[i+1]+dists[i+2]+dists[i+3]+dists[i+4]+dists[i+5]+dists[i+6]+dists[i+7];
         }
 
@@ -828,7 +832,6 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             double tmp2 = l2_norm_lowdim(&U[(i+2)*k],&ret[(c-1)*k],k);
             double tmp3 = l2_norm_lowdim(&U[(i+3)*k],&ret[(c-1)*k],k);
 
-
             dist_to_cluster[(c-1)][i] = tmp;
             dist_to_cluster[(c-1)][i+1] = tmp1;
             dist_to_cluster[(c-1)][i+2] = tmp2;
@@ -836,6 +839,7 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             __m256d comp03;
             for(int j = 0; j < c; j++) {
                 comp03 = _mm256_load_pd(&dist_to_cluster[j][i]);
+                NUM_ADDS(4);
                 dist_vec = _mm256_min_pd(comp03,dist_vec);
             }
             /*
@@ -846,6 +850,7 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             red4 = _mm256_add_pd(red2,red3);
              */
             _mm256_store_pd(dists+i,dist_vec);
+            NUM_ADDS(4);
             sum += dists[i]+dists[i+1]+dists[i+2]+dists[i+3];
 
         }
@@ -858,15 +863,17 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
             dist_to_cluster[(c-1)][i] = tmp;
             for(int j = 0; j < c; j++) {
                 double tmp22 = dist_to_cluster[j][i];
+                NUM_ADDS(1);
                 if (tmp22 < dist) {
                     dist = tmp22;
                 }
             }
+            NUM_ADDS(1);
             sum += dist;
             dists[i] = dist;
         }
 
-
+        NUM_DIVS(1);
         double inv_sum = 1/sum;
 
         __m256d inv_vec = _mm256_set1_pd(inv_sum);
@@ -876,21 +883,21 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
         for(i = 0; i < n-7; i+=8) {
             dists_vec = _mm256_load_pd(dists+i);
             dists_vec2 = _mm256_load_pd(dists+i+4);
-
+            NUM_MULS(8);
             dists_vec = _mm256_mul_pd(dists_vec,inv_vec);
             dists_vec2 = _mm256_mul_pd(dists_vec2,inv_vec);
-
             _mm256_store_pd(dists+i,dists_vec);
             _mm256_store_pd(dists+i+4,dists_vec2);
-
         }
 
         for(; i < n-3; i+=4) {
             dists_vec = _mm256_load_pd(dists+i);
+            NUM_MULS(4);
             dists_vec = _mm256_mul_pd(dists_vec,inv_vec);
             _mm256_store_pd(dists+i,dists_vec);
         }
         for(;i<n;i++) {
+            NUM_MULS(1);
             dists[i] *= inv_sum;
         }
 
@@ -901,63 +908,38 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
         __m256d mask0011 = _mm256_castsi256_pd(mask0011_int);
         __m256i mask0001_int = _mm256_set_epi64x(-1, 0 , 0 , 0);
         __m256d mask0001 = _mm256_castsi256_pd(mask0001_int);
-        //__m256i mask1000_int = _mm256_set_epi64x(0, 0 , 0 , -1);
-        //__m256d mask1000 = _mm256_castsi256_pd(mask1000_int);
         for(i = 0; i< n-3; i+=4) {
             __m256d x = _mm256_load_pd(dists+i);
-            //printf("X IS:\n");
-            //print_m256d(x);
+            NUM_ADDS(4);
             x = _mm256_add_pd(x, offset);
-            //printf("AFTER OFFSET X IS\n");
-            //print_m256d(x);
-
             __m256d t0 = _mm256_permute4x64_pd(x, _MM_SHUFFLE(2,1,0,3));
             __m256d t1 = _mm256_and_pd(t0, mask0111);
-            //printf("T1 is:\n");
-            //print_m256d(t1);
             __m256d t2 = _mm256_permute4x64_pd(x, _MM_SHUFFLE(1,0,2,3));
             __m256d t3 = _mm256_and_pd(t2, mask0011);
-            //printf("T3 is:\n");
-            //print_m256d(t3);
-
             __m256d t4 = _mm256_permute4x64_pd(x,_MM_SHUFFLE(0,2,1,3));
             __m256d t5 = _mm256_and_pd(t4, mask0001);
-
+            NUM_ADDS(12);
             x = _mm256_add_pd(x,t1);
-            //printf("X AFTER FIRST ADD\n");
-            //print_m256d(x);
             x = _mm256_add_pd(x,t3);
-            //printf("X Second AFTER ADD is:\n");
-            //print_m256d(x);
-
             x = _mm256_add_pd(x,t5);
-            //printf("X Second AFTER ADD is:\n");
-            //print_m256d(x);
-
             _mm256_store_pd(dists+i, x);
-
             offset = _mm256_and_pd(x, mask0001);
             offset = _mm256_permute4x64_pd(offset,_MM_SHUFFLE(0,2,1,3));
-            //printf("OFFSET\n");
-            //print_m256d(offset);
         }
-
 
         double tmp = dists[i-1];
         for(; i < n; i++) {
+            NUM_ADDS(1);
             dists[i] += tmp;
             tmp = dists[i];
         }
-
-
-
         int index = 0;
+        NUM_DIVS(1);
         double r = rand()/((double)RAND_MAX);
-//        printf("r = %lf\n", r);
         for(int i = 0; i < n; i++) {
+            NUM_ADDS(1);
             if(r < dists[i]) {
                 index = i;
-//                printf("picked index:%d\n",index);
                 break;
             }
         }
@@ -967,11 +949,7 @@ static inline void init_kpp_lowdim(double *U, int n, int k, double *ret) {
                 ret[c*k+j] = U[index*k+j];
             }
         }
-
     }
-
-
-
     EXIT_FUNC;
 }
 
@@ -1027,6 +1005,7 @@ static inline void move_centers_lowdim(double *new_clusters_centers, int *cluste
     ENTER_FUNC;
     for (int j = 0; j < k; j++) {
         double dist = 0;
+        NUM_ADDS(1);
         if (clusters_size[j] > 0) {
             for (int l = 0; l < k; l++) { // update
                 NUM_DIVS(1);
@@ -1035,7 +1014,6 @@ static inline void move_centers_lowdim(double *new_clusters_centers, int *cluste
             dist = l2_norm_lowdim(clusters_center + j*k, new_clusters_centers + j*k, k);
         }
         centers_dist_moved[j] = dist;
-
     }
     EXIT_FUNC;
 }
@@ -1108,10 +1086,8 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
         double max_d_arr[n] __attribute__((aligned(32)));
         int j;
         for (j = 0; j < n-7; j+=8) {
-            NUM_ADDS(16);
             lb_vec = _mm256_load_pd(lower_bounds+j);
             lb_vec1 = _mm256_load_pd(lower_bounds+j+4);
-
             dist_nearest_cluster_seq_vec = LoadArbitrary(dist_nearest_cluster+cluster_assignments[j],
                                                          dist_nearest_cluster+cluster_assignments[j+1],
                                                          dist_nearest_cluster+cluster_assignments[j+2],
@@ -1120,7 +1096,7 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
                                                           dist_nearest_cluster+cluster_assignments[j+5],
                                                           dist_nearest_cluster+cluster_assignments[j+6],
                                                           dist_nearest_cluster+cluster_assignments[j+7]);
-
+            NUM_ADDS(8);
             cmp_max_vec = _mm256_max_pd(lb_vec, dist_nearest_cluster_seq_vec);
             cmp_max_vec1 = _mm256_max_pd(lb_vec1, dist_nearest_cluster_seq_vec1);
             _mm256_store_pd(max_d_arr+j, cmp_max_vec);
@@ -1161,6 +1137,7 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
         double max_moved = 0;
         double second_max_moved = 0;
         for (int i = 0; i < k; i++) {
+            NUM_ADDS(1);
             if (centers_dist_moved[i] > max_moved) {
                 second_max_moved = max_moved;
                 max_moved = centers_dist_moved[i];
@@ -1176,8 +1153,6 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
         __m256d max_moved_vec = _mm256_set1_pd(max_moved);
         __m256d second_max_moved_vec = _mm256_set1_pd(second_max_moved);
         for(i = 0; i < n-7; i+=8){
-            NUM_ADDS(24);
-//            tmp_vec = _mm256_loadu_pd(centers_dist_moved_seq+i);
             tmp_vec = LoadArbitrary(centers_dist_moved+cluster_assignments[i],
                                     centers_dist_moved+cluster_assignments[i+1],
                                     centers_dist_moved+cluster_assignments[i+2],
@@ -1190,15 +1165,15 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
             lb_vec = _mm256_loadu_pd(lower_bounds+i);
             ub_vec1 = _mm256_loadu_pd(upper_bounds+i+4);
             lb_vec1 = _mm256_loadu_pd(lower_bounds+i+4);
-
+            NUM_ADDS(8);
             ub_vec = _mm256_add_pd(ub_vec, tmp_vec);
             ub_vec1 = _mm256_add_pd(ub_vec1, tmp_vec1);
-
+            NUM_ADDS(8);
             max_moved_tmp_equal_mask = _mm256_cmp_pd(max_moved_vec,tmp_vec,_CMP_EQ_OQ);
             max_moved_tmp_inequal_mask = _mm256_xor_pd(zero_vec, max_moved_tmp_equal_mask);
             max_moved_tmp_equal_mask1 = _mm256_cmp_pd(max_moved_vec,tmp_vec1,_CMP_EQ_OQ);
             max_moved_tmp_inequal_mask1 = _mm256_xor_pd(zero_vec, max_moved_tmp_equal_mask1);
-
+            NUM_ADDS(16);
             lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_equal_mask, second_max_moved_vec));
             lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_inequal_mask, max_moved_vec));
             lb_vec1 = _mm256_sub_pd(lb_vec1, _mm256_and_pd(max_moved_tmp_equal_mask1, second_max_moved_vec));
@@ -1212,7 +1187,9 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
         for (; i < n; i++) {
             NUM_ADDS(3);
             double tmp = centers_dist_moved[cluster_assignments[i]];
+            NUM_ADDS(1);
             upper_bounds[i] += tmp;
+            NUM_ADDS(2);
             if (max_moved == tmp){
                 lower_bounds[i] -= second_max_moved;
             } else {
