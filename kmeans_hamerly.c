@@ -974,81 +974,49 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
             }
         }
 //        // ALGO 1: line 5
-        for (int i = 0; i < n; i++) {
-            // line 6: max_d = max(s(a(i))/2, l(i)) ???
-            double max_d = MAX(lower_bounds[i], dist_nearest_cluster[cluster_assignments[i]]);
-            // ALGO 1: line7: {first bound test}
+        __m256d lb_vec; __m256d lb_vec1;
+        __m256d dist_nearest_cluster_seq_vec;
+        __m256d cmp_max_vec, cmp_max_vec1, dist_nearest_cluster_seq_vec1;
+        double max_d_arr[n] __attribute__((aligned(32)));
+        int j;
+        for (j = 0; j < n-7; j+=8) {
+            NUM_ADDS(16);
+            lb_vec = _mm256_load_pd(lower_bounds+j);
+            lb_vec1 = _mm256_load_pd(lower_bounds+j+4);
+
+            dist_nearest_cluster_seq_vec = LoadArbitrary(dist_nearest_cluster+cluster_assignments[j],
+                                                         dist_nearest_cluster+cluster_assignments[j+1],
+                                                         dist_nearest_cluster+cluster_assignments[j+2],
+                                                         dist_nearest_cluster+cluster_assignments[j+3]);
+            dist_nearest_cluster_seq_vec1 = LoadArbitrary(dist_nearest_cluster+cluster_assignments[j+4],
+                                                          dist_nearest_cluster+cluster_assignments[j+5],
+                                                          dist_nearest_cluster+cluster_assignments[j+6],
+                                                          dist_nearest_cluster+cluster_assignments[j+7]);
+
+            cmp_max_vec = _mm256_max_pd(lb_vec, dist_nearest_cluster_seq_vec);
+            cmp_max_vec1 = _mm256_max_pd(lb_vec1, dist_nearest_cluster_seq_vec1);
+            _mm256_store_pd(max_d_arr+j, cmp_max_vec);
+            _mm256_store_pd(max_d_arr+j+4, cmp_max_vec1);
+        }
+        for (; j<n; j++){
+            NUM_ADDS(2);
+            max_d_arr[j] = MAX(lower_bounds[j], dist_nearest_cluster[cluster_assignments[j]]);
+        }
+        for (int i = 0; i < n; i++){
             NUM_ADDS(1);
-            if (upper_bounds[i] > max_d) {
+            if (upper_bounds[i] > max_d_arr[i]) {
                 upper_bounds[i] = l2_norm_lowdim(U + i * k, clusters_center + cluster_assignments[i] * k, k);
                 // ALGO 1: line 9 {second bound test}
                 NUM_ADDS(1);
-                if (upper_bounds[i] > max_d) {
+                if (upper_bounds[i] > max_d_arr[i]) {
                     // Iterate over all centers and find first and second closest distances and update DS
-                    point_all_clusters_lowdim(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
+                    point_all_clusters(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
                             , clusters_size, k, i);
                 }
             }
         }
 
-//////    vectorizing mask computation
-//        // ALGO 1: line 5
-//        double dist_nearest_cluster_seq[n];
-//        for (int i = 0; i < n; i++){
-//            dist_nearest_cluster_seq[i] = dist_nearest_cluster[cluster_assignments[i]];
-//        }
-//
-//        __m256d lb_vec, dist_nearest_cluster_seq_vec;
-////        ub_vec,
-//        __m256d cmp_max_vec, cmp_max_vec1, dist_nearest_cluster_seq_vec1;
-//        __m256d lb_vec1; //, ub_vec1, dist_nearest_cluster_seq_vec1;
-////        __m256d mask_vec, mask_vec1;
-//        double max_d_arr[n];
-////        double mask[n];
-//        int j;
-//        for (j = 0; j < n-7; j+=8) {
-//            lb_vec = _mm256_load_pd(lower_bounds+j);
-//            lb_vec1 = _mm256_load_pd(lower_bounds+j+4);
-////            ub_vec = _mm256_load_pd(upper_bounds+j);
-////            ub_vec1 = _mm256_load_pd(upper_bounds+j+4);
-//            dist_nearest_cluster_seq_vec = _mm256_load_pd(dist_nearest_cluster_seq+j);
-//            dist_nearest_cluster_seq_vec1 = _mm256_load_pd(dist_nearest_cluster_seq+j+4);
-//
-//            cmp_max_vec = _mm256_max_pd(lb_vec, dist_nearest_cluster_seq_vec);
-//            cmp_max_vec1 = _mm256_max_pd(lb_vec1, dist_nearest_cluster_seq_vec1);
-//
-////            mask_vec = _mm256_cmp_pd(ub_vec, cmp_max_vec, _CMP_GT_OQ);
-////            mask_vec1 = _mm256_cmp_pd(ub_vec1, cmp_max_vec1, _CMP_GT_OQ);
-//
-//            _mm256_store_pd(max_d_arr+j, cmp_max_vec);
-//            _mm256_store_pd(max_d_arr+j+4, cmp_max_vec1);
-////            _mm256_store_pd(mask+j,mask_vec);
-////            _mm256_store_pd(mask+j+4,mask_vec1);
-//        }
-//
-//        for (; j<n; j++){
-//            NUM_ADDS(2);
-//            max_d_arr[j] = MAX(lower_bounds[j], dist_nearest_cluster_seq[j]);
-////            mask[j] = upper_bounds[j] > max_d_arr[j];
-//        }
-////        for (int i = 0; i < n; i++){
-////            printf(" %lf ", mask[i]);
-////        }
-////
-//        for (int i = 0; i < n; i++){
-//            if (upper_bounds[i] > max_d_arr[i]) {
-////                printf("entered here! ");
-//                upper_bounds[i] = l2_norm_lowdim(U + i * k, clusters_center + cluster_assignments[i] * k, k);
-//                // ALGO 1: line 9 {second bound test}
-//                NUM_ADDS(1);
-//                if (upper_bounds[i] > max_d_arr[i]) {
-////                    printf("entered here! 2");
-//                    // Iterate over all centers and find first and second closest distances and update DS
-//                    point_all_clusters(U, clusters_center, cluster_assignments, upper_bounds, lower_bounds
-//                            , clusters_size, k, i);
-//                }
-//            }
-//        }
+
 
         // To compute new mean: size calculated in point all clusters, sum now, divide in move!
         for (int i = 0; i < n; i++) {
@@ -1062,7 +1030,67 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
                 , clusters_center, centers_dist_moved, k);
 
         // ALGO 5 - Update-bounds : for all U update upper and lower distance bounds ---------------
-        update_bounds(upper_bounds, lower_bounds, centers_dist_moved, cluster_assignments, n, k);
+        double max_moved = 0;
+        double second_max_moved = 0;
+        for (int i = 0; i < k; i++) {
+            if (centers_dist_moved[i] > max_moved) {
+                second_max_moved = max_moved;
+                max_moved = centers_dist_moved[i];
+            }
+        }
+
+        int i;
+        __m256d tmp_vec, ub_vec; //, lb_vec;
+        __m256d max_moved_tmp_equal_mask, max_moved_tmp_inequal_mask;
+        __m256d tmp_vec1, ub_vec1; //, lb_vec1;
+        __m256d max_moved_tmp_equal_mask1, max_moved_tmp_inequal_mask1;
+        __m256d zero_vec = _mm256_setzero_pd();
+        __m256d max_moved_vec = _mm256_set1_pd(max_moved);
+        __m256d second_max_moved_vec = _mm256_set1_pd(second_max_moved);
+        for(i = 0; i < n-7; i+=8){
+            NUM_ADDS(24);
+//            tmp_vec = _mm256_loadu_pd(centers_dist_moved_seq+i);
+            tmp_vec = LoadArbitrary(centers_dist_moved+cluster_assignments[i],
+                                    centers_dist_moved+cluster_assignments[i+1],
+                                    centers_dist_moved+cluster_assignments[i+2],
+                                    centers_dist_moved+cluster_assignments[i+3]);
+            tmp_vec1 = LoadArbitrary(centers_dist_moved+cluster_assignments[i+4],
+                                     centers_dist_moved+cluster_assignments[i+5],
+                                     centers_dist_moved+cluster_assignments[i+6],
+                                     centers_dist_moved+cluster_assignments[i+7]);
+            ub_vec = _mm256_loadu_pd(upper_bounds+i);
+            lb_vec = _mm256_loadu_pd(lower_bounds+i);
+            ub_vec1 = _mm256_loadu_pd(upper_bounds+i+4);
+            lb_vec1 = _mm256_loadu_pd(lower_bounds+i+4);
+
+            ub_vec = _mm256_add_pd(ub_vec, tmp_vec);
+            ub_vec1 = _mm256_add_pd(ub_vec1, tmp_vec1);
+
+            max_moved_tmp_equal_mask = _mm256_cmp_pd(max_moved_vec,tmp_vec,_CMP_EQ_OQ);
+            max_moved_tmp_inequal_mask = _mm256_xor_pd(zero_vec, max_moved_tmp_equal_mask);
+            max_moved_tmp_equal_mask1 = _mm256_cmp_pd(max_moved_vec,tmp_vec1,_CMP_EQ_OQ);
+            max_moved_tmp_inequal_mask1 = _mm256_xor_pd(zero_vec, max_moved_tmp_equal_mask1);
+
+            lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_equal_mask, second_max_moved_vec));
+            lb_vec = _mm256_sub_pd(lb_vec, _mm256_and_pd(max_moved_tmp_inequal_mask, max_moved_vec));
+            lb_vec1 = _mm256_sub_pd(lb_vec1, _mm256_and_pd(max_moved_tmp_equal_mask1, second_max_moved_vec));
+            lb_vec1 = _mm256_sub_pd(lb_vec1, _mm256_and_pd(max_moved_tmp_inequal_mask1, max_moved_vec));
+
+            _mm256_storeu_pd(upper_bounds+i, ub_vec);
+            _mm256_storeu_pd(lower_bounds+i, lb_vec);
+            _mm256_storeu_pd(upper_bounds+i+4, ub_vec1);
+            _mm256_storeu_pd(lower_bounds+i+4, lb_vec1);
+        }
+        for (; i < n; i++) {
+            NUM_ADDS(3);
+            double tmp = centers_dist_moved[cluster_assignments[i]];
+            upper_bounds[i] += tmp;
+            if (max_moved == tmp){
+                lower_bounds[i] -= second_max_moved;
+            } else {
+                lower_bounds[i] -= max_moved;
+            }
+        }
         // transfer new state to current
         memcpy(clusters_center, new_clusters_centers, k * k * sizeof(double));
         iteration++;
