@@ -28,6 +28,7 @@ static void comp_array_s(double *dist_centers, int k, double *ret_s){
             if(j!=i){
                 NUM_MULS(1);
                 double half_dist = 0.5*dist_centers[i*k+j];
+                NUM_ADDS(1);
                 if(half_dist < max){
                     max = half_dist;
                 }
@@ -75,10 +76,12 @@ static void init_elkan(double *U, int n, int k, double *means, double *lb, doubl
         for(int j = 1; j < k; j++) { //traverse through the rest of clusters
             lb[i * k + j] = 0;
             NUM_MULS(1);
+            NUM_ADDS(1);
             if (0.5 * dist_centers[cur_cluster_assigned * k + j] < dist_p_c) {
                 //first compute distance between current point and cluster j's mean
                 double dist_p_c_j = l2_norm(&U[i * k], &means[j * k], k);
                 lb[i * k + j] = dist_p_c_j;
+                NUM_ADDS(1);
                 if (dist_p_c_j < dist_p_c) {
                     //found a closer cluster
                     cur_cluster_assigned = j;
@@ -137,11 +140,13 @@ void elkan_kmeans(double *U, int n, int k, int max_iter, double stopping_error, 
         for (int i = 0; i < n; i++){
             r = 1;
             double dist_p_c = 0;
+            NUM_ADDS(1);
             if(ub[i] <= s_dist_centers[indices[i]]){
                 //do nothing?
             }else{
                 for (int j = 0; j < k; j++){
                     NUM_MULS(1);
+                    NUM_ADDS(2);
                     if((indices[i]!=j)&&
                        (ub[i] > lb[i*k+j])&&
                        (ub[i] > 0.5*dist_centers[indices[i]*k+j])){
@@ -152,8 +157,10 @@ void elkan_kmeans(double *U, int n, int k, int max_iter, double stopping_error, 
                                 dist_p_c = ub[i];
                             }
                             NUM_MULS(1);
+                            NUM_ADDS(2);
                             if((dist_p_c > lb[i*k+j]) || (dist_p_c > 0.5*get_dist_centers(indices[i], j, dist_centers, k))){
                                 double dist_p_j = l2_norm(&U[i * k], &means[j*k], k);
+                                NUM_ADDS(1);
                                 if(dist_p_j < dist_p_c){
                                     indices[i] = j;
                                 }
@@ -177,6 +184,7 @@ void elkan_kmeans(double *U, int n, int k, int max_iter, double stopping_error, 
                 double temp = lb[i * k + j];
 //                double norm_temp =l2_norm(&means[j * k], &new_means[j * k], k);
 //                /*double norm_temp =*/ l2_norm((double[]){1.0, 1.0, 987, 234, 123, 34},(double[]){123,123,123,123,123,123} , 6);
+                NUM_ADDS(1);
                 lb[i * k + j] = MAX(0, temp - delta[j]);
 //                      lb[i*k+j] = 0;
             }
@@ -270,10 +278,12 @@ static void init_elkan_lowdim(double *U, int n, int k, double *means, double *lb
         for(int j = 1; j < k; j++) { //traverse through the rest of clusters
             lb[i * k + j] = 0;
             NUM_MULS(1);
+            NUM_ADDS(1);
             if (0.5 * dist_centers[cur_cluster_assigned * k + j] < dist_p_c) {
                 //first compute distance between current point and cluster j's mean
                 double dist_p_c_j = l2_norm_lowdim(&U[i * k], &means[j * k], k);
                 lb[i * k + j] = dist_p_c_j;
+                NUM_ADDS(1);
                 if (dist_p_c_j < dist_p_c) {
                     //found a closer cluster
                     cur_cluster_assigned = j;
@@ -332,11 +342,13 @@ void elkan_kmeans_lowdim(double *U, int n, int k, int max_iter, double stopping_
         for (int i = 0; i < n; i++){
             r = 1;
             double dist_p_c = 0;
+            NUM_ADDS(1);
             if(ub[i] <= s_dist_centers[indices[i]]){
                 //do nothing?
             }else{
                 for (int j = 0; j < k; j++){
                     NUM_MULS(1);
+                    NUM_ADDS(2);
                     if((indices[i]!=j)&&
                        (ub[i] > lb[i*k+j])&&
                        (ub[i] > 0.5*dist_centers[indices[i]*k+j])){
@@ -347,8 +359,10 @@ void elkan_kmeans_lowdim(double *U, int n, int k, int max_iter, double stopping_
                             dist_p_c = ub[i];
                         }
                         NUM_MULS(1);
+                        NUM_ADDS(2);
                         if((dist_p_c > lb[i*k+j]) || (dist_p_c > 0.5*get_dist_centers(indices[i], j, dist_centers, k))){
                             double dist_p_j = l2_norm_lowdim(&U[i * k], &means[j*k], k);
+                            NUM_ADDS(1);
                             if(dist_p_j < dist_p_c){
                                 indices[i] = j;
                             }
@@ -372,6 +386,7 @@ void elkan_kmeans_lowdim(double *U, int n, int k, int max_iter, double stopping_
                 double temp = lb[i * k + j];
 //                double norm_temp =l2_norm(&means[j * k], &new_means[j * k], k);
 //                /*double norm_temp =*/ l2_norm((double[]){1.0, 1.0, 987, 234, 123, 34},(double[]){123,123,123,123,123,123} , 6);
+                NUM_ADDS(1);
                 lb[i * k + j] = MAX(0, temp - delta[j]);
 //                      lb[i*k+j] = 0;
             }
