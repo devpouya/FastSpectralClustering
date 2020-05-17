@@ -27,6 +27,11 @@
  * arguments: dataset_path, number of clusters (k)
  */
 
+int cmpfunc (const void * a, const void * b) {
+    return ( *(int*)a - *(int*)b );
+}
+
+#define NUM_RUNS 9
 int main(int argc, char *argv[]) {
 
     if (argc != 4) {
@@ -41,19 +46,23 @@ int main(int argc, char *argv[]) {
     int n = lines;
 
     double *laplacian = calloc(lines * lines, sizeof(double));
-    uint64_t  start1 = start_tsc();
 
-    //oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
+    //uint64_t start1 = start_tsc();
+    oneshot_unnormalized_laplacian_vec_blocked(points, lines, dim, laplacian);
     //oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
-    oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
+    //oneshot_unnormalized_laplacian(points,lines,dim,laplacian);
 
-    uint64_t  end1 = stop_tsc(start1);
+    //runs[i] = stop_tsc(start1);
+    //num_flops[i] = NUM_FLOPS;
 
-    printf("%" PRIu64 "\n", end1);
-    printf("%" PRIu64 "\n", NUM_FLOPS);
 
-    PROFILER_LIST();
-    return 0;
+
+
+//    printf("%" PRIu64 "\n", end1);
+//    printf("%" PRIu64 "\n", NUM_FLOPS);
+
+     PROFILER_LIST_MEDIAN();
+     return 0;
 
     double *eigenvalues = malloc(k * sizeof(double));
     double *eigenvectors = malloc(n * k * sizeof(double));
