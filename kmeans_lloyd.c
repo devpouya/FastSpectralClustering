@@ -16,10 +16,11 @@
 static int find_nearest_cluster_index(double *point, double *means, int k) {
     ENTER_FUNC;
     // use l2_norm
-    double gap = FLT_MAX;
+    double gap = DBL_MAX;
     int index = 0;
     for (int i = 0; i < k; i++) { // for every cluster check abs distance to point and take the minimal
         double norm = l2_norm_squared(point, &means[i*k], k);
+        NUM_ADDS(1);
         if(norm < gap) {
             gap = norm;
             index = i;
@@ -91,10 +92,11 @@ void lloyd_kmeans(double *U, int n, int k, int max_iter, double stopping_error, 
 static int find_nearest_cluster_index_lowdim(double *point, double *means, int k) {
     ENTER_FUNC;
     // use l2_norm
-    double gap = FLT_MAX;
+    double gap = DBL_MAX;
     int index = 0;
     for (int i = 0; i < k; i++) { // for every cluster check abs distance to point and take the minimal
         double norm = l2_norm_squared_lowdim(point, &means[i*k], k);
+        NUM_ADDS(1);
         if(norm < gap) {
             gap = norm;
             index = i;
