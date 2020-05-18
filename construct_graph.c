@@ -365,7 +365,8 @@ void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, doub
     for (i = 0; i < n-(BLOCKSIZE_HD-1); i += BLOCKSIZE_HD) {
         for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
             for (int j1 = i1+1; j1 < i+BLOCKSIZE_HD; j1 += 1) {
-                NUM_ADDS(3);
+                NUM_ADDS(3+3);
+                NUM_MULS(1+1);
                 tmp = EXP(-0.5 * l2_norm_squared_vec(&points[i1 * dim], &points[j1 * dim], dim));
                 ret[i1*n + j1] = -tmp;
                 degrees[i1] += tmp;
@@ -376,8 +377,9 @@ void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, doub
         for (j = i+BLOCKSIZE_HD; j < n-(BLOCKSIZE_HD-1); j += BLOCKSIZE_HD) {
             for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
                 for (int j1 = j; j1 < j+BLOCKSIZE_HD; j1 += 1) {
+                    NUM_ADDS(3+3);
+                    NUM_MULS(1+1);
                     tmp = EXP(-0.5 * l2_norm_squared_vec(&points[i1 * dim], &points[j1 * dim], dim));
-                    NUM_ADDS(3);
                     ret[i1*n + j1] = -tmp;
                     degrees[i1] += tmp;
                     degrees[j1] += tmp;
@@ -386,8 +388,9 @@ void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, doub
         }
         for (; j < n; j++) {
             for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
+                NUM_ADDS(3+3);
+                NUM_MULS(1+1);
                 tmp = EXP(-0.5 * l2_norm_squared_vec(&points[i1 * dim], &points[j * dim], dim));
-                NUM_ADDS(3);
                 ret[i1*n + j] = -tmp;
                 degrees[i1] += tmp;
                 degrees[j] += tmp;
@@ -396,8 +399,9 @@ void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, doub
     }
     for (; i < n; i++) {
         for (int j = i+1; j < n; j++) {
+            NUM_ADDS(3+3);
+            NUM_MULS(1+1);
             tmp = EXP(-0.5 * l2_norm_squared_vec(&points[i * dim], &points[j * dim], dim));
-            NUM_ADDS(3);
             ret[i*n + j] = -tmp;
             degrees[i] += tmp;
             degrees[j] += tmp;
@@ -531,8 +535,9 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
     for (i = 0; i < n-(BLOCKSIZE_LD-1); i += BLOCKSIZE_LD) {
         for (int i1 = i; i1 < i+BLOCKSIZE_LD; i1++) {
             for (int j1 = i1+1; j1 < i+BLOCKSIZE_LD; j1 += 1) {
-                NUM_ADDS(3);
-                tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j1 * dim], dim);
+                NUM_ADDS(3+3);
+                NUM_MULS(1+1);
+                tmp = EXP(-0.5 * l2_norm_squared_lowdim(&points[i1 * dim], &points[j1 * dim], dim));
                 ret[i1*n + j1] = -tmp;
                 degrees[i1] += tmp;
                 degrees[j1] += tmp;
@@ -542,8 +547,9 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
         for (j = i+BLOCKSIZE_LD; j < n-(BLOCKSIZE_LD-1); j += BLOCKSIZE_LD) {
             for (int i1 = i; i1 < i+BLOCKSIZE_LD; i1++) {
                 for (int j1 = j; j1 < j+BLOCKSIZE_LD; j1 += 1) {
-                    tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j1 * dim], dim);
-                    NUM_ADDS(3);
+                    NUM_ADDS(3+3);
+                    NUM_MULS(1+1);
+                    tmp = EXP(-0.5 * l2_norm_squared_lowdim(&points[i1 * dim], &points[j1 * dim], dim));
                     ret[i1*n + j1] = -tmp;
                     degrees[i1] += tmp;
                     degrees[j1] += tmp;
@@ -552,8 +558,9 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
         }
         for (; j < n; j++) {
             for (int i1 = i; i1 < i+BLOCKSIZE_LD; i1++) {
-                tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j * dim], dim);
-                NUM_ADDS(3);
+                NUM_ADDS(3+3);
+                NUM_MULS(1+1);
+                tmp = EXP(-0.5 * l2_norm_squared_lowdim(&points[i1 * dim], &points[j * dim], dim));
                 ret[i1*n + j] = -tmp;
                 degrees[i1] += tmp;
                 degrees[j] += tmp;
@@ -562,8 +569,9 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
     }
     for (; i < n; i++) {
         for (int j = i+1; j < n; j++) {
-            tmp = fast_gaussian_similarity_lowdim(&points[i * dim], &points[j * dim], dim);
-            NUM_ADDS(3);
+            NUM_ADDS(3+3);
+            NUM_MULS(1+1);
+            tmp = EXP(-0.5 * l2_norm_squared_lowdim(&points[i * dim], &points[j * dim], dim));
             ret[i*n + j] = -tmp;
             degrees[i] += tmp;
             degrees[j] += tmp;

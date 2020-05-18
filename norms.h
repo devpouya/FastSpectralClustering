@@ -8,7 +8,7 @@
 #define LOG2E 1.442695040
 #define LOG_of_2 0.30102999566
 #define LOG_of_2_rec 3.32192809489
-union {
+union exp_u {
     double d;
     struct{
 #ifdef  LITTLE_ENDIAN
@@ -21,6 +21,7 @@ union {
 
 // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.9.4508&rep=rep1&type=pdf
 #define EXP(x) (eco.n.j = 1512775.3951951856938*x +1072632447, eco.d)
+// #define EXP(x) union exp_u __exp_u, __exp_u.n.j = 1512775.3951951856938*(x) +1072632447, __exp_u.d
 
 __m256d exp256_pd_fast(__m256d x);
 double appx_exp(double x);
