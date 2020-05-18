@@ -321,8 +321,10 @@ static inline void point_all_clusters(double *U, double *clusters_center, int *c
             closest_center_1 = j;
             closest_center_1_dist = dist;
         } else if (dist < closest_center_2_dist) {
-            NUM_ADDS(1);
+            NUM_ADDS(2);
             closest_center_2_dist = dist;
+        }else{
+            NUM_ADDS(2);
         }
     }
     // if the closest center changed : ALGO 1 line 12 UPDATE
@@ -980,13 +982,16 @@ static inline void point_all_clusters_lowdim(double *U, double *clusters_center,
     for (int j = 0; j < k; j++) {
         double dist = l2_norm_lowdim(U + i * k, clusters_center + j * k, k);
         // Find distance between the point and the center.
-        NUM_ADDS(1);
         if (dist < closest_center_1_dist) {
+            NUM_ADDS(1);
             closest_center_2_dist = closest_center_1_dist;
             closest_center_1 = j;
             closest_center_1_dist = dist;
         } else if (dist < closest_center_2_dist) {
+            NUM_ADDS(2);
             closest_center_2_dist = dist;
+        } else{
+            NUM_ADDS(2);
         }
     }
     // if the closest center changed : ALGO 1 line 12 UPDATE
