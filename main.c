@@ -39,9 +39,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    printf("loading dataset: %s\n", argv[1]);
-    printf("number of clusters: %d\n", atoi(argv[2]));
-    printf("output path: %s\n", argv[3]);
+//    printf("loading dataset: %s\n", argv[1]);
+//    printf("number of clusters: %d\n", atoi(argv[2]));
+//    printf("output path: %s\n", argv[3]);
 
     struct file f = alloc_load_points_from_file(argv[1]);
     int dim = f.dimension;
@@ -54,11 +54,11 @@ int main(int argc, char *argv[]) {
     // Construct the matrices and print them
     // fully-connected matrix
     //printf("Constructing fully connected matrix...\n");
-    printf("Constructing the Laplacian ONE SHOT...\n");
+    //printf("Constructing the Laplacian ONE SHOT...\n");
     //double *fully_connected = calloc(lines * lines , sizeof(double));
     //construct_fully_connected_matrix(points, lines, dim, fully_connected);
 
-    printf("Constructing unnormalized Laplacian...\n");
+    //printf("Constructing unnormalized Laplacian...\n");
     // compute unnormalized laplacian
     //double *laplacian = malloc(lines * lines * sizeof(double));
     //construct_unnormalized_laplacian(fully_connected, lines, laplacian);
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     }
     //compute the eigendecomposition and take the first k eigenvectors.
     myInt64 end1 = stop_tsc(start1);
-    printf("Performing eigenvalue decomposition...\n");
+    //printf("Performing eigenvalue decomposition...\n");
     // double *w = malloc(lines * sizeof(double));
     // lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, laplacian, lda, w);
     // /* Check for convergence */
@@ -97,9 +97,9 @@ int main(int argc, char *argv[]) {
     smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
 
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
-    printf("%d, %d\n", lines, k);
+    //printf("%d, %d\n", lines, k);
 
-    printf("Performing k-means base_clustering...\n");
+    //printf("Performing k-means base_clustering...\n");
     // U (8x2) is the datasets in points.txt for now => k = 2
     // number of cluster <=> # columns of U
 
@@ -120,9 +120,9 @@ int main(int argc, char *argv[]) {
    // hamerly_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
 
     if(k>=8){
-        hamerly_kmeans(eigenvectors, lines, k, 100, 0.0001, clusters);
+        hamerly_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
     }else{
-        hamerly_kmeans_lowdim(eigenvectors, lines, k, 100, 0.0001, clusters);
+        hamerly_kmeans_lowdim(eigenvectors, lines, k, 1000, 0.0001, clusters);
     }
     // double timing = wtime()-timing_start ;
     // printf("Timing of kmeans: %f [sec] \n", timing);
@@ -131,16 +131,21 @@ int main(int argc, char *argv[]) {
 
     //print_cluster_indices(clusters, k);
 
-    printf(" => Runtime: %" PRIu64  " cycles; ops: %" PRIu64 " ops\n", runtime, NUM_FLOPS);
+    //printf(" => Runtime: %" PRIu64  " cycles; ops: %" PRIu64 " ops\n", runtime, NUM_FLOPS);
 
     //write result in output file
     write_clustering_result(argv[3], clusters, k);
 
     PROFILER_LIST();
 
+    free(eigenvectors);
+    free(eigenvalues);
+    free(laplacian);
+    free(f.points);
     // LEAVE THESE PRINTS (for the performance checking script)
     printf("%" PRIu64 "\n", runtime);
     printf("%" PRIu64 "\n", NUM_FLOPS);
+
 
 #ifdef VALIDATION
     char *my_argv; // = {"./base_clustering" , argv[1] , argv[2] , "./base_output"};
