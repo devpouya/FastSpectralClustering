@@ -141,7 +141,6 @@ int main(int argc, char *argv[]) {
     // LEAVE THESE PRINTS (for the performance checking script)
     printf("%" PRIu64 "\n", runtime);
     printf("%" PRIu64 "\n", NUM_FLOPS);
-    printf("performance: %lf\n", (double)NUM_FLOPS/runtime);
 
 #ifdef VALIDATION
     char *my_argv; // = {"./base_clustering" , argv[1] , argv[2] , "./base_output"};
