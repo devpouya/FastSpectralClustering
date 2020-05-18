@@ -375,7 +375,7 @@ void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, doub
         int j;
         for (j = i+BLOCKSIZE_HD; j < n-(BLOCKSIZE_HD-1); j += BLOCKSIZE_HD) {
             for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
-                for (int j1 = j; j1 < j+BLOCKSIZE_HD-3; j1 += 4) {
+                for (int j1 = j; j1 < j+BLOCKSIZE_HD; j1 += 1) {
                     tmp = EXP(-0.5 * l2_norm_squared_vec(&points[i1 * dim], &points[j1 * dim], dim));
                     NUM_ADDS(3);
                     ret[i1*n + j1] = -tmp;
@@ -409,12 +409,12 @@ void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, doub
         ret[i*n + i] = degrees[i] * 0.5;
     }
 
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            printf("%lf ", ret[i*n + j]);
-        }
-        printf("\n");
-    }
+    // for (int i = 0; i < n; i++) {
+    //     for (int j = 0; j < n; j++) {
+    //         printf("%lf ", ret[i*n + j]);
+    //     }
+    //     printf("\n");
+    // }
 
     EXIT_FUNC;
 }
@@ -541,7 +541,7 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
         int j;
         for (j = i+BLOCKSIZE_LD; j < n-(BLOCKSIZE_LD-1); j += BLOCKSIZE_LD) {
             for (int i1 = i; i1 < i+BLOCKSIZE_LD; i1++) {
-                for (int j1 = j; j1 < j+BLOCKSIZE_LD-3; j1 += 4) {
+                for (int j1 = j; j1 < j+BLOCKSIZE_LD; j1 += 1) {
                     tmp = fast_gaussian_similarity_lowdim(&points[i1 * dim], &points[j1 * dim], dim);
                     NUM_ADDS(3);
                     ret[i1*n + j1] = -tmp;
