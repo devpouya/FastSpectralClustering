@@ -178,7 +178,7 @@ double gaussian_similarity(double *u, double *v, int dim) {
 double fast_gaussian_similarity(double *u, double *v, int dim) {
 //    ENTER_FUNC;
     NUM_MULS(1);
-    double inner = EXP(-0.5 * l2_norm_squared(u, v, dim));
+    double inner = EXP(-0.5 * l2_norm_squared_base(u, v, dim));
 //    EXIT_FUNC;
     return inner;
 }
@@ -368,8 +368,102 @@ double l2_norm_base(double *u, double *v, int dim) {
     return norm;
 }
 
+// https://stackoverflow.com/questions/49941645/get-sum-of-values-stored-in-m256d-with-sse-avx
+static inline double hsum_double_avx(__m256d v) {
+    __m128d vlow  = _mm256_castpd256_pd128(v);
+    __m128d vhigh = _mm256_extractf128_pd(v, 1); // high 128
+            vlow  = _mm_add_pd(vlow, vhigh);     // reduce down to 128
+
+    __m128d high64 = _mm_unpackhi_pd(vlow, vlow);
+    return  _mm_cvtsd_f64(_mm_add_sd(vlow, high64));  // reduce to scalar
+}
+
+double l2_norm_squared_vec(double *u, double *v, int dim) {
+    ENTER_FUNC;
+    NUM_ADDS(3*dim);
+    NUM_MULS(dim);
+    NUM_SQRTS(1);
+
+    double norm = 0;
+
+    __m256d v_u1, v_u2, v_v1, v_v2, v_sub1, v_sub2, zeros, v_norm1, v_norm2;
+
+    zeros = _mm256_setzero_pd();
+    v_norm1 = zeros; v_norm2 = zeros;
+
+    int i;
+    for (i = 0; i < dim - 7; i+=8) {
+        v_u1 = _mm256_loadu_pd(u + i);
+        v_v1 = _mm256_loadu_pd(v + i);
+        v_u2 = _mm256_loadu_pd(u + i + 4);
+        v_v2 = _mm256_loadu_pd(v + i + 4);
+
+        v_sub1 = _mm256_sub_pd(v_u1, v_v1);
+        v_sub2 = _mm256_sub_pd(v_u2, v_v2);
+
+        v_norm1 = _mm256_fmadd_pd(v_sub1, v_sub1, v_norm1);
+        v_norm2 = _mm256_fmadd_pd(v_sub2, v_sub2, v_norm2);
+    }
+
+    v_norm1 = _mm256_add_pd(v_norm1, v_norm2);
+    // norm = hsum_double_avx(v_norm1);
+
+    norm = (((double *) &v_norm1)[0] + ((double *) &v_norm1)[1]) + (((double *) &v_norm1)[2] + ((double *) &v_norm1)[3]);
+
+    // for(int j = 0; j < 4; j++) { norm += norm2[j]; }
+    // tail handling
+    for (; i < dim; i++) {
+        norm += (u[i] - v[i]) * (u[i] - v[i]);
+    }
+    // norm = sqrt(norm);
+    EXIT_FUNC;
+    return norm;
+}
 
 double l2_norm_vec(double *u, double *v, int dim) {
+    ENTER_FUNC;
+    NUM_ADDS(3*dim);
+    NUM_MULS(dim);
+    NUM_SQRTS(1);
+
+    double norm = 0;
+
+    __m256d v_u1, v_u2, v_v1, v_v2, v_sub1, v_sub2, zeros, v_norm1, v_norm2;
+
+    zeros = _mm256_setzero_pd();
+    v_norm1 = zeros; v_norm2 = zeros;
+
+    int i;
+    for (i = 0; i < dim - 7; i+=8) {
+        v_u1 = _mm256_loadu_pd(u + i);
+        v_v1 = _mm256_loadu_pd(v + i);
+        v_u2 = _mm256_loadu_pd(u + i + 4);
+        v_v2 = _mm256_loadu_pd(v + i + 4);
+
+        v_sub1 = _mm256_sub_pd(v_u1, v_v1);
+        v_sub2 = _mm256_sub_pd(v_u2, v_v2);
+
+        v_norm1 = _mm256_fmadd_pd(v_sub1, v_sub1, v_norm1);
+        v_norm2 = _mm256_fmadd_pd(v_sub2, v_sub2, v_norm2);
+    }
+
+    v_norm1 = _mm256_add_pd(v_norm1, v_norm2);
+    // norm = hsum_double_avx(v_norm1);
+
+    norm = (((double *) &v_norm1)[0] + ((double *) &v_norm1)[1]) + (((double *) &v_norm1)[2] + ((double *) &v_norm1)[3]);
+
+    // for(int j = 0; j < 4; j++) { norm += norm2[j]; }
+    // tail handling
+    for (; i < dim; i++) {
+        norm += (u[i] - v[i]) * (u[i] - v[i]);
+    }
+    norm = sqrt(norm);
+    EXIT_FUNC;
+    return norm;
+}
+
+
+double l2_norm_vec_old(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3*dim);
     NUM_MULS(dim);
@@ -497,7 +591,7 @@ double l2_norm_squared_base(double *u, double *v, int dim) {
     return norm;
 }
 
-double l2_norm_squared_vec(double *u, double *v, int dim) {
+double l2_norm_squared_vec_old(double *u, double *v, int dim) {
     //ENTER_FUNC;
     NUM_ADDS(3*dim);
     NUM_MULS(dim);

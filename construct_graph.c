@@ -347,12 +347,78 @@ void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *
 }
 
 
-#define BLOCKSIZE_HD 32
+#define BLOCKSIZE_HD 8
 
 //static void print_m256d(__m256d d) {
 //    double *a = (double *) &d;
 //    printf("vector: {%lf %lf %lf %lf}\n", a[0], a[1], a[2], a[3]);
 //}
+
+void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, double *ret) {
+    ENTER_FUNC;
+
+    double degrees[n];
+    double tmp;
+    memset(degrees, 0, n * sizeof(double));
+
+    int i;
+    for (i = 0; i < n-(BLOCKSIZE_HD-1); i += BLOCKSIZE_HD) {
+        for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
+            for (int j1 = i1+1; j1 < i+BLOCKSIZE_HD; j1 += 1) {
+                NUM_ADDS(3);
+                tmp = EXP(-0.5 * l2_norm_squared_vec(&points[i1 * dim], &points[j1 * dim], dim));
+                ret[i1*n + j1] = -tmp;
+                degrees[i1] += tmp;
+                degrees[j1] += tmp;
+            }
+        }
+        int j;
+        for (j = i+BLOCKSIZE_HD; j < n-(BLOCKSIZE_HD-1); j += BLOCKSIZE_HD) {
+            for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
+                for (int j1 = j; j1 < j+BLOCKSIZE_HD-3; j1 += 4) {
+                    tmp = EXP(-0.5 * l2_norm_squared_vec(&points[i1 * dim], &points[j1 * dim], dim));
+                    NUM_ADDS(3);
+                    ret[i1*n + j1] = -tmp;
+                    degrees[i1] += tmp;
+                    degrees[j1] += tmp;
+                }
+            }
+        }
+        for (; j < n; j++) {
+            for (int i1 = i; i1 < i+BLOCKSIZE_HD; i1++) {
+                tmp = EXP(-0.5 * l2_norm_squared_vec(&points[i1 * dim], &points[j * dim], dim));
+                NUM_ADDS(3);
+                ret[i1*n + j] = -tmp;
+                degrees[i1] += tmp;
+                degrees[j] += tmp;
+            }
+        }
+    }
+    for (; i < n; i++) {
+        for (int j = i+1; j < n; j++) {
+            tmp = EXP(-0.5 * l2_norm_squared_vec(&points[i * dim], &points[j * dim], dim));
+            NUM_ADDS(3);
+            ret[i*n + j] = -tmp;
+            degrees[i] += tmp;
+            degrees[j] += tmp;
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        NUM_MULS(1);
+        ret[i*n + i] = degrees[i] * 0.5;
+    }
+
+    // for (int i = 0; i < n; i++) {
+    //     for (int j = 0; j < n; j++) {
+    //         printf("%lf ", ret[i*n + j]);
+    //     }
+    //     printf("\n");
+    // }
+
+    EXIT_FUNC;
+}
+
 
 void oneshot_unnormalized_laplacian_vec_blocked(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;

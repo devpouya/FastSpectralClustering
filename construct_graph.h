@@ -14,6 +14,7 @@ void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, doubl
 void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int dim, double *ret);
 void oneshot_unnormalized_laplacian_lowdim_vec_blocked(double *points, int n, int dim, double *ret);
 void oneshot_unnormalized_laplacian_blocked_vec(double *points, int n, int dim, double *ret);
+void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, double *ret);
 void oneshot_unnormalized_laplacian_base(double *points, int n, int dim, double *ret);
 void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *ret);
 void oneshot_unnormalized_laplacian_vec_blocked(double *points, int n, int dim, double *ret);

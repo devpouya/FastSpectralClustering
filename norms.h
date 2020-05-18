@@ -41,6 +41,9 @@ double appx_gaussian_similarity(double *u, double *v, int dim);
 double fast_LUT_exp(double x);
 double fast_exp(double x);
 
+double l2_norm_vec_old(double *u, double *v, int dim);
+double l2_norm_squared_vec_old(double *u, double *v, int dim);
+
 
 // LUT
 static const double ADJUSTMENT_LUT[256] =
