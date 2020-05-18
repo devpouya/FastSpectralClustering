@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     double *fully_connected = malloc(lines * lines * sizeof(double));
     construct_fully_connected_matrix(points, lines, dim, fully_connected);
 
-    printf("Constructing unnormalized Laplacian...\n");
+    // printf("Constructing unnormalized Laplacian...\n");
     // compute unnormalized laplacian
     double *laplacian = malloc(lines * lines * sizeof(double));
     construct_unnormalized_laplacian(fully_connected, lines, laplacian);
@@ -71,9 +71,8 @@ int main(int argc, char *argv[]) {
     // printf("\n");
 
     // print_matrix("Eigenvectors (stored columnwise)", n, n, laplacian, lda);
-    printf("%d, %d", lines, k);
 
-    printf("Performing k-means base_clustering...\n");
+    printf("Performing k-means clustering...\n");
 
     // init datastructure
     struct cluster clusters[k];
