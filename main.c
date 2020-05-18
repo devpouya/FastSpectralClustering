@@ -66,9 +66,9 @@ int main(int argc, char *argv[]) {
     myInt64 start1 = start_tsc();
 
     if (dim >= 8){
-        oneshot_unnormalized_laplacian_blocked(points,lines,dim,laplacian);
+        oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
     }else{
-        oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
+        oneshot_unnormalized_laplacian_lowdim_vec_blocked(points,lines,dim,laplacian);
     }
     //compute the eigendecomposition and take the first k eigenvectors.
     myInt64 end1 = stop_tsc(start1);
@@ -120,9 +120,9 @@ int main(int argc, char *argv[]) {
    // hamerly_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
 
     if(k>=8){
-        hamerly_kmeans(eigenvectors, lines, k, 100, 0.0001, clusters);
+        hamerly_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
     }else{
-        hamerly_kmeans_lowdim(eigenvectors, lines, k, 100, 0.0001, clusters);
+        hamerly_kmeans_lowdim(eigenvectors, lines, k, 1000, 0.0001, clusters);
     }
     // double timing = wtime()-timing_start ;
     // printf("Timing of kmeans: %f [sec] \n", timing);
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
     // LEAVE THESE PRINTS (for the performance checking script)
     printf("%" PRIu64 "\n", runtime);
     printf("%" PRIu64 "\n", NUM_FLOPS);
-    //printf("performance: %lf\n", (double)NUM_FLOPS/runtime);
+
 
 #ifdef VALIDATION
     char *my_argv; // = {"./base_clustering" , argv[1] , argv[2] , "./base_output"};

@@ -23,10 +23,15 @@ union exp_u {
 #define EXP(x) (eco.n.j = 1512775.3951951856938*x +1072632447, eco.d)
 // #define EXP(x) union exp_u __exp_u, __exp_u.n.j = 1512775.3951951856938*(x) +1072632447, __exp_u.d
 
+#define l2_norm(x...) l2_norm_vec(x)
+#define l2_norm_lowdim(x...) l2_norm_lowdim_base(x)
+#define l2_norm_squared(x...) l2_norm_squared_vec(x)
+
 __m256d exp256_pd_fast(__m256d x);
 double appx_exp(double x);
 double l2_norm(double *u, double *v, int dim);
 double l2_norm_base(double *u, double *v, int dim);
+double l2_norm_lowdim_base(double *u, double *v, int dim);
 double l2_norm_vec(double *u, double *v, int dim);
 double l2_norm_lowdim(double *u, double *v, int dim);
 double l2_norm_squared(double *u, double *v, int dim);

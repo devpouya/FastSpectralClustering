@@ -44,8 +44,11 @@
 
 #define MAKE_MASK8(i0, i1, i2, i3, i4, i5, i6, i7) (i0 << 7 | i1 << 6 | i2 << 5 | i3 << 4 | i4 << 3 | i5 << 2 | i6 << 1 | i7)
 
+// NOT USED -- NO INSTRUMENTATION
 __m256d exp256_pd_fast(__m256d x) {
     // printf("-------------\n");
+    NUM_ADDS(4*3);
+    NUM_MULS(4);
     __m256 to_float = _mm256_castpd_ps(x);  // zero latency
     __m256d c1 = _mm256_set1_pd(1512775.3951951856938);
     __m256d c2 = _mm256_set1_pd(1072632447);
@@ -78,6 +81,7 @@ __m256d exp256_pd_fast(__m256d x) {
     return result;
 }
 
+// NOT USED -- NO INSTRUMENTATION
 __m256d exp256_pd(__m256d in)
 {
     // print_m256d(in);
@@ -135,6 +139,7 @@ __m256d exp256_pd(__m256d in)
  * @return
  */
 
+// NOT USED
 double fast_LUT_exp(double x) {
     ENTER_FUNC;
     NUM_ADDS(1);
@@ -145,6 +150,7 @@ double fast_LUT_exp(double x) {
     return ((double )(tmp<<32 ))* ADJUSTMENT_LUT[index];
 }
 
+// NOT USED
 double fast_exp(double x) {
     ENTER_FUNC;
     NUM_MULS(2);
@@ -167,8 +173,8 @@ double fast_exp(double x) {
 
 double gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
-    NUM_EXPS(1);
-    NUM_MULS(1);
+    NUM_ADDS(3);
+    NUM_MULS(1+1);
     double inner = exp(-0.5 * l2_norm_squared(u, v, dim));
     EXIT_FUNC;
     return inner;
@@ -177,7 +183,8 @@ double gaussian_similarity(double *u, double *v, int dim) {
 
 double fast_gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
-    NUM_MULS(1);
+    NUM_ADDS(3);
+    NUM_MULS(1+1);
     double inner = EXP(-0.5 * l2_norm_squared(u, v, dim));
     EXIT_FUNC;
     return inner;
@@ -289,9 +296,9 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
 
 double fast_gaussian_similarity_lowdim(double *u, double *v, int dim) {
     ENTER_FUNC;
-    NUM_MULS(1);
+    NUM_MULS(1+1);
+    NUM_ADDS(3);
     double inner = EXP(-0.5 * l2_norm_squared_lowdim(u, v, dim));
-
     EXIT_FUNC;
     return inner;
 }
@@ -341,14 +348,13 @@ double l2_norm_squared_lowdim(double *u, double *v, int dim) {
 
 double l2_norm_base(double *u, double *v, int dim) {
     ENTER_FUNC;
-    NUM_ADDS(3*dim);
-    NUM_MULS(dim);
-    NUM_SQRTS(1);
 
     double norm0, norm1, norm2, norm3, norm4, norm5, norm6, norm7;
     norm0 = norm1 = norm2 = norm3 = norm4 = norm5 = norm6 = norm7 = 0;
     int i;
     for (i = 0; i < dim - 7; i = i+8) {
+        NUM_ADDS(24);
+        NUM_MULS(8);
         norm0 += (u[i] - v[i]) * (u[i] - v[i]);
         norm1 += (u[i+1] - v[i+1]) * (u[i+1] - v[i+1]);
         norm2 += (u[i+2] - v[i+2]) * (u[i+2] - v[i+2]);
@@ -360,9 +366,13 @@ double l2_norm_base(double *u, double *v, int dim) {
     }
     // tail handling
     for (; i < dim; i++){
+        NUM_MULS(1);
+        NUM_ADDS(3);
         norm0 += (u[i] - v[i]) * (u[i] - v[i]);
     }
 
+    NUM_ADDS(7);
+    NUM_SQRTS(1);
 //    double norm = babylonian_squareRoot(norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7);
     double norm = sqrt(norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7);
     EXIT_FUNC;
@@ -370,6 +380,7 @@ double l2_norm_base(double *u, double *v, int dim) {
 }
 
 // https://stackoverflow.com/questions/49941645/get-sum-of-values-stored-in-m256d-with-sse-avx
+// NOT USED
 static inline double hsum_double_avx(__m256d v) {
     __m128d vlow  = _mm256_castpd256_pd128(v);
     __m128d vhigh = _mm256_extractf128_pd(v, 1); // high 128
@@ -381,9 +392,6 @@ static inline double hsum_double_avx(__m256d v) {
 
 double l2_norm_squared_vec(double *u, double *v, int dim) {
     ENTER_FUNC;
-    NUM_ADDS(3*dim);
-    NUM_MULS(dim);
-    NUM_SQRTS(1);
 
     double norm = 0;
 
@@ -399,6 +407,8 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
         v_u2 = _mm256_loadu_pd(u + i + 4);
         v_v2 = _mm256_loadu_pd(v + i + 4);
 
+        NUM_ADDS(16);
+        NUM_MULS(8);
         v_sub1 = _mm256_sub_pd(v_u1, v_v1);
         v_sub2 = _mm256_sub_pd(v_u2, v_v2);
 
@@ -406,14 +416,18 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
         v_norm2 = _mm256_fmadd_pd(v_sub2, v_sub2, v_norm2);
     }
 
+    NUM_ADDS(4);
     v_norm1 = _mm256_add_pd(v_norm1, v_norm2);
     // norm = hsum_double_avx(v_norm1);
 
+    NUM_ADDS(3);
     norm = (((double *) &v_norm1)[0] + ((double *) &v_norm1)[1]) + (((double *) &v_norm1)[2] + ((double *) &v_norm1)[3]);
 
     // for(int j = 0; j < 4; j++) { norm += norm2[j]; }
     // tail handling
     for (; i < dim; i++) {
+        NUM_ADDS(3);
+        NUM_MULS(1);
         norm += (u[i] - v[i]) * (u[i] - v[i]);
     }
     // norm = sqrt(norm);
@@ -423,9 +437,6 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
 
 double l2_norm_vec(double *u, double *v, int dim) {
     ENTER_FUNC;
-    NUM_ADDS(3*dim);
-    NUM_MULS(dim);
-    NUM_SQRTS(1);
 
     double norm = 0;
 
@@ -441,6 +452,8 @@ double l2_norm_vec(double *u, double *v, int dim) {
         v_u2 = _mm256_loadu_pd(u + i + 4);
         v_v2 = _mm256_loadu_pd(v + i + 4);
 
+        NUM_ADDS(16);
+        NUM_MULS(8);
         v_sub1 = _mm256_sub_pd(v_u1, v_v1);
         v_sub2 = _mm256_sub_pd(v_u2, v_v2);
 
@@ -448,22 +461,28 @@ double l2_norm_vec(double *u, double *v, int dim) {
         v_norm2 = _mm256_fmadd_pd(v_sub2, v_sub2, v_norm2);
     }
 
+    NUM_ADDS(4);
     v_norm1 = _mm256_add_pd(v_norm1, v_norm2);
     // norm = hsum_double_avx(v_norm1);
 
+    NUM_ADDS(3);
     norm = (((double *) &v_norm1)[0] + ((double *) &v_norm1)[1]) + (((double *) &v_norm1)[2] + ((double *) &v_norm1)[3]);
 
     // for(int j = 0; j < 4; j++) { norm += norm2[j]; }
     // tail handling
     for (; i < dim; i++) {
+        NUM_ADDS(3);
+        NUM_MULS(1);
         norm += (u[i] - v[i]) * (u[i] - v[i]);
     }
+
+    NUM_SQRTS(1);
     norm = sqrt(norm);
     EXIT_FUNC;
     return norm;
 }
 
-
+// OLD -- INSTRUMENTATION OUT OF DATE
 double l2_norm_vec_old(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3*dim);
@@ -505,6 +524,7 @@ double l2_norm_vec_old(double *u, double *v, int dim) {
     return norm;
 }
 
+// NOT USED -- INSTRUMENTATION OUT OF DATE
 __m256d l2_norm_4x1_vec(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3*dim);
@@ -567,13 +587,13 @@ __m256d l2_norm_4x1_vec(double *u, double *v, int dim) {
 
 double l2_norm_squared_base(double *u, double *v, int dim) {
     ENTER_FUNC;
-    NUM_ADDS(3 * dim);
-    NUM_MULS(dim);
 
     double norm0, norm1, norm2, norm3, norm4, norm5, norm6, norm7;
     norm0 = norm1 = norm2 = norm3 = norm4 = norm5 = norm6 = norm7 = 0;
     int i;
     for (i = 0; i < dim - 7; i = i + 8) {
+        NUM_ADDS(24);
+        NUM_MULS(8);
         norm0 += (u[i] - v[i]) * (u[i] - v[i]);
         norm1 += (u[i+1] - v[i+1]) * (u[i+1] - v[i+1]);
         norm2 += (u[i+2] - v[i+2]) * (u[i+2] - v[i+2]);
@@ -585,13 +605,17 @@ double l2_norm_squared_base(double *u, double *v, int dim) {
     }
     // tail handling
     for (; i < dim; i++){
+        NUM_ADDS(3);
+        NUM_MULS(1);
         norm0 += (u[i] - v[i]) * (u[i] - v[i]);
     }
+    NUM_ADDS(7);
     double norm = norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7;
     EXIT_FUNC;
     return norm;
 }
 
+// NOT USED -- INSTRUMENTATION OUT OF DATE 
 double l2_norm_squared_vec_old(double *u, double *v, int dim) {
     ENTER_FUNC;
     NUM_ADDS(3*dim);
@@ -631,25 +655,25 @@ double l2_norm_squared_vec_old(double *u, double *v, int dim) {
     return norm;
 }
 
-/**
- * Generic Methods for kmeans: change name definition in return {HERE};
- *
- * @param u
- * @param v
- * @param dim
- * @return
- */
+// /**
+//  * Generic Methods for kmeans: change name definition in return {HERE};
+//  *
+//  * @param u
+//  * @param v
+//  * @param dim
+//  * @return
+//  */
 
-double l2_norm(double *u, double *v, int dim) {
-    return l2_norm_vec(u, v, dim);
-}
+// double l2_norm(double *u, double *v, int dim) {
+//     return l2_norm_vec(u, v, dim);
+// }
 
-double l2_norm_squared(double *u, double *v, int dim) {
-    return l2_norm_squared_vec(u, v, dim);
-}
+// double l2_norm_squared(double *u, double *v, int dim) {
+//     return l2_norm_squared_vec(u, v, dim);
+// }
 
-double l2_norm_lowdim(double *u, double *v, int dim){
-    return l2_norm_lowdim_base(u, v, dim);
-}
+// double l2_norm_lowdim(double *u, double *v, int dim){
+//     return l2_norm_lowdim_base(u, v, dim);
+// }
 
 
