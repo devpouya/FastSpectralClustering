@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
         hamerly_kmeans_lowdim(eigenvectors, lines, k, 100, 0.0001, clusters);
     }
     // double timing = wtime()-timing_start ;
-    printf("Timing of kmeans: %f [sec] \n", timing);
+    // printf("Timing of kmeans: %f [sec] \n", timing);
 
     uint64_t runtime = stop_tsc(start2) + end1;
 

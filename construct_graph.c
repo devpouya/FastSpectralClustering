@@ -409,12 +409,12 @@ void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, doub
         ret[i*n + i] = degrees[i] * 0.5;
     }
 
-    // for (int i = 0; i < n; i++) {
-    //     for (int j = 0; j < n; j++) {
-    //         printf("%lf ", ret[i*n + j]);
-    //     }
-    //     printf("\n");
-    // }
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            printf("%lf ", ret[i*n + j]);
+        }
+        printf("\n");
+    }
 
     EXIT_FUNC;
 }
