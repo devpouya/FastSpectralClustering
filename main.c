@@ -66,9 +66,9 @@ int main(int argc, char *argv[]) {
     myInt64 start1 = start_tsc();
 
     if (dim >= 8){
-        oneshot_unnormalized_laplacian_blocked(points,lines,dim,laplacian);
+        oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
     }else{
-        oneshot_unnormalized_laplacian_lowdim_blocked(points,lines,dim,laplacian);
+        oneshot_unnormalized_laplacian_lowdim_vec_blocked(points,lines,dim,laplacian);
     }
     //compute the eigendecomposition and take the first k eigenvectors.
     myInt64 end1 = stop_tsc(start1);
