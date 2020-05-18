@@ -47,6 +47,8 @@
 // NOT USED -- NO INSTRUMENTATION
 __m256d exp256_pd_fast(__m256d x) {
     // printf("-------------\n");
+    NUM_ADDS(4*3);
+    NUM_MULS(4);
     __m256 to_float = _mm256_castpd_ps(x);  // zero latency
     __m256d c1 = _mm256_set1_pd(1512775.3951951856938);
     __m256d c2 = _mm256_set1_pd(1072632447);
