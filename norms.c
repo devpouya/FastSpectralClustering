@@ -44,7 +44,6 @@
 
 #define MAKE_MASK8(i0, i1, i2, i3, i4, i5, i6, i7) (i0 << 7 | i1 << 6 | i2 << 5 | i3 << 4 | i4 << 3 | i5 << 2 | i6 << 1 | i7)
 
-// NOT USED -- NO INSTRUMENTATION
 __m256d exp256_pd_fast(__m256d x) {
     // printf("-------------\n");
     NUM_ADDS(4*3);
@@ -221,8 +220,6 @@ double fast_gaussian_similarity(double *u, double *v, int dim) {
  */
 __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
     //ENTER_FUNC;
-    NUM_ADDS(3*dim);
-    NUM_MULS(dim);
 
     double norms[4] __attribute__((aligned(32)));
     double norm1[4] __attribute__((aligned(32))), norm2[4] __attribute__((aligned(32))), norm3[4] __attribute__((aligned(32))), norm4[4] __attribute__((aligned(32)));
@@ -244,11 +241,14 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
         v_v3 = _mm256_loadu_pd(v+2*dim + i);
         v_v4 = _mm256_loadu_pd(v+3*dim + i);
 
+        NUM_ADDS(4*4);
         v_sub1 = _mm256_sub_pd(v_u1, v_v1);
         v_sub2 = _mm256_sub_pd(v_u1, v_v2);
         v_sub3 = _mm256_sub_pd(v_u1, v_v3);
         v_sub4 = _mm256_sub_pd(v_u1, v_v4);
 
+        NUM_MULS(4*4);
+        NUM_ADDS(4*4);
         v_norm1 = _mm256_fmadd_pd(v_sub1, v_sub1, v_norm1);
         v_norm2 = _mm256_fmadd_pd(v_sub2, v_sub2, v_norm2);
         v_norm3 = _mm256_fmadd_pd(v_sub3, v_sub3, v_norm3);
@@ -261,6 +261,7 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
     _mm256_store_pd(norm4, v_norm4);
     // sum up entries of array for each one into one double => stored back in a array
     for(int j = 0; j < 4; j++) {
+        NUM_ADDS(4);
         norms[0] += norm1[j];
         norms[1] += norm2[j];
         norms[2] += norm3[j];
@@ -268,6 +269,8 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
     }
     // tail handling
     for (; i < dim; i++) {
+        NUM_ADDS(12);
+        NUM_MULS(4);
         norms[0] += (u[i] - v[i]) * (u[i] - v[i]);
         norms[1] += (u[i+dim] - v[i+dim]) * (u[i+dim] - v[i+dim]);
         norms[2] += (u[i+2*dim] - v[i+2*dim]) * (u[i+2*dim] - v[i+2*dim]);
@@ -275,6 +278,7 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
     }
     // printf("norms[0]=%lf norms[1]=%lf norms[2]=%lf norms[3]=%lf\n", norms[0], norms[1], norms[2], norms[3]);
     result = _mm256_load_pd(norms);
+    NUM_MULS(4);
     result = _mm256_mul_pd(half, result);
     result = exp256_pd_fast(result);
     // printf("exp = ");

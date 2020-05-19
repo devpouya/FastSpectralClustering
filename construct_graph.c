@@ -347,7 +347,7 @@ void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *
 }
 
 
-#define BLOCKSIZE_HD 8
+#define BLOCKSIZE_HD 32
 
 //static void print_m256d(__m256d d) {
 //    double *a = (double *) &d;
@@ -522,7 +522,7 @@ void oneshot_unnormalized_laplacian_vec_blocked(double *points, int n, int dim, 
     EXIT_FUNC;
 }
 
-#define BLOCKSIZE_LD 6
+#define BLOCKSIZE_LD 8
 
 void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int dim, double *ret) {
     ENTER_FUNC;
