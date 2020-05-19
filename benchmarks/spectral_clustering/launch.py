@@ -12,15 +12,14 @@ output_filename = "vec_8.txt"
 dataset_path = os.getcwd() + "/benchmarks/datasets/growing_n/"
 output_path = os.getcwd() + "/benchmarks/spectral_clustering/measurements/"
 k = 6
-n = 5000
-params = range(0, 10000, 100)
+dim = 2
+params = range(100, 5000, 100)
 
 # global conf
-subprocess.run(["make", "countops"])
+# subprocess.run(["make", "countops"])
 subprocess.run(["make"])
 directory = os.fsencode(str(dataset_path))
-runtimes_median = []
-performances_median = []
+times_median = []
 
 for par in params:
     print(test + " | parameter = " + str(par))
@@ -28,33 +27,23 @@ for par in params:
         filename = os.fsdecode(file)
         if filename == str(par) + ".txt":
             # compute NUM_RUNS times and get the median
-            runtimes = []
-            performances = []
+            times = []
             for i in range(0, num_runs):
                 clustering = subprocess.check_output(["./clustering", str(dataset_path) + filename, str(k), "out.txt"],
                                                  universal_newlines="\n").split("\n")
                 #print(clustering[0])
-                runtime = clustering[0]
-                runtimes.append(runtime)
-                countops = subprocess.check_output(["./countops", str(dataset_path) + filename, str(k), "out.txt"],
-                                                 universal_newlines="\n").split("\n")
-                #print(countops[1])
-                flops = countops[1]
-                performances.append(float(runtime)/float(flops))
+                time = clustering[0]
+                times.append(time)
+
             # sort the arrays
-            runtimes.sort()
-            performances.sort()
+            times.sort()
+
             # adding to final list
-            runtimes_median.append(runtimes[median_idx])
-            performances_median.append(performances[median_idx])
-            print("runtime: "+ str(runtimes[median_idx]) +" (cycles), performance: "+ str(performances[median_idx]) +" (flops/cycle)")
+            times_median.append(times[median_idx])
+            print(" time: " + str(times[median_idx]) +" (sec)")
 
 
-with open(str(output_path) + output_filename + "_runtime", 'w') as f:
+with open(str(output_path) + output_filename + "_time", 'w') as f:
     writer = csv.writer(f, delimiter='\t')
-    writer.writerows(zip(params, runtimes_median))
-
-with open(str(output_path) + output_filename + "_perf", 'w') as f:
-    writer = csv.writer(f, delimiter='\t')
-    writer.writerows(zip(params, performances_median))
+    writer.writerows(zip(params, times_median))
 
