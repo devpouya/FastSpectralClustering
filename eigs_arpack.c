@@ -55,6 +55,15 @@ void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, doub
     iparam[4] = 0;  // number of ev found by arpack.
     iparam[6] = 1;
 
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < i-1; j++) {
+            A[i*n + j] = A[j*n + i];
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        A[i*n + i] *= 2;
+    }
+
     while (ido != 99) {
         dsaupd_c(&ido, bmat, N, which, nev, tol, resid, ncv, V, ldv, iparam, ipntr,
                     workd, workl, lworkl, &info);
