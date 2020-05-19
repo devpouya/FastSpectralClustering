@@ -13,12 +13,12 @@ struct file alloc_load_points_from_file(char *file) {
     while (EOF != (fscanf(fp, "%*[^\n]"), fscanf(fp,"%*c")))
         ++lines;
     --lines;  // Subtract one because it starts with the dimension
-    printf("Read %d lines\n", lines);
+    //printf("Read %d lines\n", lines);
     // Find the dimension
     rewind(fp);
     int dim;
     fscanf(fp, "%d\n", &dim);
-    printf("Dimension = %d \n" , dim);
+    //printf("Dimension = %d \n" , dim);
     double *points = malloc(lines * dim * sizeof(double));
     for (int i = 0; i < lines; ++i) {
         for (int j = 0; j < dim; ++j){

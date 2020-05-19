@@ -8,13 +8,13 @@
 
 #include "eigs.h"
 
-static void transpose(double *A, int rows, int cols, double *ret) {
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            ret[i * cols + j] = A[i + j * rows];
-        }
-    }
-}
+//static void transpose(double *A, int rows, int cols, double *ret) {
+//    for (int i = 0; i < rows; i++) {
+//        for (int j = 0; j < cols; j++) {
+//            ret[i * cols + j] = A[i + j * rows];
+//        }
+//    }
+//}
 
 void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, double *ret_eigenvectors) {
     a_int ido = 0;
@@ -74,7 +74,6 @@ void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, doub
     dseupd_c(rvec, howmny, select, d, z, ldz, sigma, bmat, N, which, nev, tol,
             resid, ncv, V, ldv, iparam, ipntr, workd, workl, lworkl, &info);
 
-    transpose(z, N, nev, ret_eigenvectors);
 
     // for (int i = 0; i < N; i++) {
     //     for (int j = 0; j < nev; j++) {

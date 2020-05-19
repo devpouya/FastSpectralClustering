@@ -8,8 +8,8 @@ import sys
 import csv
 
 # global settings
-num_runs = 1
-median_idx = 0
+num_runs = 9
+median_idx = 4
 
 # First Benchmark: growing dim
 test = "growing dim"
