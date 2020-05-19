@@ -31,6 +31,47 @@ int cmpfunc (const void * a, const void * b) {
     return ( *(int*)a - *(int*)b );
 }
 
+#ifdef DUMPEV
+__attribute__((used))
+static void read_ev_from_file(const char *data_path, int n, int k, double *ret_ev) {
+    char path[128];
+    int len = strlen(data_path);
+    int q;
+    for (q = 0; q < len-4; q++) {
+        path[q] = data_path[q];
+    }
+    strcpy(path + q, "_ev.txt");
+    // path[strlen(data_path) - 4] = '\0';
+    printf("path is %s\n", path);
+    FILE *fp = fopen(path, "r");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < k; j++) {
+            fscanf(fp, "%lf ", &ret_ev[i*k + j]);
+            printf("%lf\n", ret_ev[i*k + j]);
+        }
+    }
+}
+
+__attribute__((used))
+static void dump_ev_to_file(const char *data_path, int n, int k, double *ev) {
+    char path[128];
+    int len = strlen(data_path);
+    int q;
+    for (q = 0; q < len-4; q++) {
+        path[q] = data_path[q];
+    }
+    strcpy(path + q, "_ev.txt");
+    printf("dumping to file: %s\n", path);
+    FILE *fp = fopen(path, "w");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < k; j++) {
+            fprintf(fp, "%.17f ", ev[i*k + j]);
+        }
+        fprintf(fp, "\n");
+    }
+}
+#endif
+
 #define NUM_RUNS 9
 int main(int argc, char *argv[]) {
 
@@ -67,7 +108,13 @@ int main(int argc, char *argv[]) {
     //printf("Performing eigenvalue decomposition...\n");
     double *eigenvalues = malloc(k * sizeof(double));
     double *eigenvectors = malloc(n * k * sizeof(double));
+
+#ifndef DUMPEV
     smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
+#else
+    // read_ev_from_file(argv[1], n, k, eigenvectors);
+    dump_ev_to_file(argv[1], n, k, eigenvectors);
+#endif
 
     //myInt64 start2 = start_tsc();
     double start2 = wtime();
