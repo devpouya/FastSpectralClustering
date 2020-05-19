@@ -13,6 +13,7 @@
 #define NUM_SQRTS(n) num_sqrts(n)
 #define NUM_EXPS(n) num_exps(n)
 #define NUM_FLOPS num_flops()
+#define RESET_FLOPS() reset_flops()
 
 void num_adds(int n);
 void num_muls(int n);
@@ -20,6 +21,7 @@ void num_divs(int n);
 void num_sqrts(int n);
 void num_exps(int n);
 uint64_t num_flops(void);
+void reset_flops();
 
 #else
 #define NUM_ADDS(n) ((void) 0)
@@ -28,6 +30,7 @@ uint64_t num_flops(void);
 #define NUM_SQRTS(n) ((void) 0)
 #define NUM_EXPS(n) ((void) 0)
 #define NUM_FLOPS ((uint64_t) 0)
+#define RESET_FLOPS() ((void) 0)
 #endif
 
 #ifdef PROFILING
