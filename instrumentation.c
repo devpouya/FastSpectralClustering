@@ -35,6 +35,7 @@ void num_divs(int n) { __num_divs += n; }
 void num_sqrts(int n) { __num_sqrts += n; }
 void num_exps(int n) { __num_exps += n; }
 uint64_t num_flops(void) { return __num_adds + __num_muls + __num_divs + __num_sqrts + __num_exps; }
+void reset_flops() { __num_adds = __num_muls = __num_divs = __num_sqrts = __num_exps = 0; }
 #endif
 
 #ifdef PROFILING
