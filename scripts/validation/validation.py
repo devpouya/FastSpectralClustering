@@ -5,9 +5,9 @@ import subprocess
 import random
 import os
 
-dataset_path = "datasets/test_points/"+input("enter the dataset file name (from datasets/test_points/): ")
+dataset_path = os.getcwd()+"/datasets/test_points/"+input("enter the dataset file name (from datasets/test_points/): ")
 number_clusters = input("enter number of clusters  ")
-output_path = "output/validation/"+input("enter the output file name (result in /output/validation/): ")
+output_path = os.getcwd()+"/output/validation/"+input("enter the output file name (result in /output/validation/): ")
 
 subprocess.run(["make"])
 subprocess.run(["./clustering", dataset_path, number_clusters, output_path])

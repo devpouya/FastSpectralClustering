@@ -22,7 +22,7 @@ void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, doub
     // Construct eigen solver object with shift 0
     // This will find eigenvalues that are closest to 0
     SymEigsShiftSolver< double, LARGEST_MAGN,
-                        DenseSymShiftSolve<double> > eigs(&op, k, MIN(2*k, n), 0.0);
+            DenseSymShiftSolve<double> > eigs(&op, k, MIN(2*k, n), 0.0);
     eigs.init();
     eigs.compute();
     if(eigs.info() == SUCCESSFUL)
@@ -34,7 +34,7 @@ void smallest_eigenvalues(double *A, int n, int k, double *ret_eigenvalues, doub
         // std::cout << "Eigenvalues found:\n" << evalues << std::endl;
         // std::cout  << "\nEigenvectors found:\n" << evectors << std::endl;
         return;
-    } 
+    }
     fprintf(stderr, "\033[31mWARNING: Spectra failed to compute eigenvalues\033[0m\n");
 }
 
