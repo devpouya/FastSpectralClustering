@@ -1049,6 +1049,8 @@ void hamerly_kmeans_lowdim(double *U, int n, int k, int max_iter, double stoppin
     int clusters_size[k] __attribute__((aligned(32)));
     memset(clusters_size, 0, k * sizeof(int));
     // n upper bounds (of closest center)
+
+
     // n lower bounds (of 2nd strict closest center)
     // double *lower_bounds = calloc(n, sizeof(double));
     double lower_bounds[n] __attribute__((aligned(32)));
