@@ -12,7 +12,7 @@ else:
     n = int(sys.argv[2])
     out = sys.argv[3]
 
-dim = 512
+dim = 2048
 points, y = make_blobs(n_samples=n,centers=k,n_features=dim,random_state=7)
 
 """
