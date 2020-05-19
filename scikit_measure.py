@@ -11,18 +11,18 @@ import os
 import csv
 
 # global settings
-num_runs = 1
-median_idx = 0
+num_runs = 3
+median_idx = 1
 
 # First Benchmark: growing dim
 test = "growing dim"
 output_filename = ""
 dataset_path = os.getcwd() + "/benchmarks/datasets/6c_5000n_growing_dim/"
-output_path = os.getcwd() + "/benchmarks/kmeans/measurements/"
+output_path = os.getcwd() + "/benchmarks/scikit/measurements/"
 k = 6
 n = 5000
 
-params = [2, 4, 8, 16, 32, 64, 128, 256, 512]
+params = [2, 4]
 
 
 # # Second Benchmark: growing n
@@ -95,15 +95,15 @@ for par in params:
             print("runtime eig: " + str(runtimes3[median_idx] - runtimes[median_idx]) + " (sec)")
 
 
-with open(str(output_path) + output_filename + "total_lloyd_runtime_no_eig", 'w') as f:
+with open(str(output_path)+ "_total_lloyd_runtime_no_eig", 'w') as f:
     writer = csv.writer(f, delimiter='\t')
     writer.writerows(zip(params, runtimes_median))
 
-with open(str(output_path) + output_filename + "elkan_runtime_no_eig", 'w') as f:
+with open(str(output_path) + "_elkan_runtime_no_eig", 'w') as f:
     writer = csv.writer(f, delimiter='\t')
     writer.writerows(zip(params, elkan_runtimes_median))
 
-with open(str(output_path) + output_filename + "total_lloyd_runtime_with_eig", 'w') as f:
+with open(str(output_path) + "_total_lloyd_runtime_with_eig", 'w') as f:
     writer = csv.writer(f, delimiter='\t')
     writer.writerows(zip(params, total_runtimes_median))
 
