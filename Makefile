@@ -54,6 +54,9 @@ profiling: $(SRC) $(EIGS)
 countops: $(SRC) $(EIGS)
 	$(CC) $(CFLAGS) -DINSTRUMENTATION -o countops $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
 
+dump_ev: $(SRC) $(EIGS)
+	$(CC) $(CFLAGS) -DDUMPEV -o dump_ev $(SRC) $(EIGS) $(CINCLUDES) $(CLIBS)
+
 .PHONY: bootstrap-arpack
 bootstrap-arpack:
 	git submodule init && git submodule update && cd arpack-ng && sh bootstrap && cd ..
