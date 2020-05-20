@@ -8,11 +8,11 @@ median_idx = 4
 
 # First Benchmark: growing dim
 test = "growing k"
-output_filename = "vec_8.txt"
+output_filename = "10-base_kmeans_growing_k"
 dataset_path = os.getcwd() + "/benchmarks/datasets/2d_2500n_growing_k/"
-output_path = os.getcwd() + "/benchmarks/kmeans/measurements/"
-k = 6
-n = 5000
+output_path = os.getcwd() + "/benchmarks/measurements/"
+#k = 6
+n = 2500
 params = [2, 4, 8, 16, 32, 64, 128, 256, 512]
 
 # # Second Benchmark: growing n
@@ -30,40 +30,41 @@ subprocess.run(["make"])
 directory = os.fsencode(str(dataset_path))
 runtimes_median = []
 performances_median = []
-
-for par in params:
-    print(test + " | parameter = " + str(par))
-    for file in sorted(os.listdir(directory)): # when generating data have just numbers for simplicity
+iter = 1
+ks = []
+for file in sorted(os.listdir(directory)): # when generating data have just numbers for simplicity
+        print("RUNNING ITER:%d"%iter)
         filename = os.fsdecode(file)
-        if filename == str(par) + ".txt":
-            # compute NUM_RUNS times and get the median
-            runtimes = []
-            performances = []
-            for i in range(0, num_runs):
-                clustering = subprocess.check_output(["./clustering", str(dataset_path) + filename, str(k), "out.txt"],
+        k = filename.split(".")[0]
+        print(k)
+        # compute NUM_RUNS times and get the median
+        runtimes = []
+        performances = []
+        for i in range(0, num_runs):
+            clustering = subprocess.check_output(["./clustering", str(dataset_path) + filename, str(k), "out.txt"],
                                                  universal_newlines="\n").split("\n")
-                #print(clustering[0])
-                runtime = clustering[0]
-                runtimes.append(runtime)
-                countops = subprocess.check_output(["./countops", str(dataset_path) + filename, str(k), "out.txt"],
+            #print(clustering[0])
+            runtime = clustering[2]
+            runtimes.append(runtime)
+            countops = subprocess.check_output(["./countops", str(dataset_path) + filename, str(k), "out.txt"],
                                                  universal_newlines="\n").split("\n")
-                #print(countops[1])
-                flops = countops[1]
-                performances.append(float(runtime)/float(flops))
-            # sort the arrays
-            runtimes.sort()
-            performances.sort()
-            # adding to final list
-            runtimes_median.append(runtimes[median_idx])
-            performances_median.append(performances[median_idx])
-            print("runtime: "+ str(runtimes[median_idx]) +" (cycles), performance: "+ str(performances[median_idx]) +" (flops/cycle)")
+            #print(countops[1])
+            flops = countops[3]
+            performances.append(float(flops)/float(runtime))
+        # sort the arrays
+        runtimes.sort()
+        performances.sort()
+        # adding to final list
+        runtimes_median.append(runtimes[median_idx])
+        performances_median.append(performances[median_idx])
+        ks.append(k)
+        print("runtime: "+ str(runtimes[median_idx]) +" (cycles), performance: "+ str(performances[median_idx]) +" (flops/cycle)")
+        iter += 1
 
-
-with open(str(output_path) + output_filename + "_runtime", 'w') as f:
+with open(str(output_path) + output_filename + "_runtime.txt", 'w') as f:
     writer = csv.writer(f, delimiter='\t')
-    writer.writerows(zip(params, runtimes_median))
+    writer.writerows(zip(ks, runtimes_median))
 
-with open(str(output_path) + output_filename + "_perf", 'w') as f:
+with open(str(output_path) + output_filename + "_perf.txt", 'w') as f:
     writer = csv.writer(f, delimiter='\t')
-    writer.writerows(zip(params, performances_median))
-
+    writer.writerows(zip(ks, performances_median))
