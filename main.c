@@ -109,9 +109,8 @@ int main(int argc, char *argv[]) {
     double *eigenvalues = malloc(k * sizeof(double));
     double *eigenvectors = malloc(n * k * sizeof(double));
 
-#ifndef DUMPEV
     smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
-#else
+#ifdef DUMPEV
     // read_ev_from_file(argv[1], n, k, eigenvectors);
     dump_ev_to_file(argv[1], n, k, eigenvectors);
 #endif

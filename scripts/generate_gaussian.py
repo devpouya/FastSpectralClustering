@@ -1,19 +1,23 @@
 import numpy as np
 import sys
 from sklearn.datasets import make_blobs
+from sklearn.preprocessing import normalize
 import os
 
-if (len(sys.argv) != 4):
+if (len(sys.argv) != 5):
     k = int(input("enter desired number of clusters: "))
     n = int(input("enter desired number of total datasets points: "))
     out = input("enter output filename: ")
+    dim = int(input("enter dim: "))
 else:
     k = int(sys.argv[1])
     n = int(sys.argv[2])
     out = sys.argv[3]
+    dim = int(sys.argv[4])
 
-dim = 2
+# dim = 300
 points, y = make_blobs(n_samples=n,centers=k,n_features=dim,random_state=7)
+points = normalize(points)
 
 """
 means = np.random.choice(n, (k,1,2), replace=False)
@@ -32,7 +36,7 @@ for i in range(k):
     points = np.append(points,st,axis=0)
 np.random.shuffle(points)
 """
-file = open(os.getcwd()+"/datasets/test_points/"+out, "w+")
+file = open(os.getcwd()+"/"+out, "w+")
 file.write("%d\n" % dim)
 for i in range(n):
     for j in range(dim):
