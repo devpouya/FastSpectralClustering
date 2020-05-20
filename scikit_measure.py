@@ -38,7 +38,7 @@ params = [i for i in range(2,100)]
 # # Third Benchmark: growing n
 # test = "growing n"
 # output_filename = "vec_8.txt"
-# dataset_path = os.getcwd() + "benchmarks/datasets/growing_n/"
+# dataset_path = os.getcwd() + "benchmarks/datasets/8c_256d_growing_n/"
 # output_path = os.getcwd() + "/benchmarks/graph/measurements/"
 # k = 6 #??
 # dim = 2 #??

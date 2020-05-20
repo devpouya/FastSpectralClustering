@@ -11,23 +11,33 @@ import csv
 num_runs = 9
 median_idx = 4
 
-# First Benchmark: growing dim
-test = "growing dim"
-output_filename = "vec_8.txt"
-dataset_path = os.getcwd() + "/benchmarks/datasets/6c_5000n_growing_dim/"
-output_path = os.getcwd() + "/benchmarks/graph/measurements/"
-k = 6
-n = 5000
-params = [2, 4, 8, 16, 32, 64, 128, 256, 512]
+# # First Benchmark: growing dim
+# test = "growing dim"
+# output_filename = "vec_8.txt"
+# dataset_path = os.getcwd() + "/benchmarks/datasets/6c_5000n_growing_dim/"
+# output_path = os.getcwd() + "/benchmarks/graph/measurements/"
+# k = 6
+# n = 5000
+# params = [2, 4, 8, 16, 32, 64, 128, 256, 512]
 
-# # Second Benchmark: growing n
+# First Benchmark: growing dim
+test = "growing n"
+output_filename = "vec_8.txt"
+dataset_path = os.getcwd() + "/benchmarks/datasets/8c_300d_growing_n/"
+output_path = os.getcwd() + "/benchmarks/spectral_clustering/measurements/"
+k = 8
+dim = 300
+params = range(100, 6000, 100)
+
+# # First Benchmark: growing dim
 # test = "growing n"
 # output_filename = "vec_8.txt"
-# dataset_path = os.getcwd() + "benchmarks/datasets/growing_n/"
-# output_path = os.getcwd() + "/benchmarks/graph/measurements/"
-# k = 6 #??
-# dim = 2 #??
-# n = range(10, 10000, 100)
+# dataset_path = os.getcwd() + "/benchmarks/datasets/72c_300d_growing_n/"
+# output_path = os.getcwd() + "/benchmarks/spectral_clustering/measurements/"
+# k = 72
+# dim = 300
+# params = range(100, 6000, 100)
+
 
 # global
 subprocess.run(["make", "countops"])

@@ -12,7 +12,7 @@ else:
     n = int(sys.argv[2])
     out = sys.argv[3]
 
-dim = 512
+dim = 2
 points, y = make_blobs(n_samples=n,centers=k,n_features=dim,random_state=7)
 
 """
@@ -32,7 +32,7 @@ for i in range(k):
     points = np.append(points,st,axis=0)
 np.random.shuffle(points)
 """
-file = open(os.getcwd()+"/datasets/100c_5000n/"+out, "w+")
+file = open(os.getcwd()+"/datasets/test_points/"+out, "w+")
 file.write("%d\n" % dim)
 for i in range(n):
     for j in range(dim):
