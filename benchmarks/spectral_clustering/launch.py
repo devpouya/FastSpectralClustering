@@ -9,11 +9,20 @@ median_idx = 4
 # First Benchmark: growing dim
 test = "growing n"
 output_filename = "vec_8.txt"
-dataset_path = os.getcwd() + "/benchmarks/datasets/growing_n/"
+dataset_path = os.getcwd() + "/benchmarks/datasets/8c_300d_growing_n/"
 output_path = os.getcwd() + "/benchmarks/spectral_clustering/measurements/"
-k = 6
-dim = 2
-params = range(100, 5000, 100)
+k = 8
+dim = 300
+params = range(100, 6000, 100)
+
+# # First Benchmark: growing dim
+# test = "growing n"
+# output_filename = "vec_8.txt"
+# dataset_path = os.getcwd() + "/benchmarks/datasets/72c_300d_growing_n/"
+# output_path = os.getcwd() + "/benchmarks/spectral_clustering/measurements/"
+# k = 72
+# dim = 300
+# params = range(100, 6000, 100)
 
 # global conf
 # subprocess.run(["make", "countops"])
