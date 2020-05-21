@@ -75,7 +75,7 @@ static void dump_ev_to_file(const char *data_path, int n, int k, double *ev) {
 #define NUM_RUNS 9
 int main(int argc, char *argv[]) {
 
-    if (argc != 4) {
+    if (argc != 5) {
         printf("usage: %s points_file num_clusters output_file\n", argv[0]);
         return 1;
     }
@@ -84,39 +84,42 @@ int main(int argc, char *argv[]) {
 //    printf("number of clusters: %d\n", atoi(argv[2]));
 //    printf("output path: %s\n", argv[3]);
 
-    struct file f = alloc_load_points_from_file(argv[1]);
-    int dim = f.dimension;
-    int lines = f.lines;
-    double *points = f.points;
+//    struct file f = alloc_load_points_from_file(argv[1]);
+//    int dim = f.dimension;
+//    int lines = f.lines;
+    int lines =atoi(argv[4]);
+//    double *points = f.points;
+//    int lines = 2500;
     int k = atoi(argv[2]);
     int n = lines;
 
 
+//double start1 = wtime();
     //printf("Constructing unnormalized Laplacian...\n");
-    double *laplacian = calloc(lines*lines, sizeof(double));
+//    double *laplacian = calloc(lines*lines, sizeof(double));
     //myInt64 start1 = start_tsc();
-    double start1 = wtime();
 
-    if (dim >= 8){
-        oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
-    }else{
-        oneshot_unnormalized_laplacian_lowdim_vec_blocked(points,lines,dim,laplacian);
-    }
+//    if (dim >= 8){
+//        oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
+//    }else{
+//        oneshot_unnormalized_laplacian_lowdim_vec_blocked(points,lines,dim,laplacian);
+//    }
     //compute the eigendecomposition and take the first k eigenvectors.
     //myInt64 end1 = stop_tsc(start1);
-    double end1 = wtime() - start1;
+//double end1 = wtime() - start1;
     //printf("Performing eigenvalue decomposition...\n");
-    double *eigenvalues = malloc(k * sizeof(double));
+//    double *eigenvalues = malloc(k * sizeof(double));
     double *eigenvectors = malloc(n * k * sizeof(double));
-
-    smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
-#ifdef DUMPEV
-    // read_ev_from_file(argv[1], n, k, eigenvectors);
-    dump_ev_to_file(argv[1], n, k, eigenvectors);
+//
+#ifndef DUMPEV
+//    smallest_eigenvalues(laplacian, n, k, eigenvalues, eigenvectors);
+#else
+     read_ev_from_file(argv[1], n, k, eigenvectors);
+//    dump_ev_to_file(argv[1], n, k, eigenvectors);
 #endif
-
+//
     //myInt64 start2 = start_tsc();
-    double start2 = wtime();
+double start1 = wtime();
     // init datastructure
     struct cluster clusters[k];
     for (int i = 0; i < k; i++) {
@@ -134,7 +137,7 @@ int main(int argc, char *argv[]) {
 
 
     // uint64_t runtime = stop_tsc(start2) + end1;
-    double end2 = wtime() - start2;
+double end1 = wtime() - start1;
     //print_cluster_indices(clusters, k);
 
     //write result in output file
@@ -142,11 +145,12 @@ int main(int argc, char *argv[]) {
 
     //PROFILER_LIST();
 
-    free(eigenvectors);
-    free(eigenvalues);
-    free(laplacian);
-    free(f.points);
-    double timing = end1 + end2;
+//    free(eigenvectors);
+//    free(eigenvalues);
+//    free(laplacian);
+//    free(f.points);
+    double timing = end1;
+//    double timing = end1 + end2;
     // LEAVE THESE PRINTS (for the performance checking script)
     printf("%f\n", timing);
 //    printf("%" PRIu64 "\n", runtime);
