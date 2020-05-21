@@ -179,6 +179,15 @@ double gaussian_similarity(double *u, double *v, int dim) {
     return inner;
 }
 
+double gaussian_similarity_lowdim(double *u, double *v, int dim) {
+    ENTER_FUNC;
+    NUM_ADDS(3);
+    NUM_MULS(1+1);
+    double inner = exp(-0.5 * l2_norm_squared_lowdim(u, v, dim));
+    EXIT_FUNC;
+    return inner;
+}
+
 
 double fast_gaussian_similarity(double *u, double *v, int dim) {
     ENTER_FUNC;
@@ -318,12 +327,14 @@ double fast_gaussian_similarity_lowdim(double *u, double *v, int dim) {
 
 double l2_norm_lowdim_base(double *u, double *v, int dim){
     ENTER_FUNC;
-    NUM_ADDS(3*dim);
+    NUM_ADDS(2*dim);
     NUM_MULS(dim);
     NUM_SQRTS(1);
     double norm = 0;
+    double temp;
     for (int i = 0; i < dim; i++){
-        norm += (u[i] - v[i]) * (u[i] - v[i]);
+        temp = u[i] - v[i];
+        norm += temp * temp;
     }
     norm = sqrt(norm);
     EXIT_FUNC;
@@ -332,11 +343,13 @@ double l2_norm_lowdim_base(double *u, double *v, int dim){
 
 double l2_norm_squared_lowdim(double *u, double *v, int dim) {
     ENTER_FUNC;
-    NUM_ADDS(3*dim);
+    NUM_ADDS(2*dim);
     NUM_MULS(dim);
     double norm = 0;
+    double temp;
     for (int i = 0; i < dim; i++) {
-        norm += (u[i] - v[i]) * (u[i] - v[i]);
+        temp = u[i] - v[i];
+        norm += temp * temp;
     }
     EXIT_FUNC;
     return norm;
@@ -369,10 +382,12 @@ double l2_norm_base(double *u, double *v, int dim) {
         norm7 += (u[i+7] - v[i+7]) * (u[i+7] - v[i+7]);
     }
     // tail handling
+    double temp;
     for (; i < dim; i++){
         NUM_MULS(1);
-        NUM_ADDS(3);
-        norm0 += (u[i] - v[i]) * (u[i] - v[i]);
+        NUM_ADDS(2);
+        temp = u[i] - v[i];
+        norm0 += temp * temp;
     }
 
     NUM_ADDS(7);
@@ -429,10 +444,12 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
 
     // for(int j = 0; j < 4; j++) { norm += norm2[j]; }
     // tail handling
+    double temp;
     for (; i < dim; i++) {
-        NUM_ADDS(3);
+        NUM_ADDS(2);
         NUM_MULS(1);
-        norm += (u[i] - v[i]) * (u[i] - v[i]);
+        temp = u[i] - v[i];
+        norm += temp * temp;
     }
     // norm = sqrt(norm);
     EXIT_FUNC;
@@ -474,10 +491,12 @@ double l2_norm_vec(double *u, double *v, int dim) {
 
     // for(int j = 0; j < 4; j++) { norm += norm2[j]; }
     // tail handling
+    double temp;
     for (; i < dim; i++) {
-        NUM_ADDS(3);
+        NUM_ADDS(2);
         NUM_MULS(1);
-        norm += (u[i] - v[i]) * (u[i] - v[i]);
+        temp = u[i] - v[i];
+        norm += temp * temp;
     }
 
     NUM_SQRTS(1);
@@ -608,10 +627,12 @@ double l2_norm_squared_base(double *u, double *v, int dim) {
         norm7 += (u[i+7] - v[i+7]) * (u[i+7] - v[i+7]);
     }
     // tail handling
+    double temp;
     for (; i < dim; i++){
-        NUM_ADDS(3);
+        NUM_ADDS(2);
         NUM_MULS(1);
-        norm0 += (u[i] - v[i]) * (u[i] - v[i]);
+        temp = u[i] - v[i];
+        norm0 += temp * temp;
     }
     NUM_ADDS(7);
     double norm = norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7;
