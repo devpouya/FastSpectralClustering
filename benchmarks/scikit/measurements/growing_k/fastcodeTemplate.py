@@ -196,7 +196,7 @@ def generate_graph(ifpath, ofpath, title, ylabel, logx=False, yscale=1.0):
 
             d_ = math.sqrt(abs(d)) * .011 * len(ylabels[c])
             dsx =  -s * d_
-            dsy = .06 + d_
+            dsy = .10 + d_
             #print d, x, y, dsx, dsy, dX, dY
 
             candidates.append((calcScore(x + dsx, y + dsy), x + dsx, y + dsy))
