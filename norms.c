@@ -190,11 +190,11 @@ double gaussian_similarity_lowdim(double *u, double *v, int dim) {
 
 
 double fast_gaussian_similarity(double *u, double *v, int dim) {
-    //ENTER_FUNC;
+    ENTER_FUNC;
     NUM_ADDS(3);
     NUM_MULS(1+1);
     double inner = EXP(-0.5 * l2_norm_squared(u, v, dim));
-    //EXIT_FUNC;
+    EXIT_FUNC;
     return inner;
 }
 
@@ -228,7 +228,7 @@ double fast_gaussian_similarity(double *u, double *v, int dim) {
  * @return vector of 4 computation of fast gaussian using simd instr.
  */
 __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
-    //ENTER_FUNC;
+    ENTER_FUNC;
 
     double norms[4] __attribute__((aligned(32)));
     double norm1[4] __attribute__((aligned(32))), norm2[4] __attribute__((aligned(32))), norm3[4] __attribute__((aligned(32))), norm4[4] __attribute__((aligned(32)));
@@ -303,7 +303,7 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
     // printf("exp3 = ");
     // print_m256d(test2);
     // printf("\n");
-    //EXIT_FUNC;
+    EXIT_FUNC;
     return result;
 }
 
@@ -403,14 +403,14 @@ double l2_norm_base(double *u, double *v, int dim) {
 static inline double hsum_double_avx(__m256d v) {
     __m128d vlow  = _mm256_castpd256_pd128(v);
     __m128d vhigh = _mm256_extractf128_pd(v, 1); // high 128
-            vlow  = _mm_add_pd(vlow, vhigh);     // reduce down to 128
+    vlow  = _mm_add_pd(vlow, vhigh);     // reduce down to 128
 
     __m128d high64 = _mm_unpackhi_pd(vlow, vlow);
     return  _mm_cvtsd_f64(_mm_add_sd(vlow, high64));  // reduce to scalar
 }
 
 double l2_norm_squared_vec(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double norm = 0;
 
@@ -452,12 +452,12 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
         norm += temp * temp;
     }
     // norm = sqrt(norm);
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 
 double l2_norm_vec(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double norm = 0;
 
@@ -501,7 +501,7 @@ double l2_norm_vec(double *u, double *v, int dim) {
 
     NUM_SQRTS(1);
     norm = sqrt(norm);
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 
@@ -640,7 +640,7 @@ double l2_norm_squared_base(double *u, double *v, int dim) {
     return norm;
 }
 
-// NOT USED -- INSTRUMENTATION OUT OF DATE 
+// NOT USED -- INSTRUMENTATION OUT OF DATE
 double l2_norm_squared_vec_old(double *u, double *v, int dim) {
     //ENTER_FUNC;
     NUM_ADDS(3*dim);

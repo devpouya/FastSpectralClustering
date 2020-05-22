@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     //printf("Constructing unnormalized Laplacian...\n");
     double *laplacian = calloc(lines*lines, sizeof(double));
     uint64_t start1 = start_tsc();
-   // double start1 = wtime();
+    //double start1 = wtime();
 
     if (dim >= 8){
         oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
@@ -105,8 +105,8 @@ int main(int argc, char *argv[]) {
     //compute the eigendecomposition and take the first k eigenvectors.
     uint64_t end1 = stop_tsc(start1);
 
-    printf("%" PRIu64 "\n", end1);
-    // printf("%" PRIu64 "\n", NUM_FLOPS);
+    PROFILER_LIST();
+
     return 0;
     //double end1 = wtime() - start1;
     //printf("Performing eigenvalue decomposition...\n");
@@ -119,8 +119,8 @@ int main(int argc, char *argv[]) {
     dump_ev_to_file(argv[1], n, k, eigenvectors);
 #endif
 
-    //myInt64 start2 = start_tsc();
-    double start2 = wtime();
+    uint64_t start2 = start_tsc();
+    //double start2 = wtime();
     // init datastructure
     struct cluster clusters[k];
     for (int i = 0; i < k; i++) {
@@ -130,31 +130,31 @@ int main(int argc, char *argv[]) {
     }
 
     if(k>=8){
-        hamerly_kmeans(eigenvectors, lines, k, 1000, 0.0001, clusters);
+        hamerly_kmeans(eigenvectors, lines, k, 100, 0.0001, clusters);
     }else{
-        hamerly_kmeans_lowdim(eigenvectors, lines, k, 1000, 0.0001, clusters);
+        hamerly_kmeans_lowdim(eigenvectors, lines, k, 100, 0.0001, clusters);
     }
     // double timing = wtime()-timing_start ;
 
 
-    // uint64_t runtime = stop_tsc(start2) + end1;
-    double end2 = wtime() - start2;
+     uint64_t runtime = stop_tsc(start2) + end1;
+    //double end2 = wtime() - start2;
     //print_cluster_indices(clusters, k);
 
     //write result in output file
     write_clustering_result(argv[3], clusters, k);
 
-    //PROFILER_LIST();
+    PROFILER_LIST();
 
     free(eigenvectors);
     free(eigenvalues);
     free(laplacian);
     free(f.points);
-    double timing = end1 + end2;
+    //double timing = end1 + end2;
     // LEAVE THESE PRINTS (for the performance checking script)
-    printf("%f\n", timing);
-//    printf("%" PRIu64 "\n", runtime);
-//    printf("%" PRIu64 "\n", NUM_FLOPS);
+    //printf("%f\n", timing);
+    printf("%" PRIu64 "\n", runtime);
+    printf("%" PRIu64 "\n", NUM_FLOPS);
 
 
 #ifdef VALIDATION

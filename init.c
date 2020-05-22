@@ -7,17 +7,18 @@
 #include "norms.h"
 #include "instrumentation.h"
 
-void cumulative_sum(double *probs, int n,  double *ret) {
-    ENTER_FUNC;
+void cumulative_sum(double *probs, int n, double *ret) {
+    //ENTER_FUNC;
     ret[0] = probs[0];
+    NUM_ADDS(n-1);
     for(int i = 1; i < n; i++) {
         ret[i] = ret[i-1]+probs[i];
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 void init_kpp(double *U, int n, int k, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     // add a random initial point to the centers
 #ifdef SEED
     srand(SEED);
@@ -25,7 +26,7 @@ void init_kpp(double *U, int n, int k, double *ret) {
     srand(time(0));
 #endif
     int ind = ((int)rand()%n);
-    printf("ind = %d\n", ind);
+//    printf("ind = %d\n", ind);
     //ret[0] = U[((int)rand()%n)*k];
     for(int j = 0; j < k; j++) {
         ret[j] = U[ind*k+j];
@@ -40,26 +41,31 @@ void init_kpp(double *U, int n, int k, double *ret) {
             double dist = DBL_MAX;
             for(int j = 0; j < c; j++) {
                 double tmp = l2_norm(&U[i*k],&ret[j*k],k);
+                NUM_ADDS(1);
                 if (tmp < dist) {
                     dist = tmp;
                 }
             }
+            NUM_ADDS(1);
             sum += dist;
             dists[i] = dist;
 
         }
+        NUM_DIVS(n);
         for(int i = 0; i < n; i++) {
             dists[i] /= sum;
         }
         double cumsums[n];
         int index = 0;
-        cumulative_sum(dists,n, cumsums);
+        cumulative_sum(dists, n, cumsums);
+        NUM_DIVS(1);
         double r = rand()/((double)RAND_MAX);
-        printf("r = %lf\n", r);
+//        printf("r = %lf\n", r);
         for(int i = 0; i < n; i++) {
+            NUM_ADDS(1);
             if(r < cumsums[i]) {
                 index = i;
-                printf("picked index:%d\n",index);
+//                printf("picked index:%d\n",index);
                 break;
             }
         }
@@ -69,5 +75,5 @@ void init_kpp(double *U, int n, int k, double *ret) {
             }
         }
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
