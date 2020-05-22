@@ -8,3 +8,4 @@ clustering
 *.o
 out.txt
 base_output
+datasets/

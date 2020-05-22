@@ -94,8 +94,8 @@ int main(int argc, char *argv[]) {
 
     //printf("Constructing unnormalized Laplacian...\n");
     double *laplacian = calloc(lines*lines, sizeof(double));
-    //myInt64 start1 = start_tsc();
-    double start1 = wtime();
+    uint64_t start1 = start_tsc();
+   // double start1 = wtime();
 
     if (dim >= 8){
         oneshot_unnormalized_laplacian_vec_blocked(points,lines,dim,laplacian);
@@ -103,8 +103,12 @@ int main(int argc, char *argv[]) {
         oneshot_unnormalized_laplacian_lowdim_vec_blocked(points,lines,dim,laplacian);
     }
     //compute the eigendecomposition and take the first k eigenvectors.
-    //myInt64 end1 = stop_tsc(start1);
-    double end1 = wtime() - start1;
+    uint64_t end1 = stop_tsc(start1);
+
+    printf("%" PRIu64 "\n", end1);
+    // printf("%" PRIu64 "\n", NUM_FLOPS);
+    return 0;
+    //double end1 = wtime() - start1;
     //printf("Performing eigenvalue decomposition...\n");
     double *eigenvalues = malloc(k * sizeof(double));
     double *eigenvectors = malloc(n * k * sizeof(double));
