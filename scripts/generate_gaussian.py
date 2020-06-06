@@ -15,9 +15,11 @@ else:
     out = sys.argv[3]
     dim = int(sys.argv[4])
 
+
 # dim = 300
 points, y = make_blobs(n_samples=n,centers=k,n_features=dim,random_state=7)
 points = normalize(points)
+
 
 """
 means = np.random.choice(n, (k,1,2), replace=False)
@@ -36,7 +38,11 @@ for i in range(k):
     points = np.append(points,st,axis=0)
 np.random.shuffle(points)
 """
-file = open(os.getcwd()+"/"+out, "w+")
+
+# for l in range(100,n,100):
+#     out = str(l)+".txt"
+file = open(os.getcwd()+"/datasets/test_points/"+out, "w+")
+
 file.write("%d\n" % dim)
 for i in range(n):
     for j in range(dim):

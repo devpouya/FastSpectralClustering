@@ -8,17 +8,17 @@
 #include "instrumentation.h"
 
 void cumulative_sum(double *probs, int n, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     ret[0] = probs[0];
     NUM_ADDS(n-1);
     for(int i = 1; i < n; i++) {
         ret[i] = ret[i-1]+probs[i];
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 void init_kpp(double *U, int n, int k, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     // add a random initial point to the centers
 #ifdef SEED
     srand(SEED);
@@ -75,5 +75,5 @@ void init_kpp(double *U, int n, int k, double *ret) {
             }
         }
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }

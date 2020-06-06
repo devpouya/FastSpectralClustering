@@ -25,7 +25,7 @@ static int cmp(const void *a, const void *b){
 }
 
 static inline void calculate_diagonal_degree_matrix(double * weighted_adj_matrix, int n, double *ret){
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_ADDS(n*n);
     int i;
     for (i = 0; i < n-7; i+=8) {
@@ -140,11 +140,11 @@ static inline void calculate_diagonal_degree_matrix(double * weighted_adj_matrix
     }
 
 
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 void construct_fully_connected_matrix(double *points, int lines, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     for (int i = 0; i < lines-3; i+=4) {
         for (int j = i+1; j < lines; j+=4) {
 
@@ -177,21 +177,21 @@ void construct_fully_connected_matrix(double *points, int lines, int dim, double
 
         }
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 void construct_eps_neighborhood_matrix(double *points, int lines, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     for (int i = 0; i < lines; ++i) {
         for (int j = 0; j < lines; ++j) {
             ret[i*lines + j] = l2_norm(&points[i*dim], &points[j*dim], dim) < EPS;
         }
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 void construct_knn_matrix(double *points, int lines, int dim, int k, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     double vals[lines];
     int indices[lines];
 
@@ -210,7 +210,7 @@ void construct_knn_matrix(double *points, int lines, int dim, int k, double *ret
             ret[i*lines + indices[s]] = (indices[s] != i) ? 1.0 : 0;
         }
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 /**
@@ -221,7 +221,7 @@ void construct_knn_matrix(double *points, int lines, int dim, int k, double *ret
  */
 
 void construct_normalized_laplacian_sym_matrix(double *weighted_adj_matrix, int num_points, double *ret){
-    ENTER_FUNC;
+    //ENTER_FUNC;
     double sqrt_inv_degree_matrix[num_points];  // '1-d' array
     calculate_diagonal_degree_matrix(weighted_adj_matrix, num_points, sqrt_inv_degree_matrix); //load degree_matrix temporarily in sqrt_inv_degree_matrix
     NUM_SQRTS(num_points);
@@ -248,11 +248,11 @@ void construct_normalized_laplacian_sym_matrix(double *weighted_adj_matrix, int 
             }
         }
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 void construct_normalized_laplacian_rw_matrix(double *weighted_adj_matrix, int num_points, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     double inv_degree_matrix[num_points];
     calculate_diagonal_degree_matrix(weighted_adj_matrix, num_points, inv_degree_matrix); //load degree_matrix temporarily in sqrt_inv_degree_matrix
     NUM_SQRTS(num_points);
@@ -270,7 +270,7 @@ void construct_normalized_laplacian_rw_matrix(double *weighted_adj_matrix, int n
             }
         }
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 /**
@@ -282,7 +282,7 @@ void construct_normalized_laplacian_rw_matrix(double *weighted_adj_matrix, int n
  */
 
 void oneshot_unnormalized_laplacian_base(double *points, int n, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
     NUM_ADDS(n*n-n);
     for (int i = 0; i < n; i++) {
@@ -301,13 +301,13 @@ void oneshot_unnormalized_laplacian_base(double *points, int n, int dim, double 
         }
         ret[i*n+i] = degi;
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 
 }
 
 // BUGGY -- DO NOT USE
 void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
     NUM_ADDS(n*n-n);
     __m256d v_tmp, v_degrees, zeros;
@@ -335,7 +335,7 @@ void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *
         }
         ret[i*n+i] = degi;
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -355,7 +355,7 @@ void oneshot_unnormalized_laplacian_vec(double *points, int n, int dim, double *
 //}
 
 void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double degrees[n];
     double tmp;
@@ -420,12 +420,12 @@ void oneshot_unnormalized_laplacian_blocked(double *points, int n, int dim, doub
     //     printf("\n");
     // }
 
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 
 void oneshot_unnormalized_laplacian_vec_blocked(double *points, int n, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double degrees[n];
     __m256d tmp_vec;
@@ -519,13 +519,13 @@ void oneshot_unnormalized_laplacian_vec_blocked(double *points, int n, int dim, 
 //        printf("\n");
 //    }
 
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 #define BLOCKSIZE_LD 8
 
 void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double degrees[n];
     double tmp;
@@ -590,12 +590,12 @@ void oneshot_unnormalized_laplacian_lowdim_blocked(double *points, int n, int di
     //     printf("\n");
     // }
 
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 // DO NOT USE -- SLOWER THAN THE NON-VECTORIZED VERSION
 void oneshot_unnormalized_laplacian_lowdim_vec_blocked(double *points, int n, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double degrees[n];
     double tmp;
@@ -689,11 +689,11 @@ void oneshot_unnormalized_laplacian_lowdim_vec_blocked(double *points, int n, in
     //     printf("\n");
     // }
 
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     // NUM_MULS((n*n-n)/2);
     // NUM_ADDS(n*n-n);
     for (int i = 0; i < n; i++) {
@@ -722,13 +722,13 @@ void oneshot_unnormalized_laplacian_lowdim(double *points, int n, int dim, doubl
     //     }
     //     printf("\n");
     // }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 
 }
 
 // BUGGY -- DO NOT USE
 void oneshot_unnormalized_laplacian_roll(double *points, int n, int dim, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_MULS((n*n-n)/2);
     NUM_ADDS(n*n-n);
     int i;
@@ -1418,11 +1418,11 @@ void oneshot_unnormalized_laplacian_roll(double *points, int n, int dim, double 
         }
         ret[i*n+i] = degi;
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 void construct_unnormalized_laplacian(double *graph, int n, double *ret) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     // double* degrees = (double *)malloc(n * n * sizeof(double));
     double degrees[n];
     calculate_diagonal_degree_matrix(graph, n, degrees);
@@ -1446,7 +1446,7 @@ void construct_unnormalized_laplacian(double *graph, int n, double *ret) {
 
     }
 
-    EXIT_FUNC;
+    //EXIT_FUNC;
 }
 
 

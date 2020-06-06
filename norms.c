@@ -141,24 +141,24 @@ __m256d exp256_pd(__m256d in)
 
 // NOT USED
 double fast_LUT_exp(double x) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_ADDS(1);
     NUM_MULS(2);
     uint64_t tmp = (1512775*x+1072632447);
     int index = (int) (tmp>>12) & 0xFF;
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return ((double )(tmp<<32 ))* ADJUSTMENT_LUT[index];
 }
 
 // NOT USED
 double fast_exp(double x) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_MULS(2);
     NUM_DIVS(1);
     NUM_ADDS(2);
     int x1 = (long long) (6051102*x+1056478197);
     int x2 = (long long) (1056478197-6051102*x);
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return ((double) x1)/((double) x2);
 }
 
@@ -172,20 +172,20 @@ double fast_exp(double x) {
 
 
 double gaussian_similarity(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_ADDS(3);
     NUM_MULS(1+1);
     double inner = exp(-0.5 * l2_norm_squared(u, v, dim));
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return inner;
 }
 
 double gaussian_similarity_lowdim(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_ADDS(3);
     NUM_MULS(1+1);
     double inner = exp(-0.5 * l2_norm_squared_lowdim(u, v, dim));
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return inner;
 }
 
@@ -200,7 +200,7 @@ double fast_gaussian_similarity(double *u, double *v, int dim) {
 }
 
 // __m256d fast_gaussian_similarity_2d_vec(double *u, double *v) {
-//     ENTER_FUNC;
+//     //ENTER_FUNC;
 
 //     __m256d u1u2 = _mm256_loadu_pd(u);  // 2 points
 //     __m256d v1v2 = _mm256_loadu_pd(v);
@@ -229,7 +229,7 @@ double fast_gaussian_similarity(double *u, double *v, int dim) {
  * @return vector of 4 computation of fast gaussian using simd instr.
  */
 __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
-    //ENTER_FUNC;
+    ENTER_FUNC;
 
     double norms[4] __attribute__((aligned(32)));
     double norm1[4] __attribute__((aligned(32))), norm2[4] __attribute__((aligned(32))), norm3[4] __attribute__((aligned(32))), norm4[4] __attribute__((aligned(32)));
@@ -304,16 +304,16 @@ __m256d fast_gaussian_similarity_vec(double *u, double *v, int dim) {
     // printf("exp3 = ");
     // print_m256d(test2);
     // printf("\n");
-    //EXIT_FUNC;
+    EXIT_FUNC;
     return result;
 }
 
 double fast_gaussian_similarity_lowdim(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_MULS(1+1);
     NUM_ADDS(3);
     double inner = EXP(-0.5 * l2_norm_squared_lowdim(u, v, dim));
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return inner;
 }
 
@@ -327,7 +327,7 @@ double fast_gaussian_similarity_lowdim(double *u, double *v, int dim) {
  */
 
 double l2_norm_lowdim_base(double *u, double *v, int dim){
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_ADDS(2*dim);
     NUM_MULS(dim);
     NUM_SQRTS(1);
@@ -338,12 +338,12 @@ double l2_norm_lowdim_base(double *u, double *v, int dim){
         norm += temp * temp;
     }
     norm = sqrt(norm);
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 
 double l2_norm_squared_lowdim(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_ADDS(2*dim);
     NUM_MULS(dim);
     double norm = 0;
@@ -352,7 +352,7 @@ double l2_norm_squared_lowdim(double *u, double *v, int dim) {
         temp = u[i] - v[i];
         norm += temp * temp;
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 
@@ -365,7 +365,7 @@ double l2_norm_squared_lowdim(double *u, double *v, int dim) {
  */
 
 double l2_norm_base(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double norm0, norm1, norm2, norm3, norm4, norm5, norm6, norm7;
     norm0 = norm1 = norm2 = norm3 = norm4 = norm5 = norm6 = norm7 = 0;
@@ -395,7 +395,7 @@ double l2_norm_base(double *u, double *v, int dim) {
     NUM_SQRTS(1);
 //    double norm = babylonian_squareRoot(norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7);
     double norm = sqrt(norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7);
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 
@@ -404,14 +404,14 @@ double l2_norm_base(double *u, double *v, int dim) {
 static inline double hsum_double_avx(__m256d v) {
     __m128d vlow  = _mm256_castpd256_pd128(v);
     __m128d vhigh = _mm256_extractf128_pd(v, 1); // high 128
-            vlow  = _mm_add_pd(vlow, vhigh);     // reduce down to 128
+    vlow  = _mm_add_pd(vlow, vhigh);     // reduce down to 128
 
     __m128d high64 = _mm_unpackhi_pd(vlow, vlow);
     return  _mm_cvtsd_f64(_mm_add_sd(vlow, high64));  // reduce to scalar
 }
 
 double l2_norm_squared_vec(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double norm = 0;
 
@@ -453,12 +453,12 @@ double l2_norm_squared_vec(double *u, double *v, int dim) {
         norm += temp * temp;
     }
     // norm = sqrt(norm);
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 
 double l2_norm_vec(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double norm = 0;
 
@@ -502,13 +502,13 @@ double l2_norm_vec(double *u, double *v, int dim) {
 
     NUM_SQRTS(1);
     norm = sqrt(norm);
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 
 // OLD -- INSTRUMENTATION OUT OF DATE
 double l2_norm_vec_old(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_ADDS(3*dim);
     NUM_MULS(dim);
     NUM_SQRTS(1);
@@ -544,13 +544,13 @@ double l2_norm_vec_old(double *u, double *v, int dim) {
         norm += (u[i] - v[i]) * (u[i] - v[i]);
     }
     norm = sqrt(norm);
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 
 // NOT USED -- INSTRUMENTATION OUT OF DATE
 __m256d l2_norm_4x1_vec(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_ADDS(3*dim);
     NUM_MULS(dim);
     NUM_SQRTS(1);
@@ -605,12 +605,12 @@ __m256d l2_norm_4x1_vec(double *u, double *v, int dim) {
     }
     result = _mm256_loadu_pd(norms);
     result = _mm256_sqrt_pd(result);
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return result;
 }
 
 double l2_norm_squared_base(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
 
     double norm0, norm1, norm2, norm3, norm4, norm5, norm6, norm7;
     norm0 = norm1 = norm2 = norm3 = norm4 = norm5 = norm6 = norm7 = 0;
@@ -637,13 +637,13 @@ double l2_norm_squared_base(double *u, double *v, int dim) {
     }
     NUM_ADDS(7);
     double norm = norm0+norm1+norm2+norm3+norm4+norm5+norm6+norm7;
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 
-// NOT USED -- INSTRUMENTATION OUT OF DATE 
+// NOT USED -- INSTRUMENTATION OUT OF DATE
 double l2_norm_squared_vec_old(double *u, double *v, int dim) {
-    ENTER_FUNC;
+    //ENTER_FUNC;
     NUM_ADDS(3*dim);
     NUM_MULS(dim);
 
@@ -677,7 +677,7 @@ double l2_norm_squared_vec_old(double *u, double *v, int dim) {
     for (; i < dim; i++) {
         norm += (u[i] - v[i]) * (u[i] - v[i]);
     }
-    EXIT_FUNC;
+    //EXIT_FUNC;
     return norm;
 }
 

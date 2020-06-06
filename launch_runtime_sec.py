@@ -23,10 +23,10 @@ median_idx = 1
 
 test = "growing_n_"
 output_filename = "c_code_"
-dataset = "72c_300d_growing_n_normalized"
+dataset = "8c_300d_growing_n_normalized"
 dataset_path = os.getcwd() + "/benchmarks/datasets/"+dataset+"/"
 output_path = os.getcwd() + "/benchmarks/scikit/measurements/growing_n/"+dataset+"/"
-k = 72 #??
+k = 8 #??
 dim = 300 #??
 params = [n for n in range(100, 6100, 100)]
 
@@ -52,13 +52,13 @@ for par in params:
     print(test + " | parameter = " + str(par))
     for file in sorted(os.listdir(directory)): # when generating data have just numbers for simplicity
         filename = os.fsdecode(file)
-        if filename == str(par) + "_ev.txt":
+        if filename == str(par) + ".txt":
             # compute NUM_RUNS times and get the median
             runtimes = []
             performances = []
 
             for i in range(0, num_runs):
-                clustering = subprocess.check_output(["./clustering", str(dataset_path) + filename, str(k), "out.txt", str(par)],
+                clustering = subprocess.check_output(["./clustering", str(dataset_path) + filename, str(k), "out.txt"],
                                                  universal_newlines="\n").split("\n")
                 #print(clustering[0])
                 runtime = clustering[0]
@@ -78,7 +78,7 @@ for par in params:
                   # +" (cycles), performance: "+ str(performances[median_idx]) +" (flops/cycle)")
 
 
-with open(str(output_path) + output_filename + test + "_runtime_sec", 'w') as f:
+with open(str(output_path) + output_filename + test + "graph_runtime_sec", 'w') as f:
     writer = csv.writer(f, delimiter='\t')
     writer.writerows(zip(params, runtimes_median))
 
