@@ -48,7 +48,7 @@ __m256d exp256_pd_fast(__m256d x) {
     // printf("-------------\n");
     NUM_ADDS(4*3);
     NUM_MULS(4);
-    __m256 to_float = _mm256_castpd_ps(x);  // zero latency
+    // __m256 to_float = _mm256_castpd_ps(x);  // zero latency
     __m256d c1 = _mm256_set1_pd(1512775.3951951856938);
     __m256d c2 = _mm256_set1_pd(1072632447);
     __m256i selector = _mm256_set_epi32(3, 7, 2, 6, 1, 5, 0, 4);
@@ -68,13 +68,14 @@ __m256d exp256_pd_fast(__m256d x) {
     // __m256i selector = _mm256_set_epi32(7, 3, 6, 2, 5, 1, 4, 0);
     __m256 permute = _mm256_permutevar8x32_ps(temp_cast, selector);  // latency 3
     // print_m256(permute);
-    __m256 float_result = _mm256_blend_ps(to_float, permute, MAKE_MASK8(1, 0, 1, 0, 1, 0, 1, 0));  // latency 1
+    // __m256 float_result = _mm256_blend_ps(to_float, permute, MAKE_MASK8(1, 0, 1, 0, 1, 0, 1, 0));  // latency 1
     // print_m256(float_result);
     // union test test;
     // test.n.j = 1512775.3951951856938*1 +1072632447;
     // printf("%lf\n", test.d);
 
-    __m256d result = _mm256_castps_pd(float_result);  // latency 0
+    // __m256d result = _mm256_castps_pd(float_result);  // latency 0
+    __m256d result = _mm256_castps_pd(permute);  // latency 0
     // print_m256d(result);
     // printf("---------sdf-----\n");
     return result;
