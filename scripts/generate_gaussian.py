@@ -18,7 +18,8 @@ else:
 
 # dim = 300
 points, y = make_blobs(n_samples=n,centers=k,n_features=dim,random_state=7)
-points = normalize(points)
+points = normalize(points, axis=0)
+points *= 100
 
 
 """

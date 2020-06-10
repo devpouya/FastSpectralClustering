@@ -16,13 +16,13 @@ subprocess.run(["./clustering", dataset_path, number_clusters, output_path])
 f = open(output_path, "r")
 
 # read the cluster number k  (actually redundant)
-k = f.readline()
+f.readline()
 
 # read the sizes of each clusters
 cluster_sizes = f.readline()
 cluster_sizes = [int(i) for i in cluster_sizes.strip().split(" ")]
-print("cluster sizes are : ")
-print(cluster_sizes)
+# print("cluster sizes are : ")
+# print(cluster_sizes)
 
 # read the original dataset
 number_of_points = sum(cluster_sizes)
@@ -33,11 +33,11 @@ data = np.zeros((number_of_points, dim))
 line_idx = 0
 for lines in f_dataset:
     line_data = lines.strip().split()
-    print(line_data)
+    # print(line_data)
     for i in range(dim):
         data[line_idx][i] = line_data[i]
     line_idx = line_idx + 1
-print("datasets set shape :{}".format(data.shape))
+# print("datasets set shape :{}".format(data.shape))
 
 # this is a list, which stores points by clusters
 clustered_data = []
@@ -61,7 +61,7 @@ for k in range(int(number_clusters)):
 number_of_colors = int(number_clusters)
 color = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
              for i in range(number_of_colors)]
-print(color)
+# print(color)
 for i in range(int(number_clusters)):
     plt.scatter(clustered_data[i][0], clustered_data[i][1], color=color[i])
 

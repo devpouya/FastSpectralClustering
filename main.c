@@ -107,7 +107,6 @@ int main(int argc, char *argv[]) {
 
     PROFILER_LIST();
 
-    return 0;
     //double end1 = wtime() - start1;
     //printf("Performing eigenvalue decomposition...\n");
     double *eigenvalues = malloc(k * sizeof(double));
